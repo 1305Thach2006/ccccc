@@ -14,6 +14,37 @@ from datetime import datetime, timedelta
 # PHẦN 1: CẤU HÌNH DATABASE (PostgreSQL ở cổng 5433)
 # ==========================================
 import os; SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:secretpassword123@localhost:5433/career_coach")
+
+_WORKING_OLLAMA_HOST = None
+def _smart_ollama_chat(*args, **kwargs):
+    global _WORKING_OLLAMA_HOST
+    candidates = []
+    if _WORKING_OLLAMA_HOST:
+        candidates.append(_WORKING_OLLAMA_HOST)
+    for h in [
+        os.getenv("OLLAMA_HOST", "").strip(),
+        "http://host.docker.internal:11434",
+        "http://192.168.65.254:11434",
+        "http://127.0.0.1:11434",
+        "http://localhost:11434",
+        "http://172.17.0.1:11434",
+        "http://ollama:11434",
+    ]:
+        if h and h not in candidates:
+            candidates.append(h)
+    last_err = None
+    for host in candidates:
+        try:
+            client = ollama.Client(host=host, headers={"Host": "localhost:11434"})
+            res = client.chat(*args, **kwargs)
+            _WORKING_OLLAMA_HOST = host
+            return res
+        except Exception as e:
+            last_err = e
+            print(f"[Ollama] Thử kết nối {host} thất bại: {e}")
+    raise last_err
+
+ollama.chat = _smart_ollama_chat
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

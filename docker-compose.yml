@@ -31,8 +31,6 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://admin:secretpassword123@postgres_db:5432/career_coach}
       - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       postgres_db:
         condition: service_healthy
