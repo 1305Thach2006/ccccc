@@ -1,0 +1,53 @@
+services:
+  # 1. Cấu hình cho Database PostgreSQL
+  postgres_db:
+    image: postgres:15
+    container_name: career_coach_pg
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword123}
+      POSTGRES_DB: ${POSTGRES_DB:-career_coach}
+    ports:
+      # Mở cổng 5433 trên máy host nối vào cổng 5432 bên trong Docker
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-career_coach}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Cấu hình cho Backend API (FastAPI + SQLAlchemy + Ollama Qwen 3.5:4b)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: career_coach_backend
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://admin:secretpassword123@postgres_db:5432/career_coach}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  # 3. Cấu hình cho Frontend Giao diện Web (Node.js Static Server)
+  frontend:
+    build:
+      context: ./front_end
+      dockerfile: Dockerfile
+    container_name: career_coach_frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-5050}:5050"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Career Coach - Nền tảng Định hướng & Huấn luyện Kỹ năng Công nghệ</title>
+  <meta name="description" content="AI Career Coach - Nền tảng phân tích khoảng cách kỹ năng và huấn luyện nghề nghiệp AI dành cho sinh viên công nghệ.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace']
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Confetti Canvas Overlay -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-16 right-5 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-sm"></div>
+
+  <!-- ========================================================================= -->
+  <!-- TOP NAVIGATION BAR -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <a href="#screen-home" data-navigate="screen-home" class="flex items-center gap-2.5 group">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:bg-indigo-700 transition-colors">
+            AI
+          </div>
+          <div class="font-bold text-slate-900 text-base tracking-tight">
+            Career Coach
+          </div>
+        </a>
+      </div>
+
+      <!-- Main Navigation -->
+      <nav class="hidden md:flex items-center gap-1.5">
+        <button id="navTabHome" data-target="screen-home" data-navigate="screen-home" class="nav-link-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 transition-all shadow-2xs">
+          <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Trang chủ</span>
+        </button>
+        <button id="navTabProfile" data-target="screen-profile" data-navigate="screen-profile" class="nav-link-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all border border-transparent">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span>Hồ sơ</span>
+        </button>
+        <button id="navTabGap" data-target="screen-gap" data-navigate="screen-gap" class="nav-link-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all border border-transparent">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span>Skill Gap</span>
+        </button>
+        <button id="navTabInterview" data-target="screen-interview" data-navigate="screen-interview" class="nav-link-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all border border-transparent">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+          <span>Phỏng vấn</span>
+        </button>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-2 relative">
+        <button id="btnLoginOpen" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm">
+          Đăng nhập
+        </button>
+
+        <!-- MENU THẢ XUỐNG KHI ĐÃ ĐĂNG NHẬP (ẨN MẶC ĐỊNH) -->
+        <div id="userDropdownMenu" class="hidden absolute right-0 top-10 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 text-xs">
+          <div id="dropdownUserName" class="px-4 py-2 font-bold text-slate-800 border-b border-slate-100 truncate">Tài khoản</div>
+          <button id="btnLogout" class="w-full text-left px-4 py-2 text-rose-600 hover:bg-slate-50 transition-colors flex items-center gap-2 border-t border-slate-100">
+            <svg class="w-3.5 h-3.5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Đăng xuất
+          </button>
+        </div>
+
+        <button id="btnToggleSound" class="w-9 h-9 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium flex items-center justify-center transition-colors shadow-2xs" title="Bật/Tắt hiệu ứng âm thanh">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+          </svg>
+        </button>
+      </div>
+
+    <!-- Mobile Responsive Navigation -->
+    <div class="md:hidden flex items-center justify-around px-2 py-1.5 border-t border-slate-200/80 bg-white/95">
+      <button data-target="screen-home" data-navigate="screen-home" class="nav-link-btn flex-1 py-1.5 px-2 text-center text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-lg flex items-center justify-center gap-1">
+        <span>Trang chủ</span>
+      </button>
+      <button data-target="screen-profile" data-navigate="screen-profile" class="nav-link-btn flex-1 py-1.5 px-2 text-center text-xs font-medium text-slate-600 rounded-lg flex items-center justify-center gap-1">
+        <span>Hồ sơ</span>
+      </button>
+      <button data-target="screen-gap" data-navigate="screen-gap" class="nav-link-btn flex-1 py-1.5 px-2 text-center text-xs font-medium text-slate-600 rounded-lg flex items-center justify-center gap-1">
+        <span>Skill Gap</span>
+      </button>
+      <button data-target="screen-interview" data-navigate="screen-interview" class="nav-link-btn flex-1 py-1.5 px-2 text-center text-xs font-medium text-slate-600 rounded-lg flex items-center justify-center gap-1">
+        <span>Phỏng vấn</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 w-full mx-auto py-6 pb-12">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: TRANG CHỦ (Home Dashboard) -->
+    <!-- ========================================================================= -->
+    <section id="screen-home" class="screen-page block space-y-6 max-w-6xl mx-auto px-4">
+
+      <!-- HERO BANNER CHUẨN CHO TẤT CẢ CÁC TAB -->
+      <div class="bg-indigo-900 rounded-2xl p-6 sm:p-7 text-white shadow-sm border border-indigo-950">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div class="lg:col-span-8 space-y-3">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-indigo-800/80 text-indigo-200 font-medium text-xs border border-indigo-700">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+              <span>Chào mừng bạn đến với AI Career Coach</span>
+            </div>
+            
+            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+              Bắt đầu bằng việc nộp CV và chọn vị trí tuyển dụng mục tiêu của bạn
+            </h2>
+
+            <div class="text-indigo-200 text-sm mt-2">
+              Hệ thống sẽ dùng AI phân tích khoảng cách kỹ năng và tạo lộ trình học tập riêng cho bạn.
+            </div>
+          </div>
+
+          <div class="lg:col-span-4 flex flex-col items-center justify-center gap-2.5">
+            <button data-navigate="screen-profile" class="w-full py-3.5 px-6 rounded-lg font-semibold text-slate-900 bg-white hover:bg-slate-100 shadow-sm transition-colors text-sm flex items-center justify-center gap-2 group">
+              <span>Cập nhật Hồ sơ ngay</span>
+              <svg class="w-4 h-4 text-slate-900 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+            <span class="text-[11px] text-indigo-200">
+              Bước đầu tiên để khai mở lộ trình sự nghiệp
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KHỐI 2: HẠT GIỐNG VÀ NGÀY STREAK (ĐÃ DỌN DẸP SẠCH SẼ) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- CỘT TRÁI (lg:col-span-8): TIẾN ĐỘ HẠT GIỐNG -->
+        <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-4">
+          
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 id="homePlantTitle" class="text-2xl sm:text-3xl font-extrabold text-[#064e3b] tracking-tight">
+                    Hạt giống
+                  </h2>
+                  <span id="homeStageBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    Giai đoạn 1/6
+                  </span>
+                </div>
+                <p class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-relaxed">
+                  Mỗi bài hoàn thành bổ sung XP cho cây. Cây lớn dần theo tiến độ của toàn bộ khoá học.
+                </p>
+              </div>
+
+              <!-- NÚT TƯỚI NƯỚC -->
+              <button class="btn-water-plant text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs flex-shrink-0">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                <span>Tưới nước (+25 XP)</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+              
+              <!-- Left inside: 6 Stages Flow Indicator -->
+              <div class="md:col-span-7 space-y-3.5">
+                <div class="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 space-y-3.5">
+                  <!-- 6 Stages Flow Indicator -->
+                  <div class="relative pt-1">
+                    <div class="absolute top-4 left-4 right-4 h-0.5 bg-slate-200/80 z-0 border-t border-dashed border-slate-300"></div>
+
+                    <div class="grid grid-cols-6 gap-1 text-center relative z-10">
+                      <div class="flex flex-col items-center cursor-pointer group" onclick="updateIllustration(1)">
+                        <div id="homeStageNode-1" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#064e3b] text-white flex items-center justify-center font-bold text-xs ring-4 ring-emerald-100 shadow-sm transition-all">01</div>
+                        <span id="homeStageLabel-1" class="text-[10px] sm:text-[11px] font-bold text-[#064e3b] mt-1 whitespace-nowrap">Hạt giống</span>
+                      </div>
+                      <div class="flex flex-col items-center cursor-pointer group" onclick="updateIllustration(2)">
+                        <div id="homeStageNode-2" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs group-hover:border-emerald-400 transition-all">02</div>
+                        <span id="homeStageLabel-2" class="text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap">Nảy mầm</span>
+                      </div>
+                      <div class="flex flex-col items-center cursor-pointer group" onclick="updateIllustration(3)">
+                        <div id="homeStageNode-3" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs group-hover:border-emerald-400 transition-all">03</div>
+                        <span id="homeStageLabel-3" class="text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap">Thân cây</span>
+                      </div>
+                      <div class="flex flex-col items-center cursor-pointer group" onclick="updateIllustration(4)">
+                        <div id="homeStageNode-4" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs group-hover:border-emerald-400 transition-all">04</div>
+                        <span id="homeStageLabel-4" class="text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap">Phân cành</span>
+                      </div>
+                      <div class="flex flex-col items-center cursor-pointer group" onclick="updateIllustration(5)">
+                        <div id="homeStageNode-5" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs group-hover:border-emerald-400 transition-all">05</div>
+                        <span id="homeStageLabel-5" class="text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap">Ra lá</span>
+                      </div>
+                      <div class="flex flex-col items-center cursor-pointer group" onclick="updateIllustration(6)">
+                        <div id="homeStageNode-6" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs group-hover:border-emerald-400 transition-all">06</div>
+                        <span id="homeStageLabel-6" class="text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap">Kết trái</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quote Block -->
+                <div id="motivationalQuoteBlock" class="flex items-start gap-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl p-3 text-slate-600 transition-all">
+                  <svg class="w-4 h-4 text-indigo-500/80 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                  </svg>
+                  <div class="flex-1 min-w-0">
+                    <p id="motivationalQuoteText" class="text-xs italic text-slate-700 leading-relaxed font-sans">
+                      "Thời điểm tốt nhất để trồng một cái cây là 4 năm Đại học. Thời điểm tốt thứ hai chính là ngày hôm nay."
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right inside: Plant SVG Illustration Scene -->
+              <div class="md:col-span-5 relative bg-gradient-to-b from-sky-50/20 via-emerald-50/15 to-slate-50/40 rounded-2xl border border-slate-200/80 p-4 min-h-[220px] flex flex-col justify-center items-center overflow-hidden shadow-2xs">
+                <div class="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-amber-200/40 blur-2xl pointer-events-none"></div>
+
+                <div class="relative flex-1 flex flex-col items-center justify-center my-1 w-full">
+                  <div id="plantIllustrationScene" class="w-full max-w-[260px] h-[160px] flex items-center justify-center transition-all duration-300 relative">
+                    <img id="plantStageImage" src="" alt="Minh họa mầm cây sự nghiệp" class="w-full h-full object-contain select-none pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- CỘT PHẢI (lg:col-span-4): KHỐI 'STREAK' -->
+        <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-xs flex flex-col justify-between text-center relative overflow-hidden group hover:border-orange-300 transition-all">
+          <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-orange-100/60 blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-amber-100/40 blur-2xl pointer-events-none"></div>
+
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 relative z-10">
+            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200/80">
+              <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping"></span>
+              Kỷ luật học tập
+            </span>
+          </div>
+
+          <!-- Flame & Number -->
+          <div class="my-4 flex flex-col items-center justify-center relative z-10">
+            <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-300 flex items-center justify-center shadow-inner mb-3">
+              <svg class="w-10 h-10 fill-current text-slate-300 drop-shadow-sm" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.316.492-.53 1.05-.67 1.63-.326 1.343-.377 2.766-.145 4.126.046.269.112.533.195.792a.5.5 0 01-.762.53 7.02 7.02 0 01-1.632-1.748c-.288-.415-.47-.887-.55-1.378a1 1 0 00-1.737-.585 7.973 7.973 0 00-1.576 3.655 8 8 0 1015.008-2.658c-.378-.857-.88-1.64-1.488-2.316a9.01 9.01 0 00-2.42-1.971z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+
+            <div class="flex items-baseline justify-center gap-1.5">
+              <span id="currentStreakText" class="text-4xl sm:text-5xl font-black text-slate-700 tracking-tight">0</span>
+              <span class="text-xl font-bold text-slate-900">Ngày</span>
+            </div>
+
+            <div class="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mt-0.5">
+              CHUỖI NGÀY LIÊN TỤC
+            </div>
+
+            <p class="text-xs text-slate-600 mt-2 max-w-[250px] leading-relaxed">
+              Hãy bắt đầu bài học đầu tiên hôm nay để kích hoạt chuỗi ngày học tập của bạn!
+            </p>
+          </div>
+
+          <!-- 7-Day Indicators -->
+          <div class="pt-3 border-t border-slate-100 space-y-2 relative z-10">
+            <div class="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+              <span>Tuần này:</span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1">
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">T2</span><div id="day-box-1" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">T3</span><div id="day-box-2" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">T4</span><div id="day-box-3" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">T5</span><div id="day-box-4" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">T6</span><div id="day-box-5" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">T7</span><div id="day-box-6" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+              <div class="flex flex-col items-center"><span class="text-[9px] text-slate-400 mb-0.5">CN</span><div id="day-box-7" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200">•</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- KHỐI 3: SƠ ĐỒ LỘ TRÌNH -->
+<div id="roadmapDiagramSection" class="bg-white rounded-xl border border-slate-200 p-6 sm:p-7 relative overflow-hidden">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
+    <div>
+      <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+        <span>Sơ đồ Lộ trình học tập</span>
+      </h3>
+      <p class="text-xs text-slate-500 mt-0.5">Lộ trình sẽ được AI tự động sinh ra sau khi bạn phân tích kỹ năng ở phần Hồ sơ.</p>
+    </div>
+    <span class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-50 text-slate-500 border border-slate-200 self-start sm:self-auto">
+      Tiến độ: 0 Bài Hoàn thành
+    </span>
+  </div>
+
+  <!-- ĐÃ BỔ SUNG ID "homeRoadmapContainer" VÀO THẺ DIV NÀY ĐỂ JAVASCRIPT CÓ THỂ TÌM THẤY VÀ GHI ĐÈ DỮ LIỆU -->
+  <div id="homeRoadmapContainer" class="relative max-w-2xl mx-auto py-4 space-y-4">
+    <div class="absolute top-6 bottom-6 left-1/2 -translate-x-1/2 w-0 border-r-2 border-dashed border-slate-200 z-0 hidden sm:block"></div>
+
+    <div class="relative z-10 flex items-center justify-between mb-10">
+      <div class="w-5/12 text-right pr-6 hidden sm:block">
+        <div class="learning-node-clickable bg-amber-50/50 border border-amber-400 rounded-lg p-3 shadow-xs hover:border-amber-500 cursor-pointer transition-all group" data-title="Chờ phân tích lộ trình" data-xp="100" data-locked="false">
+          <span class="text-[10px] font-semibold text-amber-700 uppercase tracking-wider block">Bài 01 • Sẵn sàng</span>
+          <h4 class="font-semibold text-xs sm:text-sm text-slate-900 group-hover:text-amber-700">Chờ dữ liệu sau khi phân tích</h4>
+          <div class="text-[11px] text-slate-500 mt-0.5">Cập nhật CV để mở khóa lộ trình</div>
+        </div>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-amber-500 text-white font-bold text-xs flex items-center justify-center ring-4 ring-amber-50 shadow-sm flex-shrink-0 hidden sm:flex">01</div>
+      <div class="w-full sm:w-5/12 sm:pl-6">
+        <!-- Khối hiển thị trên Mobile (và thay thế khi chưa có dữ liệu) -->
+        <div class="sm:hidden learning-node-clickable bg-amber-50/50 border border-amber-400 rounded-lg p-3 shadow-xs hover:border-amber-500 cursor-pointer transition-all group text-left">
+          <span class="text-[10px] font-semibold text-amber-700 uppercase tracking-wider block">Bài 01 • Sẵn sàng</span>
+          <h4 class="font-semibold text-xs text-slate-900 group-hover:text-amber-700">Chờ dữ liệu sau khi phân tích</h4>
+          <div class="text-[11px] text-slate-500 mt-0.5">Cập nhật CV để mở khóa lộ trình</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative z-10 flex items-center justify-between mb-10 opacity-75 hidden sm:flex">
+      <div class="w-5/12 pr-6"></div>
+      <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-300 text-slate-500 font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0">
+        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <div class="w-5/12 text-left pl-6">
+        <div class="learning-node-clickable bg-slate-50 border border-slate-200 rounded-lg p-3 cursor-not-allowed group" data-title="Chưa mở khóa" data-xp="150" data-locked="true">
+          <div class="flex items-center gap-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span>Khóa</span>
+          </div>
+          <h4 class="font-semibold text-xs sm:text-sm text-slate-700">Chờ dữ liệu sau khi phân tích</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- KHỐI 4: BÁO CÁO THỐNG KÊ (ĐÃ MỞ KHÓA BẰNG ID) -->
+      <div class="bg-white rounded-xl border border-slate-200 p-6 space-y-5 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div>
+            <h3 class="font-bold text-base text-slate-900 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Báo cáo thống kê học tập</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">Đo lường kỷ luật học tập, tỷ lệ hoàn thành mục tiêu rảnh và khả năng bám đuổi lộ trình.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <!-- 1. Thời gian tự học -->
+          <div class="bg-slate-50 rounded-lg p-3.5 border border-slate-200">
+            <div class="text-[11px] font-medium text-slate-500">Thời gian tự học</div>
+            <div id="roadmapProgressText" class="text-xl font-bold text-slate-900 mt-1">0 / 0 giờ</div>
+            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Đã hoàn thành</div>
+          </div>
+          
+          <!-- 2. Bài luyện hoàn thành -->
+          <div class="bg-slate-50 rounded-lg p-3.5 border border-slate-200">
+            <div class="text-[11px] font-medium text-slate-500">Bài luyện hoàn thành</div>
+            <div id="completedTasksCountText" class="text-xl font-bold text-slate-900 mt-1">0 bài</div>
+            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Tiến độ lộ trình</div>
+          </div>
+          
+          <!-- 3. XP tích lũy trong tuần -->
+          <div class="bg-slate-50 rounded-lg p-3.5 border border-slate-200">
+            <div class="text-[11px] font-medium text-slate-500">XP tích lũy trong tuần</div>
+            <div id="weeklyXpText" class="text-xl font-bold text-slate-900 mt-1">0 XP</div>
+            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Điểm kinh nghiệm</div>
+          </div>
+          
+          <!-- 4. Chỉ số kỷ luật học tập -->
+          <div class="bg-slate-50 rounded-lg p-3.5 border border-slate-200">
+            <div class="text-[11px] font-medium text-slate-500">Chỉ số kỷ luật học tập</div>
+            <div id="disciplineScoreText" class="text-xl font-bold text-slate-700 mt-1">0%</div>
+            <div id="streakSubtitleText" class="text-[11px] text-slate-500 font-medium mt-0.5">0 ngày streak</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: HỒ SƠ -->
+    <!-- ========================================================================= -->
+    <section id="screen-profile" class="screen-page hidden space-y-6 max-w-6xl mx-auto px-4">
+
+      <!-- HERO BANNER CHUẨN ĐẦU TAB HỒ SƠ -->
+      <div class="bg-indigo-900 rounded-2xl p-6 sm:p-7 text-white shadow-sm border border-indigo-950">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div class="lg:col-span-8 space-y-3">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-indigo-800/80 text-indigo-200 font-medium text-xs border border-indigo-700">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+              <span>Quản lý & Tùy chỉnh Hồ sơ cá nhân</span>
+            </div>
+            
+            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+              Thiết lập Hồ sơ CV & Mục tiêu Tuyển dụng của bạn
+            </h2>
+
+            <div class="text-indigo-200 text-sm mt-2">
+              Tải lên CV PDF hoặc dùng CV mẫu, tùy chỉnh sở thích kỹ năng và chọn vị trí ứng tuyển mong muốn.
+            </div>
+          </div>
+
+          <div class="lg:col-span-4 flex flex-col items-center justify-center gap-2.5">
+            <a href="#btnStartAnalysis" onclick="startAnalysis()" class="w-full py-3.5 px-6 rounded-lg font-semibold text-slate-900 bg-white hover:bg-slate-100 shadow-sm transition-colors text-sm flex items-center justify-center gap-2 group cursor-pointer text-center">
+              <span>Bắt đầu Phân tích ngay</span>
+              <svg class="w-4 h-4 text-slate-900 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+            <span class="text-[11px] text-indigo-200">
+              AI sẽ chấm điểm độ tương thích ngay lập tức
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KHUNG LƯỚI 2 CỘT (Tự động chia đều 50% - 50%) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch w-full">
+
+        <!-- ================= CỘT TRÁI: HỒ SƠ CV ================= -->
+        <div class="min-w-0 w-full bg-white rounded-xl border border-slate-200 p-5 flex flex-col justify-between space-y-5">
+          
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-md bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">1</span>
+              <h3 class="text-base font-semibold text-slate-900">Hồ sơ Ứng viên (CV)</h3>
+            </div>
+
+            <div class="bg-slate-100 p-1 rounded-lg flex items-center">
+              <button id="tabCvSample" class="flex-1 py-1.5 text-xs font-semibold rounded-md bg-white text-indigo-700 shadow-sm border border-slate-200 transition-all">
+                Dùng CV Mẫu có sẵn
+              </button>
+              <button id="tabCvUpload" class="flex-1 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all">
+                Tải lên file PDF (≤ 5MB)
+              </button>
+            </div>
+
+            <div id="contentCvSample" class="space-y-2">
+              <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">CHỌN 1 TRONG 3 HỒ SƠ SINH VIÊN MẪU:</div>
+              <div id="sampleProfilesContainer" class="space-y-2">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+
+            <div id="contentCvUpload" class="hidden space-y-3">
+              <label for="cvFileUpload" class="block border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-lg p-5 text-center bg-slate-50 transition-colors cursor-pointer group">
+                <input type="file" id="cvFileUpload" class="hidden" accept=".pdf,.doc,.docx" />
+                <svg class="w-7 h-7 mx-auto text-slate-400 group-hover:text-indigo-500 mb-1.5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <div id="uploadStatusText" class="font-medium text-xs text-slate-800 group-hover:text-indigo-700 transition-colors">
+                  Kéo thả file CV tại đây hoặc Chọn từ máy tính
+                </div>
+                <div id="uploadFileName" class="text-[11px] text-slate-500 mt-0.5">
+                  Định dạng hỗ trợ: PDF(≤ 5MB)
+                </div>
+              </label>
+            </div>
+
+            <div id="experienceContainer" class="pt-4 border-t border-slate-200 space-y-2 transition-all">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-semibold text-slate-900">
+                  Kinh nghiệm làm việc & Đồ án thực chiến:
+                </label>
+              </div>
+              <textarea id="experienceInput" rows="3" placeholder="Tóm tắt ngắn gọn các dự án môn học, đồ án tốt nghiệp..." class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 font-sans leading-relaxed"></textarea>
+            </div>
+
+            <div id="interestsContainer" class="pt-4 border-t border-slate-200 space-y-3 transition-all">
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <div>
+                  <h4 class="font-semibold text-sm text-slate-900">Sở thích & Hứng thú nghề nghiệp</h4>
+                  <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">Tự động đồng bộ theo hồ sơ sinh viên đang chọn hoặc kéo thanh trượt để tùy chỉnh.</p>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 flex-shrink-0">
+                  Trọng số 25%
+                </span>
+              </div>
+              
+              <div id="interestsSlidersContainer" class="space-y-2.5">
+                <!-- Rendered via JS -->
+              </div>
+
+              <!-- Ô cho phép người dùng tự nhập thêm sở thích -->
+              <div id="customSkillAddContainer" class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
+                <input type="text" id="customSkillInput" placeholder="Nhập thêm kỹ năng/sở thích của bạn..." class="flex-1 text-xs py-2 px-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+                <button id="btnAddCustomSkill" type="button" class="py-2 px-4 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex-shrink-0">
+                  + Thêm
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div></div>
+        </div>
+
+
+        <!-- ================= CỘT PHẢI: MỤC TIÊU JD ================= -->
+        <div class="min-w-0 w-full bg-white rounded-xl border border-slate-200 p-5 flex flex-col space-y-6">
+          
+          <!-- PHẦN 1: MỤC TIÊU TUYỂN DỤNG (JD) -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">2</span>
+                <h3 class="text-base font-semibold text-slate-900">Mục tiêu Tuyển dụng (Role / JD)</h3>
+              </div>
+              <span id="roleCountHeader" class="text-xs text-slate-500"></span>
+            </div>
+
+            <div class="bg-slate-100 p-1 rounded-lg flex items-center">
+              <button id="tabRoleStandard" class="flex-1 py-1.5 text-xs font-semibold rounded-md bg-white text-indigo-700 shadow-sm border border-slate-200 transition-all">
+                JD mẫu
+              </button>
+              <button id="tabRolePaste" class="flex-1 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all">
+                Dán JD Tự do
+              </button>
+            </div>
+
+            <div id="contentRoleStandard" class="space-y-2">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div id="contentRolePaste" class="hidden space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Vị trí / Công ty ứng tuyển:</label>
+                <input type="text" id="pasteRoleTitle" placeholder="VD: Backend Developer tại VNG..." class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none mb-3 transition-all">
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Mô tả công việc (JD):</label>
+                <textarea rows="4" placeholder="Dán nội dung yêu cầu công việc vào đây..." class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: SKILL GAP -->
+    <!-- ========================================================================= -->
+    <section id="screen-gap" class="screen-page hidden space-y-6 max-w-6xl mx-auto px-4">
+
+      <!-- HERO BANNER CHUẨN ĐẦU TAB SKILL GAP -->
+      <div class="bg-indigo-900 rounded-2xl p-6 sm:p-7 text-white shadow-sm border border-indigo-950">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div class="lg:col-span-8 space-y-3">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-indigo-800/80 text-indigo-200 font-medium text-xs border border-indigo-700">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+              <span>Đánh giá khoảng cách kỹ năng</span>
+            </div>
+            
+            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
+              Báo cáo phân tích khoảng cách kỹ năng (Skill Gap)
+            </h2>
+
+            <div class="text-indigo-200 text-sm mt-2">
+              Xem chi tiết mức độ tương thích, điểm mạnh và các kỹ năng cần bổ sung để chinh phục vị trí mơ ước.
+            </div>
+          </div>
+
+          <div class="lg:col-span-4 flex flex-col items-center justify-center gap-2.5">
+            <button data-navigate="screen-interview" class="w-full py-3.5 px-6 rounded-lg font-semibold text-slate-900 bg-white hover:bg-slate-100 shadow-sm transition-colors text-sm flex items-center justify-center gap-2 group">
+              <span>Đến phòng Phỏng vấn</span>
+              <svg class="w-4 h-4 text-slate-900 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+            <span class="text-[11px] text-indigo-200">
+              Thực hành trả lời câu hỏi STAR cùng AI
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div id="gapSkeletonLoading" class="hidden space-y-6">
+        <div class="text-indigo-600 text-sm font-semibold flex items-center gap-2">
+          <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          Hệ thống đang đọc CV và phân tích JD...
+        </div>
+      </div>
+
+      <div id="gapRealResults" class="hidden space-y-6">
+        
+        <!-- KHỐI 1: BẢNG ĐIỂM & BIỂU ĐỒ RADAR -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Cột Trái: Score Card (Giao diện mới) -->
+          <div class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs">
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                ĐỘ TƯƠNG THÍCH TỔNG THỂ (MATCH SCORE)
+              </div>
+              <div class="flex items-baseline gap-2 my-2">
+                <span id="finalMatchScore" class="text-5xl font-extrabold text-indigo-700 tracking-tight">0%</span>
+                <span class="text-[11px] text-slate-400 font-medium">trên thang 100% (Required x2, Nice-to-have x1)</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-6">
+                <div id="barMatchScore" class="bg-indigo-600 h-full rounded-full transition-all duration-700" style="width: 0%;"></div>
+              </div>
+              
+              <!-- 3 Thanh tiến độ thành phần -->
+              <div class="space-y-4 pt-4 border-t border-slate-100">
+                <div>
+                  <div class="flex justify-between items-center text-[11px] font-medium text-slate-700 mb-1.5">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>% Kỹ năng (50% trọng số)</span>
+                    <span id="valSkillScore" class="font-mono text-blue-700 font-semibold">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div id="barSkillScore" class="bg-blue-500 h-full rounded-full transition-all duration-700" style="width: 0%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center text-[11px] font-medium text-slate-700 mb-1.5">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>% Sở thích (25% trọng số)</span>
+                    <span id="valInterestScore" class="font-mono text-purple-700 font-semibold">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div id="barInterestScore" class="bg-purple-500 h-full rounded-full transition-all duration-700" style="width: 0%;"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center text-[11px] font-medium text-slate-700 mb-1.5">
+                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>% Kinh nghiệm (25% trọng số)</span>
+                    <span id="valExperienceScore" class="font-mono text-emerald-700 font-semibold">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div id="barExperienceScore" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Thống kê Kỹ năng (Đạt / Thiếu) -->
+              <div class="grid grid-cols-2 gap-3 mt-6 pt-5 border-t border-slate-100">
+                <div class="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3 text-center">
+                  <div id="valMetSkills" class="text-3xl font-bold text-emerald-600">0</div>
+                  <div class="text-[10px] font-bold text-emerald-700 uppercase tracking-wide mt-1">Kỹ năng đã đáp ứng đủ</div>
+                </div>
+                <div class="bg-orange-50/50 border border-orange-100 rounded-xl p-3 text-center">
+                  <div id="valGapSkills" class="text-3xl font-bold text-orange-500">0</div>
+                  <div class="text-[10px] font-bold text-orange-700 uppercase tracking-wide mt-1">Khoảng cách kỹ năng (Gaps)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cột Phải: Biểu đồ Radar -->
+          <div class="lg:col-span-6 bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs">
+            <h3 class="font-bold text-slate-900 text-sm">Biểu đồ Radar theo Nhóm Kỹ năng</h3>
+            <p class="text-[11px] text-slate-500 mb-4">Tỷ lệ đáp ứng từng mảng (%)</p>
+            <div class="relative flex items-center justify-center flex-1 py-2">
+              <canvas id="skillsRadarCanvas" width="380" height="280" class="max-w-full"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- KHỐI 2: LÝ DO AI GỢI Ý & CHI TIẾT GAP -->
+        <div class="space-y-4 pb-4 border-b border-slate-200">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-slate-900 text-sm">Chi tiết Khoảng cách Kỹ năng (<span id="gapCountTitle">0</span> Gaps)</h4>
+            <span class="text-[11px] text-slate-500">Ưu tiên bổ sung các kỹ năng bắt buộc</span>
+          </div>
+          <div id="gapDetailsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- KHỐI LỊCH RẢNH & LỘ TRÌNH (BỐ CỤC 2 CỘT MỚI) -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 flex flex-col space-y-6 shadow-xs mt-6">
+          <div class="space-y-2">
+            <h3 class="text-base font-semibold text-slate-900">Lộ trình học tập</h3>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Để AI tự động sắp xếp các bài học, vui lòng chọn ngày trên lịch và thiết lập khung giờ rảnh của bạn.
+            </p>
+          </div>
+            
+          <!-- GRID 2 CỘT -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- CỘT TRÁI: CHỌN GIỜ & DANH SÁCH (lg:col-span-5) -->
+            <div class="lg:col-span-5 space-y-5">
+              <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4">
+                
+                <div class="text-xs font-bold text-slate-700 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+                  <span>Ngày đang chọn:</span>
+                  <span id="displaySelectedDate" class="text-indigo-600 font-black">Chưa chọn</span>
+                </div>
+
+                <!-- Giao diện Dropdown Giờ & Phút -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- TỪ (GIỜ : PHÚT) -->
+                  <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Từ (Giờ : Phút):</label>
+                    <div class="flex items-center gap-1.5">
+                      <div class="relative flex-1">
+                        <select id="startHour" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:border-indigo-600 outline-none bg-white appearance-none text-center font-semibold text-slate-800 cursor-pointer shadow-2xs"></select>
+                      </div>
+                      <span class="text-slate-400 font-bold text-sm">:</span>
+                      <div class="relative flex-1">
+                        <select id="startMin" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:border-indigo-600 outline-none bg-white appearance-none text-center font-semibold text-slate-800 cursor-pointer shadow-2xs"></select>
+                      </div>
+                    </div>
+                    <input type="hidden" id="studyTimeStart" value="08:00">
+                  </div>
+
+                  <!-- ĐẾN (GIỜ : PHÚT) -->
+                  <div class="space-y-1.5">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đến (Giờ : Phút):</label>
+                    <div class="flex items-center gap-1.5">
+                      <div class="relative flex-1">
+                        <select id="endHour" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:border-indigo-600 outline-none bg-white appearance-none text-center font-semibold text-slate-800 cursor-pointer shadow-2xs"></select>
+                      </div>
+                      <span class="text-slate-400 font-bold text-sm">:</span>
+                      <div class="relative flex-1">
+                        <select id="endMin" class="w-full text-xs p-2 rounded-lg border border-slate-300 focus:border-indigo-600 outline-none bg-white appearance-none text-center font-semibold text-slate-800 cursor-pointer shadow-2xs"></select>
+                      </div>
+                    </div>
+                    <input type="hidden" id="studyTimeEnd" value="10:00">
+                  </div>
+                </div>
+
+                <!-- Nút Thêm -->
+                <button type="button" id="btnAddSchedule" class="w-full py-2.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Ghi nhận giờ rảnh
+                </button>
+              </div>
+
+              <!-- Khung chứa danh sách lịch đã thêm -->
+              <div class="space-y-2">
+                <h4 class="text-xs font-bold text-slate-700">Lịch đã đăng ký:</h4>
+                <div id="scheduleListContainer" class="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                  <div class="text-center py-6 text-[11px] text-slate-500 border border-dashed border-slate-300 rounded-xl bg-slate-50/50">
+                    Chưa có lịch rảnh nào được thêm.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CỘT PHẢI: LỊCH THÁNG (WINDOWS STYLE) (lg:col-span-7) -->
+            <div class="lg:col-span-7">
+              <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                
+                <!-- Thanh Điều Hướng Tháng -->
+                <div class="flex items-center justify-between mb-4">
+                  <button type="button" id="btnPrevMonth" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors" title="Tháng trước">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  </button>
+                  <div class="text-sm font-black text-slate-800 tracking-wide" id="currentMonthDisplay">
+                    Tháng 10/2026
+                  </div>
+                  <button type="button" id="btnNextMonth" class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors" title="Tháng sau">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+
+                <!-- Tiêu đề Thứ -->
+                <div class="grid grid-cols-7 gap-1 mb-2">
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">T2</div>
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">T3</div>
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">T4</div>
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">T5</div>
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">T6</div>
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">T7</div>
+                  <div class="text-center text-[10px] font-bold text-slate-400 uppercase">CN</div>
+                </div>
+
+                <!-- Lưới Ngày -->
+                <div id="calendarDaysGrid" class="grid grid-cols-7 gap-1">
+                  <!-- Rendered via JS -->
+                </div>
+
+              </div>
+
+              <!-- Nút Tạo lộ trình -->
+              <div class="mt-6 text-right">
+                <button type="button" id="btnGenerateStudyPlan" class="py-3 px-6 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2 w-full sm:w-auto sm:ml-auto">
+                  Tạo lộ trình học
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: PHỎNG VẤN (Đã đồng bộ khung chứa max-w-4xl mx-auto) -->
+    <!-- ========================================================================= -->
+    <section id="screen-interview" class="screen-page hidden space-y-5 max-w-4xl mx-auto">
+
+      <!-- TOP CONTROL / VIEW TOGGLE -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+          <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Mô phỏng phỏng vấn đa ngành theo CV & JD</span>
+        </div>
+
+        <div class="inline-flex p-1 bg-slate-100 rounded-lg text-xs font-medium border border-slate-200">
+          <button id="btnTabModeSetup" class="px-3 py-1.5 rounded-md bg-white text-blue-700 font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>Thiết lập buổi luyện</span>
+          </button>
+          <button id="btnTabModeRoom" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+            <span>Phòng phỏng vấn AI</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- GIAO DIỆN 1: THIẾT LẬP BUỔI LUYỆN PHỎNG VẤN -->
+      <!-- Đã bỏ max-w-4xl mx-auto ở đây vì thẻ section cha đã gánh nhiệm vụ căn giữa -->
+      <div id="interviewSetupView" class="space-y-5">
+
+        <!-- Top Banner -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
+          <div class="md:col-span-8 bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white rounded-xl border border-blue-100 p-4 sm:p-5 flex flex-col justify-center shadow-2xs">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">Mô phỏng phỏng vấn AI</span>
+              <span class="text-xs text-slate-400">• Đa ngành nghề</span>
+            </div>
+            <h2 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+              Thiết lập buổi luyện phỏng vấn
+            </h2>
+            <p class="text-slate-600 text-xs mt-1 leading-relaxed">
+              Hệ thống tự động dựa vào CV và JD mục tiêu trong hồ sơ để cá nhân hoá câu hỏi sát thực tế.
+            </p>
+          </div>
+
+          <div class="md:col-span-4 bg-white rounded-xl border border-blue-100 p-4 flex items-center gap-3 shadow-2xs">
+            <div class="w-9 h-9 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <p class="text-xs text-slate-700 font-medium leading-relaxed">
+              Câu hỏi bám sát cấp độ khó và vòng tuyển dụng bạn chọn.
+            </p>
+          </div>
+        </div>
+
+        <!-- KHỐI TINH CHỈNH BUỔI LUYỆN -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 space-y-5 shadow-2xs">
+          
+          <div class="flex items-start gap-3 border-b border-slate-100 pb-3">
+            <span class="w-6 h-6 rounded-md bg-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0">3</span>
+            <div class="flex-1">
+              <h3 class="font-bold text-base text-slate-900 tracking-tight">Tinh chỉnh buổi luyện</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Tùy chỉnh vòng phỏng vấn, độ khó và ngôn ngữ hiển thị.</p>
+            </div>
+          </div>
+
+          <!-- 1. Chọn vòng phỏng vấn -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">1. Chọn vòng phỏng vấn:</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div class="persona-option-card p-3 rounded-xl cursor-pointer border border-slate-200 hover:border-blue-300 transition-all" data-persona="hr">
+                <div class="font-bold text-xs text-slate-900 mb-1">Vòng Nhân sự (HR)</div>
+                <p class="text-[11px] text-slate-500 leading-snug">Đánh giá kỹ năng mềm, thái độ & văn hóa.</p>
+              </div>
+              <div class="persona-option-card active p-3 rounded-xl cursor-pointer border border-blue-600 bg-blue-50/50 transition-all" data-persona="tech_lead">
+                <div class="font-bold text-xs text-blue-700 mb-1 flex items-center justify-between">
+                  <span>Vòng Chuyên môn</span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-snug">Xoáy sâu kiến thức kỹ thuật & thuật toán.</p>
+              </div>
+              <div class="persona-option-card p-3 rounded-xl cursor-pointer border border-slate-200 hover:border-blue-300 transition-all" data-persona="culture_fit">
+                <div class="font-bold text-xs text-slate-900 mb-1">Vòng Văn hoá</div>
+                <p class="text-[11px] text-slate-500 leading-snug">Đánh giá tinh thần đồng đội & thích ứng.</p>
+              </div>
+              <div class="persona-option-card p-3 rounded-xl cursor-pointer border border-slate-200 hover:border-blue-300 transition-all" data-persona="hiring_manager">
+                <div class="font-bold text-xs text-slate-900 mb-1">Vòng cuối (Manager)</div>
+                <p class="text-[11px] text-slate-500 leading-snug">Tư duy chiến lược & giải pháp thực tế.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Chọn độ khó -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">2. Chọn độ khó:</label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button type="button" class="btn-level-select py-2 px-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-level="fresher">Fresher/Junior</button>
+              <button type="button" class="btn-level-select active py-2 px-2.5 rounded-lg border border-blue-600 bg-blue-50 text-xs font-bold text-blue-700 cursor-pointer" data-level="mid">Middle</button>
+              <button type="button" class="btn-level-select py-2 px-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-level="senior">Senior/Lead</button>
+              <button type="button" class="btn-level-select py-2 px-2.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-level="expert">Expert/Manager</button>
+            </div>
+          </div>
+
+          <!-- 3. Chọn ngôn ngữ -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">3. Chọn ngôn ngữ:</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button type="button" class="btn-lang-select py-2 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-lang="system">🌐 Theo hệ thống</button>
+              <button type="button" class="btn-lang-select active py-2 px-3 rounded-lg border border-blue-600 bg-blue-50 text-xs font-bold text-blue-700 cursor-pointer" data-lang="vi">Tiếng Việt</button>
+              <button type="button" class="btn-lang-select py-2 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-lang="en">Tiếng Anh</button>
+            </div>
+          </div>
+
+          <!-- Nút Bắt đầu -->
+          <div class="pt-3 border-t border-slate-100">
+            <button id="btnStartInterviewSession" class="w-full py-3 px-5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Bắt đầu phỏng vấn ngay</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Hidden State Containers -->
+        <div class="hidden" aria-hidden="true">
+          <div id="interviewCvAvatar">CV</div>
+          <span id="interviewCvName"></span>
+          <span id="interviewCvFieldBadge"></span>
+          <span id="interviewCvSubtitle"></span>
+          <div id="interviewCvSkills"></div>
+          <div id="interviewCvExp"></div>
+          <span id="interviewJdTitle"></span>
+          <span id="interviewJdFieldBadge"></span>
+          <span id="interviewJdMatchBadge"></span>
+          <div id="interviewJdSkills"></div>
+          <select id="interviewRoleSelector"></select>
+          <span id="summaryCvName"></span>
+          <span id="summaryCvSub"></span>
+          <span id="summaryJdTitle"></span>
+          <span id="summaryJdSub"></span>
+          <span id="summaryContext"></span>
+          <span id="summaryLang"></span>
+          <select id="interviewStyleSelect"><option value="star" selected>STAR</option></select>
+        </div>
+      </div>
+
+      <!-- GIAO DIỆN 2: PHÒNG LUYỆN PHỎNG VẤN TRỰC TIẾP -->
+      <div id="interviewLiveRoomView" class="hidden space-y-5">
+        
+        <!-- Live Room Header -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <button id="btnBackToSetup" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all cursor-pointer">
+              ← Thiết lập lại
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-slate-900 text-sm">Phòng Phỏng vấn Trực tiếp</h3>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1"></span>AI Sẵn sàng
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 👇 BỔ SUNG LẠI KHUNG CHỨA TAB CÂU HỎI Ở ĐÂY 👇 -->
+        <div class="space-y-1">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">CHỌN CÂU HỎI PHỎNG VẤN:</div>
+          <div id="interviewQuestionTabsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+            <!-- Dữ liệu câu hỏi từ API sẽ tự động render vào đây -->
+          </div>
+        </div>
+
+        <!-- Active Question Card -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4 shadow-2xs">
+          
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span id="interviewActiveCategory" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">Đang cập nhật...</span>
+              <span id="interviewActiveDifficulty" class="text-xs text-slate-500">Độ khó: --</span>
+            </div>
+            <span class="text-xs text-blue-700 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Technical Lead</span>
+          </div>
+
+          <div class="space-y-2">
+            <h3 id="interviewActiveTitle" class="text-base font-bold text-slate-900 tracking-tight">
+              Đang tải câu hỏi từ AI...
+            </h3>
+
+            <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-2.5">
+              <p id="interviewActiveQuestion" class="text-xs sm:text-sm font-medium text-slate-900 leading-relaxed">
+                Vui lòng chờ trong giây lát...
+              </p>
+            </div>
+          </div>
+
+          <!-- Textarea & Submit -->
+          <div class="space-y-2.5 pt-1">
+            <div class="flex items-center justify-between">
+              <label for="userAnswerInput" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Câu trả lời của bạn:</label>
+            </div>
+            <textarea id="userAnswerInput" rows="5" placeholder="Gõ câu trả lời theo chuẩn STAR..." class="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-sans leading-relaxed text-slate-800 placeholder-slate-400"></textarea>
+            <button id="btnSubmitAnswer" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2">
+              <span>Nộp câu trả lời</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- AI Locked Answer Container -->
+        <div id="lockedAiContainer" class="bg-white rounded-xl border border-slate-200 p-5 space-y-3 shadow-2xs">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Khung Gợi ý STAR & Đáp án Mẫu từ AI</h4>
+          </div>
+
+          <div class="relative rounded-xl overflow-hidden border border-slate-200">
+            <div id="lockedAiAnswer" class="blur-md select-none pointer-events-none p-4 bg-slate-50 text-xs text-slate-800 space-y-2">
+              <!-- Nội dung đáp án mẫu động sẽ được nạp vào đây -->
+            </div>
+            <div id="lockOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-xs p-4 text-center z-20">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-2 font-bold">🔒</div>
+              <div class="font-bold text-xs sm:text-sm text-slate-900 mb-0.5">Khóa đáp án mẫu AI & Gợi ý STAR</div>
+              <p class="text-[11px] text-slate-600 max-w-sm mb-2">Vui lòng tự trả lời và bấm Nộp câu trả lời ở trên để mở khóa đáp án.</p>
+            </div>
+          </div>
+        </div>
+
+    </section>
+
+  </main>
+
+<!-- ========================================== -->
+  <!-- MODAL ĐĂNG NHẬP / ĐĂNG KÝ -->
+  <!-- ========================================== -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-2xl shadow-xl p-6 relative transform transition-all overflow-hidden">
+      <button id="btnCloseAuth" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1 transition-colors z-10">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <!-- GIAO DIỆN ĐĂNG NHẬP -->
+      <div id="loginView" class="block transition-all duration-300">
+        <h3 class="text-xl font-bold text-slate-900 mb-1 text-center">Chào mừng trở lại!</h3>
+        <p class="text-xs text-slate-500 text-center mb-5">Đăng nhập để lưu tiến độ mầm cây của bạn</p>
+        <div class="space-y-3.5">
+          <input type="email" placeholder="Email của bạn" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="password" placeholder="Mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <!-- Đã thêm id="btnSubmitLogin" -->
+          <button id="btnSubmitLogin" class="w-full py-3 mt-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all text-sm">
+            Đăng nhập
+          </button>
+        </div>
+        <p class="text-xs text-center text-slate-600 mt-4">
+          Chưa có tài khoản? <button id="btnSwitchToRegister" class="text-indigo-600 font-bold hover:underline">Đăng ký ngay</button>
+        </p>
+      </div>
+
+      <!-- GIAO DIỆN ĐĂNG KÝ -->
+      <div id="registerView" class="hidden transition-all duration-300">
+        <h3 class="text-xl font-bold text-slate-900 mb-1 text-center">Tạo tài khoản mới</h3>
+        <p class="text-xs text-slate-500 text-center mb-5">Bắt đầu hành trình phát triển sự nghiệp</p>
+        <div class="space-y-3.5">
+          <input type="text" placeholder="Họ và tên" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="email" placeholder="Email" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="password" placeholder="Mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="password" placeholder="Xác nhận mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <!-- Đã thêm id="btnSubmitRegister" -->
+          <button id="btnSubmitRegister" class="w-full py-3 mt-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all text-sm">
+            Đăng ký
+          </button>
+        </div>
+        <p class="text-xs text-center text-slate-600 mt-4">
+          Đã có tài khoản? <button id="btnSwitchToLogin" class="text-indigo-600 font-bold hover:underline">Đăng nhập</button>
+        </p>
+      </div>
+
+    </div>
+  </div>
+  <script src="store.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

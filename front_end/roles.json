@@ -1,0 +1,73 @@
+[
+  {
+    "id": "backend-php",
+    "title": "Kỹ sư Backend PHP / Laravel",
+    "field": "CNTT",
+    "requiredSkills": [
+      "PHP",
+      "Laravel",
+      "MySQL",
+      "REST API",
+      "Git"
+    ]
+  },
+  {
+    "id": "fullstack-laravel-tailwind",
+    "title": "Kỹ sư Fullstack Web (Laravel + Tailwind CSS)",
+    "field": "CNTT",
+    "requiredSkills": [
+      "PHP",
+      "Laravel",
+      "MySQL",
+      "HTML/CSS",
+      "Tailwind CSS",
+      "JavaScript",
+      "Git"
+    ]
+  },
+  {
+    "id": "financial-analyst",
+    "title": "Chuyên viên Phân tích Tài chính",
+    "field": "Kinh tế",
+    "requiredSkills": [
+      "Phân tích báo cáo tài chính",
+      "Excel nâng cao",
+      "Lập dự toán",
+      "Power BI cơ bản"
+    ]
+  },
+  {
+    "id": "general-accountant",
+    "title": "Kế toán tổng hợp",
+    "field": "Kinh tế",
+    "requiredSkills": [
+      "Kế toán tổng hợp",
+      "MISA",
+      "Excel nâng cao",
+      "Thuế"
+    ]
+  },
+  {
+    "id": "corporate-legal-officer",
+    "title": "Chuyên viên Pháp chế doanh nghiệp",
+    "field": "Luật",
+    "requiredSkills": [
+      "Soạn thảo hợp đồng",
+      "Luật Doanh nghiệp",
+      "Tư vấn pháp lý",
+      "Nghiên cứu văn bản pháp luật"
+    ]
+  },
+  {
+    "id": "legal-assistant",
+    "title": "Trợ lý Luật sư (Luật Kinh tế)",
+    "field": "Luật",
+    "requiredSkills": [
+      "Nghiên cứu văn bản pháp luật",
+      "Soạn thảo hợp đồng",
+      "Tư vấn pháp lý",
+      "Luật Doanh nghiệp",
+      "Luật Lao động"
+    ]
+  }
+]

@@ -1,0 +1,17 @@
+# Tự động chuẩn hóa ký tự xuống dòng giữa Windows và Linux/macOS/Docker
+* text=auto
+
+# Các file script Linux và cấu hình Docker bắt buộc dùng LF (\n) để tránh lỗi khi chạy trong container
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Các file script Windows Batch bắt buộc dùng CRLF (\r\n)
+*.bat text eol=crlf
+*.cmd text eol=crlf

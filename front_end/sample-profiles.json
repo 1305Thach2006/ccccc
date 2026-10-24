@@ -1,0 +1,152 @@
+[
+  {
+    "id": "khoi",
+    "name": "Nguyễn Minh Khôi",
+    "subtitle": "Sinh viên năm 4 / Công nghệ thông tin (Fresher PHP & Laravel)",
+    "major": "Công nghệ thông tin (IT)",
+    "skills": [
+      "PHP",
+      "Laravel",
+      "MySQL",
+      "REST API",
+      "Git",
+      "HTML/CSS",
+      "Unit Test"
+    ],
+    "experience": "Đồ án tốt nghiệp: website quản lý đặt phòng ký túc xá bằng Laravel + MySQL, có phân quyền admin/sinh viên và API cho app di động. Thực tập 3 tháng tại công ty phần mềm: viết API, sửa lỗi và viết unit test cơ bản bằng PHPUnit.",
+    "interests": [
+      {
+        "topic": "Lập trình Backend",
+        "score": 5
+      },
+      {
+        "topic": "Thiết kế CSDL",
+        "score": 4
+      },
+      {
+        "topic": "Phát triển Web",
+        "score": 4
+      },
+      {
+        "topic": "Bảo mật ứng dụng",
+        "score": 3
+      },
+      {
+        "topic": "DevOps / Cloud",
+        "score": 2
+      },
+      {
+        "topic": "AI / Machine Learning",
+        "score": 2
+      },
+      {
+        "topic": "Phát triển Mobile",
+        "score": 2
+      },
+      {
+        "topic": "Thiết kế UI/UX",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "id": "linh",
+    "name": "Phạm Thùy Linh",
+    "subtitle": "Sinh viên năm 4 / Kinh tế (Tài chính - Kế toán)",
+    "major": "Kinh tế (Tài chính - Kế toán)",
+    "skills": [
+      "Kế toán tổng hợp",
+      "Excel nâng cao",
+      "Phân tích báo cáo tài chính",
+      "Lập dự toán",
+      "MISA",
+      "Power BI cơ bản",
+      "Tiếng Anh thương mại"
+    ],
+    "experience": "Thực tập 3 tháng tại phòng kế toán một công ty thương mại: nhập chứng từ, đối chiếu công nợ, lập báo cáo thu chi hằng tháng bằng Excel và MISA. Đồ án: phân tích báo cáo tài chính 3 năm của một doanh nghiệp niêm yết, đề xuất cải thiện cơ cấu vốn.",
+    "interests": [
+      {
+        "topic": "Phân tích tài chính",
+        "score": 5
+      },
+      {
+        "topic": "Kế toán - Kiểm toán",
+        "score": 5
+      },
+      {
+        "topic": "Đầu tư & Thị trường vốn",
+        "score": 4
+      },
+      {
+        "topic": "Ngân hàng",
+        "score": 3
+      },
+      {
+        "topic": "Phân tích dữ liệu kinh doanh",
+        "score": 3
+      },
+      {
+        "topic": "Thuế & Chính sách",
+        "score": 3
+      },
+      {
+        "topic": "Marketing & Bán hàng",
+        "score": 2
+      },
+      {
+        "topic": "Quản trị nhân sự",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "id": "duc",
+    "name": "Võ Quốc Đức",
+    "subtitle": "Sinh viên năm 4 / Luật (Luật Kinh tế)",
+    "major": "Luật (Luật Kinh tế)",
+    "skills": [
+      "Soạn thảo hợp đồng",
+      "Nghiên cứu văn bản pháp luật",
+      "Luật Doanh nghiệp",
+      "Luật Lao động",
+      "Tư vấn pháp lý",
+      "Kỹ năng thuyết trình",
+      "Tiếng Anh pháp lý cơ bản"
+    ],
+    "experience": "Thực tập 2 tháng tại văn phòng luật: tra cứu văn bản, soạn thảo và rà soát hợp đồng thương mại, hỗ trợ lập hồ sơ thành lập doanh nghiệp. Đồ án: phân tích các điều khoản thường gặp trong hợp đồng lao động và rủi ro pháp lý cho người sử dụng lao động.",
+    "interests": [
+      {
+        "topic": "Luật Doanh nghiệp & Hợp đồng",
+        "score": 5
+      },
+      {
+        "topic": "Pháp chế doanh nghiệp",
+        "score": 5
+      },
+      {
+        "topic": "Luật Lao động",
+        "score": 4
+      },
+      {
+        "topic": "Sở hữu trí tuệ",
+        "score": 3
+      },
+      {
+        "topic": "Tranh tụng & Giải quyết tranh chấp",
+        "score": 3
+      },
+      {
+        "topic": "Luật Thương mại quốc tế",
+        "score": 3
+      },
+      {
+        "topic": "Tuân thủ & Quản trị rủi ro",
+        "score": 2
+      },
+      {
+        "topic": "Luật Hình sự",
+        "score": 1
+      }
+    ]
+  }
+]
