@@ -552,7 +552,7 @@ async function startAnalysis() {
         requestBody.skills = currentInterests;
     }
 
-    const res = await fetch(`http://127.0.0.1:8000/analyses/match/${profileId}/${roleKey}`, { 
+    const res = await fetch(`${API_BASE_URL}/analyses/match/${profileId}/${roleKey}`, { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
@@ -1064,7 +1064,7 @@ if (btnSubmit) {
 
     try {
       // 3. Gọi API (Đã truyền ID câu hỏi động và đính kèm profile_id)
-      const res = await fetch(`http://127.0.0.1:8000/interview/submit-and-evaluate/${currentQuestionId}`, {
+      const res = await fetch(`${API_BASE_URL}/interview/submit-and-evaluate/${currentQuestionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -2464,7 +2464,7 @@ if (btnStartInterview) {
         btnStartInterview.disabled = true;
 
         try {
-            const res = await fetch(`http://127.0.0.1:8000/interview/generate`, {
+            const res = await fetch(`${API_BASE_URL}/interview/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
