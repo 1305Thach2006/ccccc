@@ -16,19 +16,19 @@
 
 ---
 
-## ✨ 2. Các tính năng cốt lõi đã hoàn thiện
+## 2. Các tính năng cốt lõi đã hoàn thiện
 
 | Phân hệ | Chi tiết tính năng |
 | :--- | :--- |
-| **1. Quản lý Hồ sơ & Trích xuất CV Đa Ngành** | • Đăng ký / Đăng nhập tài khoản cá nhân (tự động khởi tạo hồ sơ & chậu cây Gamification).<br>• Tải lên file CV PDF (≤ 5MB): Tự động bóc tách **Kỹ năng chuyên môn đa ngành**, **Kinh nghiệm làm việc / Đồ án** và đồng bộ lên thanh trượt đánh giá năng lực.<br>• Cho phép thêm/xóa/điều chỉnh mức độ thành thạo kỹ năng (thang 1–5) linh hoạt. |
+| **1. Quản lý Hồ sơ & Trích xuất CV Đa Ngành (Kèm Kỹ năng mềm)** | • Đăng ký / Đăng nhập tài khoản cá nhân (tự động khởi tạo hồ sơ & chậu cây Gamification).<br>• Tải lên file CV PDF (≤ 5MB): Tự động bóc tách **Kỹ năng chuyên môn đa ngành**, **Kinh nghiệm làm việc / Đồ án**.<br>• **Trích xuất Kỹ năng mềm (Soft Skills)**: Nếu CV chưa có kỹ năng chuyên ngành, hệ thống tự động tìm và bóc tách các **Kỹ năng mềm** người dùng liệt kê trên CV (Giao tiếp, Làm việc nhóm, Giải quyết vấn đề, Quản lý thời gian, Thuyết trình, Lãnh đạo...). |
 | **2. Phân tích JD Tự Do Mọi Ngành & Kết luận Chuyên sâu** | • Hỗ trợ chọn JD mẫu đa ngành hoặc **dán trực tiếp bất kỳ JD thực tế nào vào ô JD Tự do**.<br>• Tự động trích xuất danh sách kỹ năng yêu cầu từ văn bản JD tự do ở mọi ngành nghề.<br>• Công thức chấm điểm định lượng: **50% Kỹ năng chuyên môn + 25% Mức độ hứng thú + 25% Kinh nghiệm thực tế**.<br>• Sinh **Báo cáo Kết luận Chuyên sâu** gồm: Đánh giá tổng quan, Điểm mạnh cốt lõi đã đáp ứng, Phân tích lỗ hổng kỹ năng (Skill Gaps) và Khuyến nghị hành động cụ thể. |
-| **3. Lộ trình Học tập & Mở khóa Thời gian thực (`UTC+7`)** | • Tự động sinh danh sách bài học thực chiến bao phủ 100% các kỹ năng còn thiếu (Gaps).<br>• **Thuật toán băm giờ tự động (Time-Slicing)**: Chia nhỏ bài học dài thành nhiều phần (`Phần 1`, `Phần 2`...) khớp với từng khung giờ rảnh đã đăng ký.<br>• **Đồng bộ chuẩn múi giờ Việt Nam (`UTC+7`)**: Mở khóa bài học chính xác theo giờ thực tế và tự động cập nhật trạng thái nút *"Hoàn thành ✨"* ngay trên màn hình mà không cần tải lại trang. |
-| **4. Phỏng vấn Ngẫu nhiên Đa vòng & Chấm điểm STAR** | • **Bộ câu hỏi Random theo từng lượt**: Mỗi lần bấm *"Bắt đầu phỏng vấn ngay"* hoặc *"🎲 Đổi bộ câu hỏi ngẫu nhiên mới"* ở bất kỳ vòng nào (*HR, Chuyên môn, Văn hóa, Manager*), hệ thống đều sinh ngẫu nhiên một bộ 3 câu hỏi mới theo đa góc độ.<br>• **Chấm điểm & Sửa bài chi tiết**: Đánh giá câu trả lời trên thang điểm `1.0 – 10.0` (kiểm tra cấu trúc Situation - Task - Action - Result, độ sâu chuyên môn và số liệu minh chứng), đưa ra nhận xét chi tiết và gợi ý câu trả lời nâng cấp chuẩn STAR. |
-| **5. Gamification (Tưới Cây, Chuỗi Streak & Thống Kê)** | • **6 giai đoạn phát triển mầm cây**: *Hạt giống → Nảy mầm → Phát triển thân → Phân cành → Ra lá → Kết trái*.<br>• **Tưới nước hằng ngày (+25 XP)**, thưởng hoàn thành bài học đúng hạn (+50 XP), thưởng trả lời phỏng vấn (+10 đến +50 XP), theo dõi **Chuỗi ngày học liên tiếp (Streak)** và **Chỉ số Kỷ luật học tập (%)**. |
+| **3. Lộ trình Học tập, Cập nhật Lịch rảnh Giữ Lộ trình & Sơ đồ Ziczac 1 Trái - 1 Phải** | • Tự động sinh danh sách bài học thực chiến bao phủ 100% các kỹ năng còn thiếu (Gaps) và **reset toàn bộ chỉ số thống kê** khi khởi tạo một lộ trình mới.<br>• **Cập nhật lịch rảnh giữ nguyên lộ trình (`/study-plan/update-schedule`)**: Cho phép người học đổi khung giờ rảnh và tự động phân bổ lại các bài học chưa hoàn thành mà không làm mất lộ trình, không mất bài đã học hay chuỗi Streak.<br>• **Giao diện Sơ đồ Lộ trình 1 Trái - 1 Phải**: Hiển thị xuyên suốt từ bài đầu đến hết lộ trình theo bố cục đối xứng trái - phải trực quan. |
+| **4. Phỏng vấn Ngẫu nhiên Đa vòng (Tiếng Việt & Tiếng Anh 100%) & Chấm điểm STAR** | • **Hỗ trợ 2 ngôn ngữ Tiếng Việt & Tiếng Anh**: Khi chọn chế độ **Tiếng Anh**, toàn bộ câu hỏi, tiêu đề, gợi ý STAR và nhận xét chấm điểm đều được AI sinh 100% bằng Tiếng Anh chuyên ngành.<br>• **Bộ câu hỏi Random theo từng lượt**: Mỗi lần vào phòng hoặc bấm đổi câu hỏi ở bất kỳ vòng nào (*HR, Chuyên môn, Văn hóa, Manager*), hệ thống đều sinh ngẫu nhiên một bộ 3 câu hỏi mới.<br>• **Chấm điểm & Sửa bài chi tiết**: Đánh giá câu trả lời trên thang điểm `1.0 – 10.0` và viết lại đáp án mẫu chuẩn STAR. |
+| **5. Gamification (Nuôi Cây Theo Số Ngày Lộ Trình, 1 Ngày = 1 Streak & Phiếu Nghỉ Phép)** | • **Quá trình nuôi cây gắn liền với lộ trình**: Tổng XP mục tiêu của cây được tính theo công thức `(Tổng số bài học × 50 XP) + (Số ngày của lộ trình × 25 XP tưới cây)` qua 6 giai đoạn phát triển (*Hạt giống → Nảy mầm → Phát triển thân → Phân cành → Ra lá → Kết trái*).<br>• **Logic 1 ngày làm bài = tối đa 1 Streak**: Hoàn thành nhiều bài học trong cùng 1 ngày chỉ cộng tối đa **+1 Streak** cho ngày đó.<br>• **Thẻ Phiếu Nghỉ Phép (Giới hạn 1 lần / 1 tuần)**: Cho phép học viên đăng ký nghỉ phép 1 ngày/tuần để bảo lưu chuỗi Streak không bị đứt đoạn. |
 
 ---
 
-## 🏗️ 3. Kiến trúc hệ thống (4 Containers tự động hoàn toàn)
+## 3. Kiến trúc hệ thống (4 Containers tự động hoàn toàn)
 
 ```mermaid
 flowchart LR
@@ -46,16 +46,15 @@ flowchart LR
     UI -->|Truy cập Web :5050| FE
     UI -->|Gọi REST API :8000| BE
     BE -->|SQLAlchemy ORM| DB
-    BE -->|Tự động dò & gọi AI| AI
+    BE -->|Gọi trực tiếp Qwen 3.5:4b| AI
 ```
 
-> **Cơ chế vận hành AI thông minh & Không bao giờ bị treo (`_smart_ollama_chat` trong `main.py`)**:
-> * Nếu máy tính đã có sẵn mô hình `qwen3.5:4b` (trên máy thật hoặc trong container `career_coach_ollama`), hệ thống gọi trực tiếp với chế độ tối ưu tốc độ (`think=False`), phản hồi chỉ trong **1 – 5 giây**.
-> * Nếu máy mới tải từ GitHub về và container đang tải ngầm mô hình `qwen3.5:4b` (~3.3 GB) trong lần chạy đầu tiên, hệ thống **tự động kích hoạt Engine Phân tích Ngữ cảnh Đa ngành tích hợp sẵn** để trả kết quả ngay lập tức (**< 0.1 giây**), đảm bảo người chấm bài có thể kiểm thử mượt mà 100% tính năng ngay từ giây đầu tiên!
+> **Cơ chế kết nối AI trực tiếp (`_smart_ollama_chat` trong `main.py`)**:
+> * Hệ thống tự động dò tìm dịch vụ Ollama đang chạy mô hình `qwen3.5:4b` (trên máy host hoặc trong container `career_coach_ollama`) và gọi trực tiếp mô hình AI với chế độ tối ưu tốc độ (`think=False`) mà không sử dụng dữ liệu giả lập dự phòng (no fallback).
 
 ---
 
-## 🚀 4. Hướng dẫn cài đặt và chạy dự án từ GitHub
+## 4. Hướng dẫn cài đặt và chạy dự án từ GitHub
 
 ### Yêu cầu duy nhất trước khi chạy
 * Máy tính đã cài đặt và mở sẵn **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (đảm bảo biểu tượng Docker ở góc màn hình đang ở trạng thái **Running**).
@@ -78,7 +77,7 @@ Tại thư mục dự án, chạy lệnh:
 docker compose up --build -d
 ```
 
-*(💡 **Ghi chú**: Bạn chỉ cần chạy duy nhất lệnh `docker compose up --build -d` ở trên là toàn bộ 4 container sẽ tự động khởi tạo và hoạt động ngay. Ngoài ra, nếu dùng Windows bạn cũng có thể nhấp đúp vào file `run.bat`).*
+*(Lưu ý: Nếu trước đó trên máy đang có container cũ chiếm cổng `5050`, `8000` hoặc `5433`, hãy chạy `docker rm -f career_coach_frontend career_coach_backend career_coach_pg career_coach_ollama` hoặc `docker compose down` trước khi chạy `docker compose up --build -d`).*
 
 ---
 
@@ -87,30 +86,34 @@ Sau khi lệnh ở Bước 2 báo `Started`, bạn mở trình duyệt web và t
 
 | Thành phần | Đường dẫn truy cập | Mô tả chi tiết |
 | :--- | :--- | :--- |
-| 🌐 **Giao diện Web chính (Frontend)** | **[http://localhost:5050](http://localhost:5050)** | Giao diện sử dụng đầy đủ các tính năng của ứng dụng |
-| 📄 **Tài liệu API (Swagger UI)** | **[http://localhost:8000/docs](http://localhost:8000/docs)** | Giao diện kiểm thử trực tiếp 13 REST API của Backend |
-| 🩺 **Kiểm tra trạng thái Backend** | **[http://localhost:8000/](http://localhost:8000/)** | Trả về thông điệp JSON xác nhận server đang hoạt động |
-| 🗄️ **PostgreSQL Database** | `localhost:5433` | **User**: `admin` \| **Pass**: `secretpassword123` \| **DB**: `career_coach` |
-| 🤖 **Ollama AI Container** | `localhost:11435` | Cổng AI nội bộ trong Docker (ánh xạ ra cổng `11435` để tránh trùng cổng `11434`) |
+| **Giao diện Web chính (Frontend)** | **[http://localhost:5050](http://localhost:5050)** | Giao diện sử dụng đầy đủ các tính năng của ứng dụng |
+| **Tài liệu API (Swagger UI)** | **[http://localhost:8000/docs](http://localhost:8000/docs)** | Giao diện kiểm thử trực tiếp 16 REST API của Backend |
+| **Kiểm tra trạng thái Backend** | **[http://localhost:8000/](http://localhost:8000/)** | Trả về thông điệp JSON xác nhận server đang hoạt động |
+| **PostgreSQL Database** | `localhost:5433` | **User**: `admin` \| **Pass**: `secretpassword123` \| **DB**: `career_coach` |
+| **Ollama AI Container** | `localhost:11435` | Cổng AI nội bộ trong Docker (ánh xạ ra cổng `11435` để tránh trùng cổng `11434`) |
 
 ---
 
-## 🔌 5. Danh mục 13 API Endpoints trong hệ thống
+## 5. Danh mục 17 API Endpoints trong hệ thống
 
 | Phương thức | Endpoint | Chức năng xử lý |
 | :---: | :--- | :--- |
 | `POST` | `/auth/register` | Đăng ký tài khoản học viên mới & tự động khởi tạo chậu cây Gamification |
 | `POST` | `/auth/login` | Đăng nhập hệ thống và đồng bộ hồ sơ cá nhân |
-| `POST` | `/profiles/extract-cv/` | **[AI + Universal NLP]** Bóc tách kỹ năng đa ngành và kinh nghiệm từ văn bản CV PDF |
+| `GET` | `/auth/verify/{profile_id}` | Xác thực phiên đăng nhập lưu trong trình duyệt (tự dọn rác nếu DB bị xóa/reset) |
+| `POST` | `/profiles/extract-cv/` | **[AI + Universal NLP]** Bóc tách kỹ năng chuyên ngành, kỹ năng mềm và kinh nghiệm từ văn bản CV PDF |
 | `POST` | `/jobs/extract-advanced/` | **[AI + Universal NLP]** Trích xuất kỹ năng chuyên môn kèm bằng chứng từ Mô tả công việc (JD) |
 | `POST` | `/analyses/match/{profile_id}/{role_id}` | **[AI + Thuật toán]** Phân tích độ khớp CV - JD mọi ngành nghề, vẽ biểu đồ Radar & sinh Kết luận chuyên sâu |
-| `POST` | `/study-plan/generate` | **[AI + Băm giờ]** Sinh bài học bù kỹ năng thiếu và tự động chia nhỏ theo lịch rảnh (`UTC+7`) |
+| `POST` | `/study-plan/generate` | **[AI + Băm giờ]** Sinh lộ trình học tập mới, chia nhỏ theo lịch rảnh (`UTC+7`) và reset toàn bộ thống kê lộ trình |
+| `POST` | `/study-plan/update-schedule` | **[Cập nhật lịch rảnh]** Đổi lịch rảnh và xếp lại các bài chưa học nhưng **giữ nguyên lộ trình, bài đã học & Streak** |
+| `GET` | `/study-plan/schedules/{profile_id}` | Lấy danh sách các khung giờ rảnh đã lưu của học viên |
 | `GET` | `/study-plan/tasks/{profile_id}` | Lấy danh sách các bài học trong lộ trình đã lưu của học viên (theo đúng thứ tự) |
-| `POST` | `/study-plan/complete-task` | Hoàn thành bài học (kiểm tra giờ mở khóa `unlock_time` theo giờ VN), cộng XP & tính chuỗi Streak |
-| `GET` | `/gamification/{profile_id}` | Lấy dữ liệu giai đoạn mầm cây, XP, chuỗi Streak và chỉ số kỷ luật tuần |
-| `POST` | `/gamification/water-plant/{profile_id}` | Tưới nước chăm sóc mầm cây mỗi ngày một lần (+25 XP) |
-| `POST` | `/interview/generate` | **[AI + Random Engine]** Sinh ngẫu nhiên bộ 3 câu hỏi phỏng vấn mới theo vòng, độ khó & ngành nghề |
-| `POST` | `/interview/submit-and-evaluate/{question_id}` | **[AI Giám khảo]** Chấm điểm câu trả lời phỏng vấn (`1.0 – 10.0`), nhận xét chi tiết, nâng cấp STAR & thưởng XP |
+| `POST` | `/study-plan/complete-task` | Hoàn thành bài học (kiểm tra giờ mở khóa `UTC+7`), cộng +50 XP & tính Streak (tối đa 1 Streak/ngày) |
+| `GET` | `/gamification/{profile_id}` | Lấy dữ liệu giai đoạn mầm cây theo lộ trình, XP, chuỗi Streak, Phiếu nghỉ phép và chỉ số kỷ luật |
+| `POST` | `/gamification/water-plant/{profile_id}` | Tưới nước chăm sóc mầm cây mỗi ngày một lần (+25 XP tính vào tiến độ lộ trình học) |
+| `POST` | `/gamification/use-leave-pass/{profile_id}` | Đăng ký sử dụng **Thẻ Phiếu Nghỉ Phép** (giới hạn 1 lần / 1 tuần) để bảo lưu chuỗi Streak |
+| `POST` | `/interview/generate` | **[AI + Random Engine]** Sinh ngẫu nhiên bộ 3 câu hỏi phỏng vấn mới theo vòng, độ khó & ngôn ngữ (`vi` / `en`) |
+| `POST` | `/interview/submit-and-evaluate/{question_id}` | **[AI Giám khảo]** Chấm điểm câu trả lời phỏng vấn (`1.0 – 10.0`), nhận xét & nâng cấp STAR theo ngôn ngữ đã chọn |
 | `DELETE` | `/system/reset-database/` | Xóa và khởi tạo lại toàn bộ bảng trong Database để phục vụ kiểm thử |
 
 ---

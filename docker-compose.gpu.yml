@@ -1,33 +1,9 @@
+# File mở rộng (override) cho phép container Ollama dùng GPU rời NVIDIA.
+# Yêu cầu: máy có card NVIDIA và đã cài NVIDIA Container Toolkit.
+# Cách chạy:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up --build -d
 services:
-  # 1. Cấu hình cho Database PostgreSQL
-  postgres_db:
-    image: postgres:15
-    container_name: career_coach_pg
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword123}
-      POSTGRES_DB: ${POSTGRES_DB:-career_coach}
-    ports:
-      - "${POSTGRES_PORT:-5433}:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-career_coach}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # 2. Cấu hình Ollama chạy trong Docker sử dụng GPU NVIDIA (Dành cho máy có card rời NVIDIA)
   ollama:
-    image: ollama/ollama:latest
-    container_name: career_coach_ollama_gpu
-    restart: always
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull ${OLLAMA_MODEL:-qwen3.5:4b} && wait"]
     deploy:
       resources:
         reservations:
@@ -35,37 +11,3 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-
-  # 3. Cấu hình cho Backend API (FastAPI + SQLAlchemy + Ollama GPU)
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: career_coach_backend
-    restart: always
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
-    environment:
-      - DATABASE_URL=postgresql+psycopg2://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-secretpassword123}@postgres_db:5432/${POSTGRES_DB:-career_coach}
-      - OLLAMA_HOST=http://ollama:11434
-    depends_on:
-      postgres_db:
-        condition: service_healthy
-      ollama:
-        condition: service_started
-
-  # 4. Cấu hình cho Frontend Giao diện Web (Node.js Static Server)
-  frontend:
-    build:
-      context: ./front_end
-      dockerfile: Dockerfile
-    container_name: career_coach_frontend
-    restart: always
-    ports:
-      - "${FRONTEND_PORT:-5050}:5050"
-    depends_on:
-      - backend
-
-volumes:
-  pgdata:
-  ollama_data:

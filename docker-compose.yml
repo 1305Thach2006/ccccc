@@ -1,16 +1,16 @@
 services:
-  # 1. Cấu hình cho Database PostgreSQL
+  # 1. Database PostgreSQL 15
   postgres_db:
     image: postgres:15
     container_name: career_coach_pg
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword123}
       POSTGRES_DB: ${POSTGRES_DB:-career_coach}
       TZ: Asia/Ho_Chi_Minh
     ports:
-      # Mở cổng 5433 trên máy host nối vào cổng 5432 bên trong Docker
+      # Cổng 5433 trên máy host nối vào cổng 5432 bên trong Docker
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -18,46 +18,51 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-career_coach}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  # 2. Cấu hình AI Server (Tự động chạy Ollama & tải model qwen3.5:4b trên mọi máy tải từ GitHub về)
+  # 2. AI Server Ollama (tự động tải model qwen3.5:4b ở lần chạy đầu tiên)
   ollama:
     image: ollama/ollama:latest
     container_name: career_coach_ollama
-    restart: always
+    restart: unless-stopped
     ports:
-      # Dùng cổng 11435 ngoài máy host để không bao giờ bị đụng cổng 11434 nếu máy đã cài sẵn Ollama
+      # Dùng cổng 11435 ngoài máy host để không đụng cổng 11434 nếu máy đã cài sẵn Ollama
       - "${OLLAMA_DOCKER_PORT:-11435}:11434"
     volumes:
       - ollama_data:/root/.ollama
-    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull ${OLLAMA_MODEL:-qwen3.5:4b} && wait"]
+    # Nếu tải model lỗi (mất mạng), Ollama vẫn tiếp tục chạy; Backend sẽ tự tải lại model khi được gọi
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5; ollama pull ${OLLAMA_MODEL:-qwen3.5:4b} || echo 'Tai model that bai, Backend se thu tai lai khi su dung'; wait"]
 
-  # 3. Cấu hình cho Backend API (FastAPI + SQLAlchemy + Ollama Qwen 3.5:4b)
+  # 3. Backend API (FastAPI + SQLAlchemy + Ollama Qwen 3.5:4b)
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: career_coach_backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
       - TZ=Asia/Ho_Chi_Minh
       - DATABASE_URL=${DATABASE_URL:-postgresql+psycopg2://admin:secretpassword123@postgres_db:5432/career_coach}
-      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # Backend tự dò: Ollama trong Docker (ollama:11434) và Ollama cài sẵn trên máy host (host.docker.internal:11434),
+      # ưu tiên nơi đã có sẵn model qwen3.5:4b
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres_db:
         condition: service_healthy
       ollama:
         condition: service_started
 
-  # 4. Cấu hình cho Frontend Giao diện Web (Node.js Static Server)
+  # 4. Frontend Giao diện Web (Node.js Static Server)
   frontend:
     build:
       context: ./front_end
       dockerfile: Dockerfile
     container_name: career_coach_frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-5050}:5050"
     depends_on:

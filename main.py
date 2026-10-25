@@ -139,16 +139,25 @@ UNIVERSAL_SKILL_CATALOG = {
     "Chuyên môn Y Dược & Chăm sóc sức khỏe": ["dược", "y tế", "gpp", "gdp", "gmp", "lâm sàng", "bệnh viện", "nhà thuốc", "chăm sóc sức khỏe"],
     "Kỹ năng Sư phạm & Giảng dạy": ["giảng dạy", "sư phạm", "giáo án", "đào tạo học viên", "teaching", "ielts trainer", "trợ giảng"],
 
-    # 12. Công cụ Văn phòng, Ngoại ngữ & Kỹ năng mềm cốt lõi
+    # 12. Công cụ Văn phòng & Ngoại ngữ
     "Microsoft Office (Word / Excel / PowerPoint)": ["microsoft office", "tin học văn phòng", "ms office", "word", "powerpoint", "mos", "ic3"],
     "Tiếng Anh chuyên ngành / Giao tiếp": ["tiếng anh", "english", "toeic", "ielts", "toefl", "giao tiếp tiếng anh", "tiếng anh thương mại", "tiếng anh pháp lý"],
     "Ngoại ngữ thứ 2 (Trung / Nhật / Hàn)": ["tiếng trung", "hsk", "tiếng nhật", "jlpt", "tiếng hàn", "topik", "tiếng pháp"],
-    "Kỹ năng thuyết trình": ["thuyết trình", "presentation", "public speaking", "trình bày"],
-    "Giao tiếp & Phối hợp": ["giao tiếp", "communication", "ứng xử"],
-    "Làm việc nhóm (Teamwork)": ["teamwork", "làm việc nhóm", "phối hợp nhóm", "team player"],
-    "Giải quyết vấn đề & Tư duy phản biện": ["giải quyết vấn đề", "problem solving", "tư duy phản biện", "critical thinking", "phân tích"],
-    "Quản lý thời gian & Lập kế hoạch": ["quản lý thời gian", "time management", "lập kế hoạch", "planning", "đa nhiệm", "multitasking"],
-    "Lãnh đạo & Quản lý đội nhóm": ["lãnh đạo", "leadership", "quản lý nhóm", "team lead", "mentor"],
+}
+
+# TỪ ĐIỂN KỸ NĂNG MỀM (SOFT SKILLS) DÙNG KHI CV KHÔNG CÓ KỸ NĂNG CHUYÊN NGÀNH HOẶC CẦN BÓC TÁCH KỸ NĂNG MỀM
+SOFT_SKILLS_CATALOG = {
+    "Giao tiếp & Trình bày (Communication)": ["giao tiếp", "communication", "ứng xử", "trình bày", "diễn đạt", "lắng nghe"],
+    "Làm việc nhóm (Teamwork)": ["làm việc nhóm", "teamwork", "team work", "phối hợp nhóm", "hợp tác", "collaboration", "team player"],
+    "Giải quyết vấn đề (Problem Solving)": ["giải quyết vấn đề", "problem solving", "xử lý tình huống", "xử lý sự cố"],
+    "Tư duy phản biện & Phân tích (Critical Thinking)": ["tư duy phản biện", "critical thinking", "tư duy logic", "analytical thinking", "tư duy phân tích"],
+    "Quản lý thời gian & Tổ chức công việc": ["quản lý thời gian", "time management", "lập kế hoạch", "planning", "tổ chức công việc", "sắp xếp công việc", "đa nhiệm", "multitasking"],
+    "Kỹ năng Thuyết trình (Presentation)": ["thuyết trình", "presentation", "public speaking"],
+    "Đàm phán & Thuyết phục (Negotiation)": ["đàm phán", "thương lượng", "negotiation", "thuyết phục"],
+    "Lãnh đạo & Quản lý đội nhóm (Leadership)": ["lãnh đạo", "leadership", "quản lý nhóm", "team lead", "mentor", "dẫn dắt", "điều phối"],
+    "Làm việc dưới áp lực & Thích nghi nhanh": ["chịu áp lực", "áp lực cao", "under pressure", "thích nghi", "adaptability", "linh hoạt", "ham học hỏi", "tự học", "chủ động"],
+    "Tư duy sáng tạo (Creativity)": ["sáng tạo", "creativity", "creative", "ý tưởng mới", "đổi mới"],
+    "Chăm sóc & Dịch vụ khách hàng": ["chăm sóc khách hàng", "customer service", "tư vấn khách hàng", "dịch vụ khách hàng", "tận tâm"],
 }
 
 
@@ -161,10 +170,25 @@ def _kw_in_text(kw: str, text_lower: str) -> bool:
     return bool(re.search(pattern, text_lower))
 
 
-def extract_skills_universal_from_text(text: str, max_skills: int = 12) -> list[str]:
+def extract_soft_skills_from_text(text: str, max_skills: int = 10) -> list[str]:
+    """Tìm các kỹ năng mềm mà ứng viên có liệt kê trên CV."""
+    if not text or not text.strip():
+        return []
+    text_lower = " " + text.lower() + " "
+    found_soft = []
+    for skill_name, keywords in SOFT_SKILLS_CATALOG.items():
+        for kw in keywords:
+            if _kw_in_text(kw, text_lower):
+                if skill_name not in found_soft:
+                    found_soft.append(skill_name)
+                break
+    return found_soft[:max_skills]
+
+
+def extract_skills_universal_from_text(text: str, max_skills: int = 12, include_soft: bool = True) -> list[str]:
     """
-    Trích xuất kỹ năng đa ngành từ bất kỳ văn bản CV hoặc JD tự do nào.
-    Kết hợp từ điển 12 nhóm ngành lớn + NLP bóc tách cụm từ theo dòng yêu cầu.
+    Trích xuất kỹ năng chuyên ngành từ văn bản CV hoặc JD.
+    Nếu không tìm thấy kỹ năng chuyên ngành (hoặc include_soft=True), tìm tiếp các kỹ năng mềm được liệt kê trong văn bản.
     """
     if not text or not text.strip():
         return []
@@ -192,6 +216,13 @@ def extract_skills_universal_from_text(text: str, max_skills: int = 12) -> list[
         if 3 <= len(phrase) <= 42 and not any(phrase.lower() in f.lower() or f.lower() in phrase.lower() for f in found):
             found.append(phrase[:1].upper() + phrase[1:])
 
+    # Nếu không có kỹ năng chuyên ngành (hoặc cần bổ sung kỹ năng mềm có liệt kê trên CV/JD)
+    if include_soft or len(found) == 0:
+        soft_found = extract_soft_skills_from_text(text, max_skills=max_skills)
+        for sf in soft_found:
+            if not any(sf.lower() in f.lower() or f.lower() in sf.lower() for f in found):
+                found.append(sf)
+
     if len(found) < 4:
         for bp in bullet_patterns:
             clean_bp = re.sub(r'^(yêu cầu|có|biết|ưu tiên|kỹ năng)\s*:?\s*', '', bp.strip(), flags=re.IGNORECASE).strip(" .,:;-")
@@ -212,8 +243,8 @@ def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
     if c in j or j in c:
         return True
 
-    # Kiểm tra nếu cả 2 cùng thuộc 1 nhóm trong UNIVERSAL_SKILL_CATALOG
-    for skill_label, kws in UNIVERSAL_SKILL_CATALOG.items():
+    combined_catalogs = list(UNIVERSAL_SKILL_CATALOG.items()) + list(SOFT_SKILLS_CATALOG.items())
+    for skill_label, kws in combined_catalogs:
         lbl_low = skill_label.lower()
         c_hit = (c == lbl_low) or any(_kw_in_text(kw, c) for kw in kws if len(kw.strip()) >= 2)
         if not c_hit:
@@ -222,7 +253,6 @@ def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
         if j_hit:
             return True
 
-    # So khớp theo token chính (bỏ từ nối phổ biến)
     stop_tokens = {"kỹ", "năng", "cơ", "bản", "nâng", "cao", "chuyên", "môn", "về", "và", "hoặc", "quản", "lý", "phân", "tích", "nghiệp", "vụ"}
     c_tokens = {t for t in re.split(r'[\s/,\-\(\)]+', c) if len(t) >= 3 and t not in stop_tokens}
     j_tokens = {t for t in re.split(r'[\s/,\-\(\)]+', j) if len(t) >= 3 and t not in stop_tokens}
@@ -232,232 +262,9 @@ def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
 
 
 # ==========================================
-# NGÂN HÀNG CÂU HỎI PHỎNG VẤN ĐA CHIỀU (RANDOM HÓA MỖI VÒNG)
-# ==========================================
-def generate_randomized_interview_questions(target_role: str, level: str, candidate_skills: list, gaps: list, persona: str = "tech_lead") -> list[dict]:
-    """Tạo bộ 3 câu hỏi phỏng vấn hoàn toàn ngẫu nhiên ở mỗi lần gọi, bám sát vị trí, kỹ năng và lỗ hổng của ứng viên."""
-    rng = random.SystemRandom()
-
-    role_display = target_role if target_role and target_role != "Professional" else "Chuyên viên chuyên môn"
-    skill_1 = candidate_skills[0] if len(candidate_skills) > 0 else "kỹ năng chuyên môn cốt lõi"
-    skill_2 = candidate_skills[1] if len(candidate_skills) > 1 else skill_1
-    gap_1 = gaps[0] if len(gaps) > 0 else "nghiệp vụ nâng cao"
-    gap_2 = gaps[1] if len(gaps) > 1 else gap_1
-
-    level_map = {"intern": "Thực tập sinh / Fresher", "fresher": "Fresher", "junior": "Junior", "mid": "Mid-level", "senior": "Senior / Trưởng nhóm"}
-    level_label = level_map.get(str(level).lower(), str(level).capitalize())
-
-    persona_map = {
-        "tech_lead": "Trưởng bộ phận Chuyên môn (Tech / Domain Lead)",
-        "hiring_manager": "Quản lý Tuyển dụng (Hiring Manager)",
-        "hr_director": "Giám đốc Nhân sự (HR Director)",
-        "startup_founder": "Nhà sáng lập / Giám đốc điều hành (Founder / CEO)"
-    }
-    persona_label = persona_map.get(str(persona).lower(), "Chuyên gia Tuyển dụng")
-
-    # 8 mẫu câu hỏi Chuyên môn (Câu 1) - Random chọn 1
-    cat1_pool = [
-        {
-            "title": f"Vận dụng thực chiến {skill_1} trong công việc",
-            "question": f"Dưới góc nhìn của {persona_label}, ở vị trí {role_display} ({level_label}), bạn hãy chia sẻ một dự án hoặc nhiệm vụ thực tế mà bạn đã áp dụng **{skill_1}** (kết hợp với **{skill_2}**). Đâu là quyết định chuyên môn khó nhất bạn đã đưa ra và kết quả đo lường được là gì?",
-            "star": {
-                "situation": f"Mô tả bối cảnh dự án hoặc bài toán nghiệp vụ tại vị trí {role_display} đòi hỏi áp dụng {skill_1}.",
-                "task": "Xác định mục tiêu cụ thể, tiêu chuẩn chất lượng hoặc KPI bạn cần đạt được.",
-                "action": f"Trình bày quy trình triển khai từng bước bằng {skill_1} và {skill_2}, cách bạn kiểm soát sai sót.",
-                "result": "Đưa ra con số định lượng (tiết kiệm thời gian, tăng độ chính xác hoặc hoàn thành vượt tiến độ)."
-            }
-        },
-        {
-            "title": f"Tối ưu hóa quy trình & Chất lượng với {skill_1}",
-            "question": f"Khi đảm nhận vai trò {role_display}, nếu bạn phát hiện quy trình hiện tại liên quan đến **{skill_1}** đang tốn nhiều thời gian và dễ phát sinh lỗi lặp lại, bạn sẽ phân tích nguyên nhân gốc rễ và cải tiến như thế nào?",
-            "star": {
-                "situation": f"Quy trình xử lý công việc liên quan đến {skill_1} gặp điểm nghẽn làm chậm tiến độ chung.",
-                "task": "Tìm ra nguyên nhân cốt lõi và đề xuất giải pháp chuẩn hóa nhằm giảm tỷ lệ sai sót.",
-                "action": f"Ứng dụng {skill_1} và {skill_2} để thiết lập checklist kiểm tra, tự động hóa hoặc tối ưu thao tác.",
-                "result": "Giảm thiểu rõ rệt thời gian xử lý và nâng cao chất lượng đầu ra của cả bộ phận."
-            }
-        },
-        {
-            "title": f"Kiểm soát chất lượng & Xử lý lỗi chuyên môn ({skill_1})",
-            "question": f"Trong quá trình thực hiện nghiệp vụ {role_display}, làm thế nào để bạn đảm bảo đầu ra khi sử dụng **{skill_1}** luôn đạt độ chính xác cao nhất? Hãy kể về một lần bạn phát hiện sớm một rủi ro/lỗi tiềm ẩn trước khi bàn giao.",
-            "star": {
-                "situation": f"Trong giai đoạn nghiệm thu sản phẩm/báo cáo của vị trí {role_display}, phát hiện dấu hiệu bất thường về dữ liệu/kỹ thuật.",
-                "task": "Rà soát toàn diện, khoanh vùng lỗi và khắc phục triệt để trước giờ bàn giao chính thức.",
-                "action": f"Sử dụng các kỹ thuật kiểm tra chéo trong {skill_1}, đối chiếu tiêu chuẩn đầu ra và chỉnh sửa ngay.",
-                "result": "Bàn giao đúng hạn với độ chính xác 100%, được cấp trên và khách hàng/đối tác đánh giá cao."
-            }
-        },
-        {
-            "title": f"Chuyển hóa lý thuyết {skill_1} thành giá trị thực tế",
-            "question": f"Nhiều ứng viên vị trí {role_display} nắm lý thuyết về **{skill_1}** nhưng lúng túng khi gặp dữ liệu/bài toán thực tế phức tạp. Bạn hãy minh chứng năng lực thực hành của mình qua một sản phẩm hoặc kết quả cụ thể bạn từng làm.",
-            "star": {
-                "situation": "Đối mặt với một yêu cầu thực tế phức tạp khác xa các bài tập mẫu thông thường.",
-                "task": f"Vận dụng linh hoạt {skill_1} và {skill_2} để giải quyết trọn vẹn yêu cầu thực tế đó.",
-                "action": "Phân tách bài toán lớn thành các mô-đun nhỏ, thử nghiệm giải pháp và tinh chỉnh theo phản hồi thực tế.",
-                "result": "Hoàn thiện sản phẩm/hồ sơ đạt chuẩn thực tế và rút ra bộ kinh nghiệm quý báu."
-            }
-        },
-        {
-            "title": f"So sánh & Lựa chọn phương pháp trong {role_display}",
-            "question": f"Khi giải quyết một bài toán tại vị trí {role_display}, thường có nhiều cách tiếp cận khác nhau liên quan đến **{skill_1}** và **{skill_2}**. Bạn dựa vào những tiêu chí nào (hiệu năng, chi phí, thời gian, độ an toàn) để chọn phương án tối ưu?",
-            "star": {
-                "situation": "Dự án đứng trước 2 phương án triển khai chuyên môn có ưu và nhược điểm riêng.",
-                "task": "Đánh giá khách quan để chọn ra phương án phù hợp nhất với nguồn lực và thời hạn của tổ chức.",
-                "action": f"Lập bảng so sánh dựa trên tiêu chí chuyên môn {skill_1}, thử nghiệm nhanh và bảo vệ phương án trước nhóm.",
-                "result": "Phương án được chọn vận hành ổn định, đáp ứng đúng mục tiêu đề ra và tiết kiệm nguồn lực."
-            }
-        }
-    ]
-
-    # 8 mẫu câu hỏi Tình huống & Khắc phục khoảng trống kỹ năng (Câu 2) - Random chọn 1
-    cat2_pool = [
-        {
-            "title": f"Chinh phục nhanh kỹ năng mới: {gap_1}",
-            "question": f"Hồ sơ của bạn hiện đang cần bổ sung thêm về **{gap_1}**. Giả sử ngay tuần đầu nhận việc ở vị trí {role_display}, sếp giao một nhiệm vụ đòi hỏi áp dụng **{gap_1}** và **{gap_2}** trong 5 ngày tới, bạn sẽ xoay sở ra sao?",
-            "star": {
-                "situation": f"Nhận nhiệm vụ khẩn cấp tại vị trí {role_display} có yêu cầu sử dụng {gap_1} — mảng kiến thức bạn chưa có nhiều kinh nghiệm sâu.",
-                "task": "Vừa phải nắm bắt nhanh nguyên lý cốt lõi của kỹ năng mới, vừa đảm bảo hoàn thành công việc đúng hạn.",
-                "action": f"Lập kế hoạch học tập trung vào đúng phần {gap_1} phục vụ trực tiếp cho dự án, tham khảo tài liệu chuẩn và hỏi nhanh anh/chị đi trước.",
-                "result": "Hoàn thành nhiệm vụ đúng tiến độ, không làm gián đoạn công việc chung và làm chủ được kỹ năng mới."
-            }
-        },
-        {
-            "title": f"Xử lý sự cố phát sinh ngoài dự kiến ({gap_1})",
-            "question": f"Tình huống thực tế: Khi dự án {role_display} đang chạy nước rút trước giờ nghiệm thu 24 giờ, một sự cố nghiêm trọng liên quan đến **{gap_1}** bất ngờ xảy ra. Với tư cách là người phụ trách ({level_label}), thứ tự ưu tiên hành động của bạn là gì?",
-            "star": {
-                "situation": f"Sự cố phát sinh ở khâu {gap_1} ngay sát thời điểm bàn giao quan trọng của dự án.",
-                "task": "Khoanh vùng rủi ro, khắc phục sự cố nhanh nhất và thông báo minh bạch cho các bên liên quan.",
-                "action": "Giữ bình tĩnh, đánh giá mức độ ảnh hưởng, áp dụng phương án dự phòng (workaround) và phối hợp xử lý dứt điểm nguyên nhân.",
-                "result": "Khắc phục sự cố kịp thời trước giờ G, giảm thiểu thiệt hại và bổ sung quy trình phòng ngừa tái diễn."
-            }
-        },
-        {
-            "title": f"Ra quyết định khi thiếu thông tin trong mảng {gap_1}",
-            "question": f"Ở vị trí {role_display}, nếu khách hàng hoặc cấp trên đưa ra một yêu cầu rất mơ hồ liên quan đến **{gap_1}** nhưng lại cần bản đề xuất ngay trong ngày, bạn sẽ đặt những câu hỏi gì và xử lý tình huống này như thế nào?",
-            "star": {
-                "situation": f"Nhận đề bài chưa rõ ràng các thông số đầu vào liên quan đến {gap_1} trong khi thời gian phản hồi rất ngắn.",
-                "task": "Làm rõ nhu cầu thực sự của các bên và xây dựng bản đề xuất khả thi ngay trong ngày.",
-                "action": "Chủ động liệt kê các câu hỏi trọng tâm để xác nhận kỳ vọng, đồng thời chuẩn bị 2 phương án (Cơ bản & Mở rộng) kèm giả định rõ ràng.",
-                "result": "Giúp cấp trên/khách hàng chốt phương án nhanh chóng ngay buổi họp đầu tiên."
-            }
-        },
-        {
-            "title": f"Cân bằng giữa Tiến độ gấp và Chất lượng ({gap_1})",
-            "question": f"Giả sử bạn đang thực hiện một hạng mục liên quan đến **{gap_1}** cho vị trí {role_display}, nhưng khối lượng công việc tăng gấp đôi vào phút chót trong khi deadline không đổi. Bạn sẽ thương lượng và sắp xếp lại công việc thế nào?",
-            "star": {
-                "situation": "Khối lượng công việc phát sinh đột biến sát hạn chót mà nguồn lực và thời gian không thay đổi.",
-                "task": "Đảm bảo các hạng mục cốt lõi nhất vẫn hoàn thành đúng hạn với chất lượng cao.",
-                "action": f"Phân loại đầu việc theo ma trận ưu tiên (Must-have vs Nice-to-have), tập trung xử lý phần cốt lõi của {gap_1} trước và báo cáo sớm để điều phối nguồn lực.",
-                "result": "Bàn giao đúng hạn toàn bộ phần cốt lõi và hoàn tất phần mở rộng ngay sau đó mà không ảnh hưởng chất lượng."
-            }
-        },
-        {
-            "title": f"Chuyển đổi công cụ / quy trình mới ({gap_1})",
-            "question": f"Nếu công ty quyết định thay đổi quy trình cũ sang áp dụng tiêu chuẩn/công cụ mới là **{gap_1}** và **{gap_2}** cho vị trí {role_display}, bạn sẽ làm gì để thích nghi nhanh nhất mà không làm giảm năng suất?",
-            "star": {
-                "situation": f"Bộ phận chuyển đổi sang áp dụng {gap_1} nhằm nâng cao hiệu suất làm việc.",
-                "task": "Nhanh chóng làm quen và chuyển giao công việc sang quy trình/công cụ mới một cách trơn tru.",
-                "action": f"Chủ động tự học ngoài giờ, đối chiếu điểm tương đồng giữa kỹ năng {skill_1} sẵn có với {gap_1} để rút ngắn thời gian làm quen.",
-                "result": "Làm chủ công cụ mới chỉ sau thời gian ngắn và hỗ trợ các thành viên khác trong nhóm cùng chuyển đổi."
-            }
-        }
-    ]
-
-    # 8 mẫu câu hỏi Kỹ năng mềm & Văn hóa làm việc (Câu 3) - Random chọn 1
-    cat3_pool = [
-        {
-            "title": "Giải quyết bất đồng quan điểm trong đội nhóm",
-            "question": f"Khi làm việc nhóm ở lĩnh vực {role_display}, nếu ý kiến chuyên môn của bạn (dựa trên **{skill_1}**) trái ngược với một thành viên có thâm niên hơn, bạn sẽ trao đổi và thuyết phục như thế nào để giữ hòa khí mà vẫn tìm ra giải pháp đúng?",
-            "star": {
-                "situation": "Trong cuộc họp dự án, có sự khác biệt lớn về hướng tiếp cận giữa bạn và một đồng nghiệp nhiều kinh nghiệm.",
-                "task": "Bảo vệ góc nhìn chuyên môn một cách cầu thị và hướng cả nhóm tới giải pháp hiệu quả nhất cho dự án.",
-                "action": "Lắng nghe trọn vẹn lý lẽ của đồng nghiệp, sau đó trình bày phương án của mình bằng số liệu/minh chứng thực tế thay vì cảm tính.",
-                "result": "Hai bên kết hợp được ưu điểm của cả hai phương án, giúp dự án đạt kết quả vượt mong đợi và gắn kết tinh thần nhóm."
-            }
-        },
-        {
-            "title": "Tiếp nhận phản hồi gay gắt (Constructive Feedback)",
-            "question": f"Hãy kể về một lần sản phẩm, báo cáo hoặc phần việc của bạn bị giảng viên, sếp hoặc khách hàng phê bình thẳng thắn. Cảm xúc lúc đó của bạn thế nào và bạn đã biến phản hồi đó thành hành động cải thiện ra sao?",
-            "star": {
-                "situation": "Bản dự thảo/sản phẩm đầu tiên chưa đáp ứng đúng kỳ vọng khắt khe của người đánh giá.",
-                "task": "Tiếp nhận toàn bộ góp ý một cách chuyên nghiệp và nâng cấp chất lượng sản phẩm trong thời gian ngắn.",
-                "action": "Ghi chép chi tiết từng điểm cần sửa, hỏi lại để làm rõ tiêu chuẩn mong muốn, phân tích nguyên nhân thiếu sót và làm lại bản mới hoàn chỉnh.",
-                "result": "Bản cập nhật sau được đánh giá rất cao về thái độ cầu tiến và chất lượng vượt trội."
-            }
-        },
-        {
-            "title": "Quản lý áp lực đa nhiệm (Multi-tasking & Deadline)",
-            "question": f"Ở môi trường làm việc năng động của vị trí {role_display}, nếu cùng một lúc bạn nhận 3 đầu việc từ 3 người khác nhau và ai cũng bảo là 'cần gấp ngay hôm nay', bạn sẽ xử lý và giao tiếp với họ như thế nào?",
-            "star": {
-                "situation": "Nhận đồng thời 3 yêu cầu khẩn cấp từ các bên liên quan trong cùng một buổi làm việc.",
-                "task": "Sắp xếp thứ tự thực hiện hợp lý mà không làm bất kỳ bên nào bị động hay hiểu lầm.",
-                "action": "Đánh giá nhanh mức độ tác động (Impact) và độ khẩn cấp (Urgency) của từng việc, trao đổi minh bạch mốc giờ bàn giao cụ thể với từng người.",
-                "result": "Hoàn thành cả 3 đầu việc đúng cam kết và xây dựng được uy tín về tính kỷ luật, chủ động."
-            }
-        },
-        {
-            "title": "Khả năng tự học & Phát triển bản thân dài hạn",
-            "question": f"Ngành nghề của vị trí {role_display} thay đổi rất nhanh, đặc biệt là các yêu cầu mới như **{gap_1}**. Bạn đang duy trì thói quen tự học và rèn luyện kỷ luật cá nhân hằng tuần như thế nào để không bị tụt hậu?",
-            "star": {
-                "situation": f"Nhận thấy thị trường tuyển dụng vị trí {role_display} ngày càng đòi hỏi cao về {gap_1} bên cạnh {skill_1}.",
-                "task": "Xây dựng lộ trình tự học có kỷ luật mỗi tuần để lấp đầy khoảng trống năng lực.",
-                "action": "Chia nhỏ mục tiêu học tập theo từng khung giờ rảnh cố định trong tuần, kết hợp học lý thuyết với làm dự án nhỏ thực hành.",
-                "result": "Hình thành chuỗi thói quen học tập đều đặn (Streak), liên tục bổ sung kỹ năng mới vào hồ sơ năng lực."
-            }
-        },
-        {
-            "title": "Tinh thần trách nhiệm khi xảy ra sai sót",
-            "question": f"Không ai làm việc mà không từng mắc sai lầm. Hãy chia sẻ một lần bạn hoặc nhóm của bạn gặp một sai sót trong công việc/đồ án. Bạn đã đứng ra nhận trách nhiệm và khắc phục hậu quả như thế nào?",
-            "star": {
-                "situation": "Một sai sót trong khâu kiểm tra dẫn đến kết quả đầu ra bị lệch so với kế hoạch ban đầu.",
-                "task": "Chủ động nhận trách nhiệm, xử lý hậu quả ngay lập tức và khôi phục niềm tin của tập thể.",
-                "action": "Không đổ lỗi, lập tức báo cáo trung thực kèm theo 2 phương án khắc phục cụ thể và làm thêm giờ để sửa triệt để lỗi.",
-                "result": "Sự cố được giải quyết êm đẹp, đồng thời thiết lập được quy trình kiểm tra 2 lớp giúp nhóm không bao giờ lặp lại lỗi đó."
-            }
-        }
-    ]
-
-    q1 = rng.choice(cat1_pool)
-    q2 = rng.choice(cat2_pool)
-    q3 = rng.choice(cat3_pool)
-
-    return [
-        {
-            "id": 1,
-            "title": q1["title"],
-            "question": q1["question"],
-            "category": "Chuyên môn",
-            "difficulty": "3/5",
-            "tag": "Cơ bản",
-            "suggested_star": q1["star"]
-        },
-        {
-            "id": 2,
-            "title": q2["title"],
-            "question": q2["question"],
-            "category": "Tình huống",
-            "difficulty": "4/5",
-            "tag": "Quan trọng",
-            "suggested_star": q2["star"]
-        },
-        {
-            "id": 3,
-            "title": q3["title"],
-            "question": q3["question"],
-            "category": "Kỹ năng mềm",
-            "difficulty": "5/5",
-            "tag": "Nâng cao",
-            "suggested_star": q3["star"]
-        }
-    ]
-
-
-# ==========================================
-# HỆ THỐNG KẾT NỐI OLLAMA THÔNG MINH & FALLBACK TỨC THÌ
+# HỆ THỐNG KẾT NỐI OLLAMA TRỰC TIẾP (KHÔNG DÙNG FALLBACK)
 # ==========================================
 _WORKING_OLLAMA_HOST = None
-_LAST_FAILED_PROBE_TS = 0.0
-_PULLING_HOSTS = set()
 
 def _probe_ollama_host(host: str, target_model: str = "qwen3.5:4b"):
     try:
@@ -465,7 +272,7 @@ def _probe_ollama_host(host: str, target_model: str = "qwen3.5:4b"):
             f"{host.rstrip('/')}/api/tags",
             headers={"Host": "localhost:11434"}
         )
-        with urllib.request.urlopen(req, timeout=0.6) as resp:
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
             if resp.status == 200:
                 data = json.loads(resp.read().decode("utf-8"))
                 models = [m.get("name", "") for m in data.get("models", [])]
@@ -475,224 +282,58 @@ def _probe_ollama_host(host: str, target_model: str = "qwen3.5:4b"):
         pass
     return False, False
 
-def _bg_pull_model(host: str, target_model: str):
-    key = f"{host}|{target_model}"
-    if key in _PULLING_HOSTS:
-        return
-    _PULLING_HOSTS.add(key)
-    try:
-        print(f"[Ollama Background] Đang tải ngầm model {target_model} tại {host}...")
-        client = ollama.Client(host=host, headers={"Host": "localhost:11434"}, timeout=900.0)
-        client.pull(target_model)
-        print(f"[Ollama Background] Đã tải xong model {target_model} tại {host}!")
-    except Exception as e:
-        print(f"[Ollama Background] Lỗi tải ngầm model tại {host}: {e}")
-    finally:
-        _PULLING_HOSTS.discard(key)
-
-def _build_fallback_ai_content(messages: list) -> str:
-    prompt = "\n".join(str(m.get("content", "")) for m in (messages or []) if isinstance(m, dict))
-    prompt_lower = prompt.lower()
-
-    # 1. Trích xuất CV (/profiles/extract-cv/)
-    if "extract candidate info from the cv text" in prompt_lower or "cv text:" in prompt_lower:
-        cv_part = prompt.split("CV TEXT:")[-1].split("REQUIRED JSON FORMAT:")[0].strip() if "CV TEXT:" in prompt else prompt
-        email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', cv_part)
-        found_email = email_match.group(0) if email_match else "email@example.com"
-        lines = [ln.strip() for ln in cv_part.splitlines() if ln.strip() and 2 < len(ln.strip()) < 60]
-        found_name = lines[0] if lines else "Candidate Name"
-        extracted_list = extract_skills_universal_from_text(cv_part, max_skills=10)
-        detected_skills = {sk: 4 for sk in extracted_list}
-        if not detected_skills:
-            detected_skills = {
-                "Kỹ năng chuyên môn": 4,
-                "Giao tiếp & Phối hợp": 4,
-                "Làm việc nhóm (Teamwork)": 4,
-                "Microsoft Office (Word / Excel / PowerPoint)": 4
-            }
-        return json.dumps({
-            "name": found_name,
-            "email": found_email,
-            "skills": detected_skills,
-            "experience": cv_part[:600]
-        }, ensure_ascii=False)
-
-    # 2. Tạo lộ trình học tập (/study-plan/generate)
-    if "lên lộ trình học tập cá nhân hóa" in prompt_lower:
-        gaps_raw = ""
-        m = re.search(r"kỹ năng bị hổng sau:\s*(.+?)\.", prompt, re.DOTALL)
-        if m:
-            gaps_raw = m.group(1).strip()
-        gaps_list = [g.strip() for g in gaps_raw.split(",") if g.strip()]
-        if not gaps_list:
-            gaps_list = ["Kỹ năng chuyên ngành", "Thực hành dự án thực tế"]
-        tasks = []
-        for gap in gaps_list:
-            tasks.append({"title": f"Nền tảng cốt lõi & Quy trình chuẩn: {gap}", "duration_minutes": 45})
-            tasks.append({"title": f"Thực hành bài tập tình huống thực tế: {gap}", "duration_minutes": 60})
-        return json.dumps({"tasks": tasks}, ensure_ascii=False)
-
-    # 3. Tạo bộ 3 câu hỏi phỏng vấn ngẫu nhiên (/interview/generate)
-    if "bạn phải tạo ra đúng 3 câu hỏi khác nhau" in prompt_lower:
-        role_m = re.search(r"-\s*Vị trí:\s*(.+)", prompt)
-        level_m = re.search(r"-\s*Cấp độ:\s*(.+)", prompt)
-        skills_m = re.search(r"-\s*Kỹ năng:\s*(.+)", prompt)
-        gaps_m = re.search(r"-\s*Cần cải thiện:\s*(.+)", prompt)
-        persona_m = re.search(r"-\s*Phong cách người phỏng vấn:\s*(.+)", prompt)
-        role_str = role_m.group(1).strip() if role_m else "Chuyên viên"
-        level_str = level_m.group(1).strip() if level_m else "mid"
-        persona_str = persona_m.group(1).strip() if persona_m else "tech_lead"
-
-        def _parse_list_str(s: str) -> list:
-            if not s:
-                return []
-            try:
-                val = json.loads(s.replace("'", '"'))
-                if isinstance(val, list):
-                    return [str(x) for x in val if x]
-            except Exception:
-                pass
-            return [x.strip(" []'\"") for x in s.split(",") if x.strip(" []'\"")]
-
-        skills_list = _parse_list_str(skills_m.group(1).strip() if skills_m else "")
-        gaps_list = _parse_list_str(gaps_m.group(1).strip() if gaps_m else "")
-        questions = generate_randomized_interview_questions(role_str, level_str, skills_list, gaps_list, persona_str)
-        return json.dumps({"questions": questions}, ensure_ascii=False)
-
-    # 4. Chấm điểm câu trả lời phỏng vấn (/interview/submit-and-evaluate/{question_id})
-    if "chấm điểm câu trả lời của ứng viên" in prompt_lower:
-        q_m = re.search(r"-\s*Câu hỏi phỏng vấn:\s*(.+?)\n\s*-\s*Câu trả lời của ứng viên:", prompt, re.DOTALL)
-        a_m = re.search(r"-\s*Câu trả lời của ứng viên:\s*(.+?)\n\s*\[CẤU TRÚC JSON BẮT BUỘC\]", prompt, re.DOTALL)
-        q_text = q_m.group(1).strip() if q_m else "Câu hỏi phỏng vấn chuyên môn"
-        a_text = a_m.group(1).strip() if a_m else ""
-        words = a_text.split()
-        word_count = len(words)
-        a_lower = a_text.lower()
-
-        star_signals = [
-            "tình huống", "bối cảnh", "khi làm", "dự án", "nhiệm vụ", "mục tiêu", "trách nhiệm",
-            "hành động", "triển khai", "thực hiện", "giải quyết", "phối hợp", "sử dụng",
-            "kết quả", "đạt được", "giảm", "tăng", "hoàn thành", "%", "học được",
-            "situation", "task", "action", "result"
-        ]
-        hit_signals = sum(1 for kw in star_signals if kw in a_lower)
-        has_numbers = bool(re.search(r'\d+', a_text))
-
-        if word_count < 15:
-            score = round(4.5 + min(1.5, hit_signals * 0.3), 1)
-            fb = (
-                f"Ưu điểm: Bạn đã đưa ra phản hồi bước đầu cho câu hỏi '{q_text[:70]}...'. "
-                "Điểm cần cải thiện: Câu trả lời còn quá ngắn, chưa phân tích rõ Bối cảnh (Situation), Nhiệm vụ (Task), các bước Hành động cụ thể (Action) và Kết quả định lượng (Result). Hãy mở rộng câu trả lời tối thiểu 4-6 câu theo cấu trúc STAR."
-            )
-        elif word_count < 40:
-            score = round(min(7.8, 6.5 + hit_signals * 0.25 + (0.4 if has_numbers else 0.0)), 1)
-            fb = (
-                "Ưu điểm: Câu trả lời đi đúng trọng tâm câu hỏi và nêu được hướng giải quyết hợp lý. "
-                "Điểm cần cải thiện: Bạn nên làm rõ hơn vai trò cá nhân trong phần Hành động (Action) và bổ sung các con số đo lường cụ thể ở phần Kết quả (Result) như % hiệu suất tăng lên, thời gian tiết kiệm được hoặc mức độ hài lòng của các bên."
-            )
-        else:
-            score = round(min(9.5, 7.6 + hit_signals * 0.22 + (0.5 if has_numbers else 0.0)), 1)
-            fb = (
-                "Ưu điểm: Câu trả lời rất chi tiết, lập luận chặt chẽ, thể hiện rõ tư duy thực tế và bám sát cấu trúc STAR. "
-                "Điểm cần cải thiện: Để câu trả lời đạt mức xuất sắc (9.5 - 10/10) trước hội đồng tuyển dụng, bạn có thể nhấn mạnh thêm bài học kinh nghiệm rút ra và cách chuẩn hóa giải pháp đó thành quy trình chung cho tập thể."
-            )
-
-        improved = (
-            f"• S (Situation - Tình huống): Trong một dự án/nhiệm vụ thực tế liên quan trực tiếp đến '{q_text[:90]}', nhóm tôi từng đối mặt với yêu cầu khắt khe về cả chất lượng chuyên môn lẫn tiến độ bàn giao.\n"
-            f"• T (Task - Nhiệm vụ): Tôi được giao phụ trách chính việc phân tích bài toán, đề xuất phương án tối ưu và đảm bảo đầu ra đạt 100% tiêu chuẩn đúng hạn.\n"
-            f"• A (Action - Hành động): Tôi đã chủ động rà soát dữ liệu đầu vào, lập kế hoạch triển khai theo từng mốc ưu tiên, áp dụng công cụ chuyên ngành để kiểm soát chất lượng và phối hợp chặt chẽ với các thành viên để tháo gỡ điểm nghẽn.\n"
-            f"• R (Result - Kết quả): Hoàn thành mục tiêu sớm hơn 20% thời gian dự kiến, giảm thiểu tối đa sai sót phát sinh và giải pháp này được ghi nhận làm quy trình tham khảo cho các dự án tiếp theo."
-        )
-        return json.dumps({
-            "evaluation": {
-                "score": score,
-                "feedback": fb,
-                "improved_answer": improved
-            }
-        }, ensure_ascii=False)
-
-    # 5. Trích xuất JD nâng cao (/jobs/extract-advanced/)
-    if '"evidence"' in prompt_lower:
-        jd_part = prompt.split("JD:")[-1].strip() if "JD:" in prompt else prompt
-        skills = extract_skills_universal_from_text(jd_part, max_skills=8)
-        if not skills:
-            skills = ["Kỹ năng chuyên môn", "Giải quyết vấn đề", "Giao tiếp & Làm việc nhóm"]
-        return json.dumps([
-            {"skill": s, "evidence": f"Yêu cầu năng lực '{s}' được đề cập trong Mô tả công việc (JD)."}
-            for s in skills
-        ], ensure_ascii=False)
-
-    # 6. Trích xuất danh sách kỹ năng từ JD tự do (/analyses/match)
-    jd_part = prompt.split("JD:")[-1].strip() if "JD:" in prompt else prompt
-    matched = extract_skills_universal_from_text(jd_part, max_skills=10)
-    if not matched:
-        matched = ["Kỹ năng chuyên môn ngành", "Phân tích & Giải quyết vấn đề", "Giao tiếp & Phối hợp nhóm", "Microsoft Office (Word / Excel / PowerPoint)"]
-    return json.dumps(matched, ensure_ascii=False)
-
 
 def _smart_ollama_chat(*args, **kwargs):
-    global _WORKING_OLLAMA_HOST, _LAST_FAILED_PROBE_TS
-    import time as _time
-    # Tắt chế độ suy nghĩ ngầm (<think>) của Qwen 3.5 để tốc độ trả lời nhanh gấp 10 lần và không bị rỗng content
+    global _WORKING_OLLAMA_HOST
+    # Tắt chế độ suy nghĩ ngầm (<think>) của Qwen 3.5 để tốc độ trả lời nhanh và trả thẳng JSON
     kwargs.setdefault("think", False)
     target_model = kwargs.get("model", "qwen3.5:4b")
-    messages = kwargs.get("messages", args[1] if len(args) > 1 else [])
 
-    now_ts = _time.time()
-    alive_with_model = []
-    alive_without_model = []
-
+    in_docker = os.path.exists("/.dockerenv")
+    raw_hosts = []
     if _WORKING_OLLAMA_HOST:
-        is_alive, has_model = _probe_ollama_host(_WORKING_OLLAMA_HOST, target_model)
-        if is_alive and has_model:
-            alive_with_model.append(_WORKING_OLLAMA_HOST)
-        else:
-            _WORKING_OLLAMA_HOST = None
+        raw_hosts.append(_WORKING_OLLAMA_HOST)
+    env_host = os.getenv("OLLAMA_HOST", "").strip()
+    if env_host:
+        raw_hosts.append(env_host)
+    raw_hosts.append("http://127.0.0.1:11434")
+    if in_docker:
+        raw_hosts.extend(["http://host.docker.internal:11434", "http://ollama:11434"])
 
-    if not alive_with_model and (now_ts - _LAST_FAILED_PROBE_TS > 15.0):
-        in_docker = os.path.exists("/.dockerenv")
-        raw_hosts = [os.getenv("OLLAMA_HOST", "").strip(), "http://127.0.0.1:11434"]
-        if in_docker:
-            raw_hosts.extend(["http://host.docker.internal:11434", "http://ollama:11434"])
-        candidates = []
-        for h in raw_hosts:
-            if h and h not in candidates:
-                candidates.append(h)
+    candidates = []
+    for h in raw_hosts:
+        if h and h not in candidates:
+            candidates.append(h)
 
-        for host in candidates:
-            is_alive, has_model = _probe_ollama_host(host, target_model)
-            if is_alive:
-                if has_model:
-                    alive_with_model.append(host)
-                    break
-                else:
-                    alive_without_model.append(host)
-        if not alive_with_model:
-            _LAST_FAILED_PROBE_TS = now_ts
+    # Ưu tiên dịch vụ Ollama ĐÃ CÓ SẴN model; chỉ tải model khi không nơi nào có sẵn
+    alive_with_model, alive_without_model = [], []
+    for host in candidates:
+        is_alive, has_model = _probe_ollama_host(host, target_model)
+        if is_alive:
+            (alive_with_model if has_model else alive_without_model).append(host)
 
-    # Nếu có host Ollama đang sống nhưng chưa tải xong model qwen3.5:4b (3.3GB), kích hoạt tải ngầm không gây treo web
-    for host in alive_without_model:
-        threading.Thread(target=_bg_pull_model, args=(host, target_model), daemon=True).start()
+    # Khi phải tải model, ưu tiên container Ollama nội bộ của Docker Compose
+    alive_without_model.sort(key=lambda h: 0 if "ollama:" in h else 1)
 
-    # Nếu đã có host có sẵn model qwen3.5:4b -> Gọi trực tiếp mô hình AI Qwen 3.5:4b
-    for host in alive_with_model:
+    last_err = None
+    for host, has_model in [(h, True) for h in alive_with_model] + [(h, False) for h in alive_without_model]:
         try:
-            client = ollama.Client(host=host, headers={"Host": "localhost:11434"}, timeout=35.0)
+            client = ollama.Client(host=host, headers={"Host": "localhost:11434"}, timeout=300.0)
+            if not has_model:
+                print(f"[Ollama] Đang tải model {target_model} tại {host}...")
+                client.pull(target_model)
             res = client.chat(*args, **kwargs)
             _WORKING_OLLAMA_HOST = host
             return res
         except Exception as e:
             print(f"[Ollama] Lỗi khi gọi model tại {host}: {e}")
-            _WORKING_OLLAMA_HOST = None
-            _LAST_FAILED_PROBE_TS = now_ts
+            last_err = e
+            if _WORKING_OLLAMA_HOST == host:
+                _WORKING_OLLAMA_HOST = None
 
-    # Cơ chế dự phòng thông minh: Khi máy mới tải từ GitHub về đang trong lúc chờ tải 3.3GB model hoặc máy yếu không chạy nổi LLM
-    print("[AI Fallback Engine] Sử dụng bộ xử lý AI đa ngành dự phòng thông minh...")
-    fallback_content = _build_fallback_ai_content(messages)
-    return ollama.ChatResponse(
-        model=target_model,
-        message=ollama.Message(role="assistant", content=fallback_content)
-    )
+    if last_err:
+        raise last_err
+    raise RuntimeError(f"Không thể kết nối tới dịch vụ Ollama ({', '.join(candidates)}). Vui lòng kiểm tra Ollama đã chạy và có model {target_model}.")
 
 ollama.chat = _smart_ollama_chat
 
@@ -712,6 +353,7 @@ class AnswerSubmitRequest(BaseModel):
     profile_id: int | str = 1
     question_text: str
     student_answer: str
+    language: str | None = "vi"
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -773,10 +415,11 @@ class StreakAndReport(Base):
     current_xp = Column(Integer, default=0)
     weekly_xp = Column(Integer, default=0)
 
-    # 2. Quản lý Chuỗi ngày (Streak)
+    # 2. Quản lý Chuỗi ngày (Streak) & Phiếu nghỉ phép (1 lần/tuần)
     current_streak = Column(Integer, default=0)
     last_study_date = Column(String, default="")
     last_watered_date = Column(String, default="")
+    last_leave_date = Column(String, default="")
     recovery_mode = Column(Boolean, default=False)
 
     # 3. Báo cáo Giờ học & Lộ trình (Phút)
@@ -805,7 +448,10 @@ class Interview(Base):
     evaluation_json = Column(Text)
 
 try:
+    from sqlalchemy import text as sa_text
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as _conn:
+        _conn.execute(sa_text("ALTER TABLE streaks_and_reports ADD COLUMN IF NOT EXISTS last_leave_date VARCHAR DEFAULT ''"))
 except Exception as _db_init_err:
     print(f"Lưu ý: Chờ kết nối Database khi khởi chạy ({_db_init_err})")
 
@@ -838,6 +484,10 @@ class StudyPlanRequest(BaseModel):
     schedules: List[ScheduleItem]
     gaps: List[str]
 
+class UpdateScheduleRequest(BaseModel):
+    profile_id: str | int
+    schedules: List[ScheduleItem]
+
 
 def resolve_profile_id(raw_profile_id: int | str | None) -> int:
     """Chuyển đổi mọi dạng profile_id (số hoặc chuỗi như 'khoi', 'linh', 'duc') về ID số nguyên hợp lệ."""
@@ -853,7 +503,6 @@ def resolve_profile_id(raw_profile_id: int | str | None) -> int:
 def ensure_profile_and_streak(db: Session, raw_profile_id: int | str | None) -> tuple[Profile, StreakAndReport]:
     """
     Đảm bảo luôn tồn tại bản ghi Profile và StreakAndReport (Chậu cây) trong Database.
-    Khắc phục triệt để lỗi 404 'Không tìm thấy chậu cây của bạn!' trong mọi trường hợp.
     """
     pid = resolve_profile_id(raw_profile_id)
     profile = db.query(Profile).filter(Profile.id == pid).first()
@@ -886,6 +535,184 @@ def ensure_profile_and_streak(db: Session, raw_profile_id: int | str | None) -> 
         db.refresh(record)
 
     return profile, record
+
+
+def _is_same_iso_week(date_str_1: str, date_str_2: str) -> bool:
+    """Kiểm tra 2 chuỗi ngày YYYY-MM-DD có nằm trong cùng 1 tuần lễ (Thứ 2 -> Chủ Nhật) hay không."""
+    if not date_str_1 or not date_str_2:
+        return False
+    try:
+        d1 = datetime.strptime(date_str_1.strip(), "%Y-%m-%d").date()
+        d2 = datetime.strptime(date_str_2.strip(), "%Y-%m-%d").date()
+        return d1.isocalendar()[:2] == d2.isocalendar()[:2]
+    except Exception:
+        return False
+
+
+def _clean_spaced_hyphens(value):
+    """Hạn chế tối đa ký tự gạch nối (' - ', ' – ', ' — ') trong văn bản được AI sinh ra."""
+    if isinstance(value, str):
+        cleaned = re.sub(r'\s+[-–—]\s+', ', ', value)
+        cleaned = re.sub(r'(?:^|\n)\s*-\s+', lambda m: '\n• ' if '\n' in m.group(0) else '', cleaned)
+        return cleaned.strip()
+    elif isinstance(value, list):
+        return [_clean_spaced_hyphens(item) for item in value]
+    elif isinstance(value, dict):
+        return {k: _clean_spaced_hyphens(v) for k, v in value.items()}
+    return value
+
+
+def compute_roadmap_and_plant_metrics(db: Session, profile_id: int, record: StreakAndReport) -> dict:
+    """
+    Tính toán quá trình nuôi cây tương ứng với lộ trình đã tạo trong bao nhiêu ngày đó
+    + thêm XP tưới cây với số ngày của lộ trình học:
+      Target Plant XP = (Tổng số bài học * 50 XP) + (Số ngày của lộ trình * 25 XP tưới cây)
+    """
+    all_tasks = db.query(StudyTask).filter(StudyTask.profile_id == profile_id).order_by(StudyTask.id.asc()).all()
+    total_tasks = len(all_tasks)
+    completed_tasks = sum(1 for t in all_tasks if t.status == "completed")
+    task_progress_percent = round((completed_tasks / total_tasks) * 100.0, 1) if total_tasks > 0 else 0.0
+
+    scheduled_days_set = {
+        t.scheduled_day.strip()
+        for t in all_tasks
+        if t.scheduled_day and t.scheduled_day.strip() and t.scheduled_day.strip() != "Chờ xếp lịch"
+    }
+    roadmap_days = max(1, len(scheduled_days_set)) if total_tasks > 0 else 0
+
+    if total_tasks > 0:
+        target_plant_xp = (total_tasks * 50) + (roadmap_days * 25)
+    else:
+        target_plant_xp = 0
+
+    if total_tasks == 0 or target_plant_xp <= 0 or record.current_xp <= 0:
+        plant_progress_percent = 0.0
+    else:
+        plant_progress_percent = min(100.0, round((record.current_xp / target_plant_xp) * 100.0, 1))
+
+    if plant_progress_percent <= 0:
+        current_stage = "Hạt giống"
+    elif plant_progress_percent < 25:
+        current_stage = "Nảy mầm"
+    elif plant_progress_percent < 50:
+        current_stage = "Phát triển thân"
+    elif plant_progress_percent < 75:
+        current_stage = "Phân cành"
+    elif plant_progress_percent < 100:
+        current_stage = "Ra lá"
+    else:
+        current_stage = "Kết trái"
+
+    record.seed_stage = current_stage
+
+    total_mins = sum(t.duration_minutes for t in all_tasks)
+    completed_mins = sum(t.duration_minutes for t in all_tasks if t.status == "completed")
+    record.total_roadmap_minutes = total_mins
+    record.completed_roadmap_minutes = completed_mins
+
+    record.completed_tasks_weekly = completed_tasks
+    planned = record.planned_tasks_weekly if record.planned_tasks_weekly > 0 else total_tasks
+    if planned > 0 and total_tasks > 0:
+        record.discipline_score = min(100.0, round((completed_tasks / planned) * 100.0, 1))
+    else:
+        record.discipline_score = 0.0
+
+    base_xp = target_plant_xp if target_plant_xp > 0 else 300
+    stage_thresholds = [
+        max(25, round(base_xp * 0.15)),
+        max(50, round(base_xp * 0.30)),
+        max(75, round(base_xp * 0.50)),
+        max(100, round(base_xp * 0.75)),
+        max(125, round(base_xp * 0.90)),
+        max(150, base_xp)
+    ]
+
+    return {
+        "all_tasks": all_tasks,
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "progress_percent": task_progress_percent,
+        "roadmap_days": roadmap_days,
+        "target_plant_xp": target_plant_xp,
+        "plant_progress_percent": plant_progress_percent,
+        "seed_stage": current_stage,
+        "stage_thresholds": stage_thresholds,
+        "total_roadmap_minutes": total_mins,
+        "completed_roadmap_minutes": completed_mins,
+        "discipline_score": record.discipline_score
+    }
+
+
+def _slice_tasks_into_schedules(target_pid: int, raw_tasks: list[dict], schedules: list[ScheduleItem]) -> list[StudyTask]:
+    """Băm nhỏ danh sách bài học vào các khung giờ rảnh theo đúng thứ tự thời gian."""
+    sorted_schedules = list(schedules) if schedules else []
+    sorted_schedules.sort(key=lambda x: datetime.strptime(f"{x.exactDate} {x.timeStart}", "%d/%m/%Y %H:%M"))
+
+    final_db_tasks = []
+    current_schedule_idx = 0
+
+    def get_slot_info(idx):
+        if idx >= len(sorted_schedules):
+            return None, None, 0
+        slot = sorted_schedules[idx]
+        start = datetime.strptime(f"{slot.exactDate} {slot.timeStart}", "%d/%m/%Y %H:%M")
+        end = datetime.strptime(f"{slot.exactDate} {slot.timeEnd}", "%d/%m/%Y %H:%M")
+        if end <= start:
+            end = start + timedelta(minutes=60)
+        return start, end, max(15, int((end - start).total_seconds() / 60))
+
+    current_start, current_end, slot_remaining = get_slot_info(0)
+
+    for task in raw_tasks:
+        task_title = task.get("title", "Bài học chuyên môn")
+        try:
+            task_remaining = max(15, int(task.get("duration_minutes", 45) or 45))
+        except Exception:
+            task_remaining = 45
+        part = 1
+
+        while task_remaining > 0:
+            while slot_remaining <= 0 and current_schedule_idx < len(sorted_schedules):
+                current_schedule_idx += 1
+                current_start, current_end, slot_remaining = get_slot_info(current_schedule_idx)
+
+            if current_schedule_idx < len(sorted_schedules):
+                chunk_duration = min(task_remaining, slot_remaining)
+                chunk_end_time = current_start + timedelta(minutes=chunk_duration)
+
+                needs_split = (task_remaining > slot_remaining) or (part > 1)
+                final_title = f"{task_title} (Phần {part})" if needs_split else task_title
+
+                final_db_tasks.append(StudyTask(
+                    profile_id=target_pid,
+                    title=final_title,
+                    duration_minutes=chunk_duration,
+                    scheduled_day=current_start.strftime("%d/%m/%Y"),
+                    unlock_time=current_start.isoformat(),
+                    deadline_time=chunk_end_time.isoformat(),
+                    status="locked"
+                ))
+
+                task_remaining -= chunk_duration
+                slot_remaining -= chunk_duration
+                current_start = chunk_end_time
+                part += 1
+            else:
+                needs_split = part > 1
+                final_title = f"{task_title} (Phần {part})" if needs_split else task_title
+
+                final_db_tasks.append(StudyTask(
+                    profile_id=target_pid,
+                    title=final_title,
+                    duration_minutes=task_remaining,
+                    scheduled_day="Chờ xếp lịch",
+                    unlock_time="",
+                    deadline_time="",
+                    status="unscheduled"
+                ))
+                task_remaining = 0
+
+    return final_db_tasks
 
 
 # ==========================================
@@ -921,22 +748,15 @@ def create_job_with_advanced_ai(job: JobCreateAI, db: Session = Depends(get_db))
     [{{"skill": "Tên kỹ năng", "evidence": "Trích dẫn bằng chứng từ JD"}}]
     JD: {job.description}
     """
-    try:
-        response = ollama.chat(
-            model='qwen3.5:4b',
-            messages=[
-                {'role': 'system', 'content': 'You are a JSON API. Output only valid JSON.'},
-                {'role': 'user', 'content': prompt_text}
-            ],
-            format='json'
-        )
-        ai_extracted_skills = response['message']['content']
-    except Exception:
-        fallback_skills = extract_skills_universal_from_text(job.description, max_skills=8) or ["Kỹ năng chuyên môn"]
-        ai_extracted_skills = json.dumps(
-            [{"skill": s, "evidence": "Trích xuất từ yêu cầu công việc trong JD"} for s in fallback_skills],
-            ensure_ascii=False
-        )
+    response = ollama.chat(
+        model='qwen3.5:4b',
+        messages=[
+            {'role': 'system', 'content': 'You are a JSON API. Output only valid JSON.'},
+            {'role': 'user', 'content': prompt_text}
+        ],
+        format='json'
+    )
+    ai_extracted_skills = response['message']['content']
 
     db_job = Job(title=job.title, description=job.description, requirements_json=ai_extracted_skills)
     db.add(db_job)
@@ -949,7 +769,11 @@ def create_job_with_advanced_ai(job: JobCreateAI, db: Session = Depends(get_db))
 def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
     cv_text_short = cv_input.cv_text[:2500]
 
-    prompt_text = f"""Extract candidate info and all professional skills (any industry: IT, Finance, Accounting, Law, F&B, Marketing, HR, Logistics, Engineering, etc.) from the CV text below. Output ONLY a valid JSON object without any explanation.
+    prompt_text = f"""Extract candidate info and skills from the CV text below (any industry: IT, Finance, Accounting, Law, F&B, Marketing, HR, Logistics, Engineering, etc.).
+IMPORTANT RULE:
+1. Extract all specialized domain/hard skills mentioned in the CV.
+2. If the CV does NOT contain specialized domain skills (or only has general experience), you MUST carefully search the CV text for any SOFT SKILLS (Kỹ năng mềm: communication, teamwork, problem solving, time management, presentation, leadership, adaptability, critical thinking, customer service, negotiation, etc.) listed by the candidate and include them in "skills".
+Output ONLY a valid JSON object without any explanation.
         CV TEXT:
         {cv_text_short}
 
@@ -957,39 +781,31 @@ def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
         {{
             "name": "Candidate Name",
             "email": "email@example.com",
-            "skills": {{"Skill 1": 4, "Skill 2": 5, "Skill 3": 4}},
+            "skills": {{"Skill 1": 4, "Skill 2": 5}},
+            "soft_skills": ["Soft skill 1", "Soft skill 2"],
             "experience": "Brief summary of work experience and projects from CV"
         }}
     """
 
-    ai_data = {}
-    try:
-        response = ollama.chat(
-            model='qwen3.5:4b',
-            format='json',
-            messages=[{'role': 'user', 'content': prompt_text}],
-            options={'temperature': 0.1}
-        )
+    response = ollama.chat(
+        model='qwen3.5:4b',
+        format='json',
+        messages=[{'role': 'user', 'content': prompt_text}],
+        options={'temperature': 0.1}
+    )
 
-        content = ""
-        if hasattr(response, 'message') and response.message:
-            content = getattr(response.message, 'content', '')
-        elif isinstance(response, dict):
-            content = response.get('message', {}).get('content', '')
+    content = ""
+    if hasattr(response, 'message') and response.message:
+        content = getattr(response.message, 'content', '')
+    elif isinstance(response, dict):
+        content = response.get('message', {}).get('content', '')
 
-        content = content.strip()
-        print(f"--- CÂU TRẢ LỜI GỐC CỦA AI (CV) ---:\n{content}\n-----------------------------")
+    content = content.strip()
+    print(f"--- CÂU TRẢ LỜI GỐC CỦA AI (CV) ---:\n{content}\n-----------------------------")
 
-        if not content:
-            raise ValueError("Ollama trả về chuỗi rỗng.")
-
-        json_match = re.search(r'(\{[\s\S]*\})', content)
-        cleaned = json_match.group(1) if json_match else content
-        ai_data = json.loads(cleaned.strip())
-
-    except Exception as e:
-        print(f"--- DÙNG BỘ BÓC TÁCH ĐA NGÀNH CHO CV ---: {str(e)}")
-        ai_data = {}
+    json_match = re.search(r'(\{[\s\S]*\})', content)
+    cleaned = json_match.group(1) if json_match else content
+    ai_data = json.loads(cleaned.strip()) if cleaned else {}
 
     ai_name = str(ai_data.get("name", "")).strip()
     if not ai_name or ai_name == "Candidate Name":
@@ -1015,20 +831,39 @@ def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
                 except Exception:
                     final_skills[str(k).strip()] = 4
 
-    # Bổ sung thêm các kỹ năng đa ngành quét được từ văn bản CV để không bỏ sót bất kỳ ngành nào
-    universal_detected = extract_skills_universal_from_text(cv_input.cv_text, max_skills=10)
-    for sk in universal_detected:
+    # Phân tách kỹ năng chuyên ngành và kỹ năng mềm
+    soft_catalog_labels = {lbl.lower() for lbl in SOFT_SKILLS_CATALOG.keys()}
+    universal_detected = extract_skills_universal_from_text(cv_input.cv_text, max_skills=10, include_soft=False)
+    domain_detected = [sk for sk in universal_detected if sk.lower() not in soft_catalog_labels]
+
+    for sk in domain_detected:
         if not any(skills_are_matching(sk, existing_k) for existing_k in final_skills.keys()):
             final_skills[sk] = 4
         if len(final_skills) >= 12:
             break
 
-    if not final_skills:
-        final_skills = {"Kỹ năng chuyên môn": 4, "Giao tiếp & Phối hợp": 4, "Làm việc nhóm (Teamwork)": 4}
+    has_specialized_skills = any(k.lower() not in soft_catalog_labels for k in final_skills.keys())
 
-    ai_exp = str(ai_data.get("experience", "")).strip()
+    # Nếu CV không có kỹ năng chuyên ngành (hoặc số kỹ năng còn ít), quét toàn bộ Kỹ năng mềm người dùng liệt kê trên CV
+    if not has_specialized_skills or len(final_skills) < 5:
+        ai_soft_list = ai_data.get("soft_skills", [])
+        if isinstance(ai_soft_list, list):
+            for s_sk in ai_soft_list:
+                if s_sk and str(s_sk).strip():
+                    s_name = str(s_sk).strip()
+                    if not any(skills_are_matching(s_name, existing_k) for existing_k in final_skills.keys()):
+                        final_skills[s_name] = 4
+
+        soft_detected = extract_soft_skills_from_text(cv_input.cv_text, max_skills=10)
+        for s_sk in soft_detected:
+            if not any(skills_are_matching(s_sk, existing_k) for existing_k in final_skills.keys()):
+                final_skills[s_sk] = 4
+            if len(final_skills) >= 12:
+                break
+
+    ai_exp = _clean_spaced_hyphens(str(ai_data.get("experience", "")).strip())
     if not ai_exp or ai_exp == "Chưa có dữ liệu":
-        ai_exp = cv_input.cv_text[:800].strip()
+        ai_exp = _clean_spaced_hyphens(cv_input.cv_text[:800].strip())
 
     existing_profile = db.query(Profile).filter(Profile.email == ai_email).first()
     if existing_profile:
@@ -1223,7 +1058,7 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
                 "category": cat.lower(),
                 "is_required": w_i >= 2.0,
                 "status": "Chưa đạt" if sv_i == 0 else "Cần nâng cao",
-                "reason": f"Yêu cầu mức {int(yc_i)}/5, hồ sơ hiện tại {'chưa ghi nhận kỹ năng này' if sv_i == 0 else f'đang ở mức {int(sv_i)}/5 — cần bổ sung thêm thực hành'}."
+                "reason": f"Yêu cầu mức {int(yc_i)}/5, hồ sơ hiện tại {'chưa ghi nhận kỹ năng này' if sv_i == 0 else f'đang ở mức {int(sv_i)}/5, cần bổ sung thêm thực hành'}."
             })
 
     skill_score = (weighted_score_sum / total_weight) * 100.0 if total_weight > 0 else 0.0
@@ -1296,13 +1131,13 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
     elif rounded_total >= 50:
         fit_verdict = f"Hồ sơ của bạn ở mức KHÁ TIỀM NĂNG ({rounded_total}%) cho vị trí '{target_role_display}', đã có nền tảng cơ bản nhưng cần bổ sung thêm các kỹ năng còn thiếu."
     else:
-        fit_verdict = f"Hồ sơ hiện tại đạt {rounded_total}% độ khớp với vị trí '{target_role_display}' — đang có khoảng cách kỹ năng lớn cần được lên lộ trình học bù đắp."
+        fit_verdict = f"Hồ sơ hiện tại đạt {rounded_total}% độ khớp với vị trí '{target_role_display}', đang có khoảng cách kỹ năng lớn cần được lên lộ trình học bù đắp."
 
     matched_str = ", ".join(matched_skill_names[:5]) if matched_skill_names else "Chưa có kỹ năng khớp trực tiếp"
     gaps_str = ", ".join(missing_skill_names[:5]) if missing_skill_names else "Không có lỗ hổng kỹ năng lớn"
 
-    ai_reasoning = (
-        f"📌 Kết luận tổng quan: {fit_verdict}\n"
+    ai_reasoning = _clean_spaced_hyphens(
+        f"Kết luận tổng quan: {fit_verdict}\n"
         f"• Điểm mạnh hiện có: Đáp ứng {met_count}/{len(jd_skills)} nhóm kỹ năng yêu cầu của JD ({matched_str}) "
         f"với điểm Chuyên môn đạt {round(skill_score)}%, mức độ Yêu thích đạt {round(interest_score)}% và Kinh nghiệm thực tiễn đạt {round(experience_score)}%.\n"
         f"• Trọng tâm cần cải thiện ({gap_count} kỹ năng): {gaps_str}. "
@@ -1328,7 +1163,7 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
 
 
 # ==========================================
-# PHẦN 5: API TẠO LỘ TRÌNH HỌC TẬP & BĂM GIỜ THÔNG MINH
+# PHẦN 5: API TẠO LỘ TRÌNH HỌC TẬP & CẬP NHẬT LỊCH RẢNH GIỮ LỘ TRÌNH
 # ==========================================
 @app.post("/study-plan/generate")
 def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
@@ -1344,8 +1179,9 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
         
         QUY TẮC BẮT BUỘC:
         1. Sáng tạo TỐI THIỂU {gaps_count} bài học. Mỗi kỹ năng hổng phải có ít nhất 1 bài học chi tiết, thực tế.
-        2. CHỈ trả về JSON hợp lệ, KHÔNG kèm văn bản giải thích.
-        3. Định dạng chuẩn:
+        2. Không sử dụng ký tự gạch nối " - " trong tên bài học (hãy viết câu tự nhiên hoặc dùng dấu phẩy, dấu hai chấm).
+        3. CHỈ trả về JSON hợp lệ, KHÔNG kèm văn bản giải thích.
+        4. Định dạng chuẩn:
         {{
             "tasks": [
                 {{"title": "Tên bài học cụ thể", "duration_minutes": 45}},
@@ -1356,6 +1192,7 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
 
         max_retries = 2
         ai_tasks = []
+        last_ai_err = None
 
         for attempt in range(max_retries):
             print(f"--- ĐANG GỌI AI TẠO LỘ TRÌNH (LẦN THỬ {attempt + 1}/{max_retries}) ---")
@@ -1381,102 +1218,55 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
                     raw_content = json_m.group(1)
 
                 ai_data = json.loads(raw_content)
-                ai_tasks = ai_data.get("tasks", [])
+                ai_tasks = _clean_spaced_hyphens(ai_data.get("tasks", []))
 
-                if len(ai_tasks) >= gaps_count:
+                if len(ai_tasks) > 0:
                     print(f"AI ĐÃ TẠO THÀNH CÔNG {len(ai_tasks)} BÀI HỌC CHO {gaps_count} KỸ NĂNG!")
                     break
             except Exception as e:
+                last_ai_err = e
                 print(f"Lỗi tạo lộ trình lần {attempt + 1}: {e}")
 
-        if len(ai_tasks) < gaps_count:
-            for i in range(len(ai_tasks), gaps_count):
-                skill_gap = missing_skills[i % len(missing_skills)]
-                ai_tasks.append({"title": f"Nền tảng & Lý thuyết trọng tâm: {skill_gap}", "duration_minutes": 45})
-                ai_tasks.append({"title": f"Thực hành tình huống thực tế: {skill_gap}", "duration_minutes": 60})
+        if not ai_tasks:
+            raise HTTPException(status_code=500, detail=f"Không thể gọi AI tạo lộ trình: {last_ai_err}")
 
-        # BƯỚC 2: PYTHON BĂM GIỜ THEO KHUNG GIỜ RẢNH
         schedules = req.schedules if req.schedules else []
-        schedules.sort(key=lambda x: datetime.strptime(f"{x.exactDate} {x.timeStart}", "%d/%m/%Y %H:%M"))
+        profile.free_time_json = json.dumps([s.dict() for s in schedules], ensure_ascii=False)
 
-        final_db_tasks = []
-        current_schedule_idx = 0
+        final_db_tasks = _slice_tasks_into_schedules(target_pid, ai_tasks, schedules)
 
-        def get_slot_info(idx):
-            if idx >= len(schedules):
-                return None, None, 0
-            slot = schedules[idx]
-            start = datetime.strptime(f"{slot.exactDate} {slot.timeStart}", "%d/%m/%Y %H:%M")
-            end = datetime.strptime(f"{slot.exactDate} {slot.timeEnd}", "%d/%m/%Y %H:%M")
-            if end <= start:
-                end = start + timedelta(minutes=60)
-            return start, end, max(15, int((end - start).total_seconds() / 60))
-
-        current_start, current_end, slot_remaining = get_slot_info(0)
-
-        for task in ai_tasks:
-            task_title = task.get("title", "Bài học chuyên môn")
-            try:
-                task_remaining = max(15, int(task.get("duration_minutes", 45) or 45))
-            except Exception:
-                task_remaining = 45
-            part = 1
-
-            while task_remaining > 0:
-                while slot_remaining <= 0 and current_schedule_idx < len(schedules):
-                    current_schedule_idx += 1
-                    current_start, current_end, slot_remaining = get_slot_info(current_schedule_idx)
-
-                if current_schedule_idx < len(schedules):
-                    chunk_duration = min(task_remaining, slot_remaining)
-                    chunk_end_time = current_start + timedelta(minutes=chunk_duration)
-
-                    needs_split = (task_remaining > slot_remaining) or (part > 1)
-                    final_title = f"{task_title} (Phần {part})" if needs_split else task_title
-
-                    final_db_tasks.append(StudyTask(
-                        profile_id=target_pid,
-                        title=final_title,
-                        duration_minutes=chunk_duration,
-                        scheduled_day=current_start.strftime("%d/%m/%Y"),
-                        unlock_time=current_start.isoformat(),
-                        deadline_time=chunk_end_time.isoformat(),
-                        status="locked"
-                    ))
-
-                    task_remaining -= chunk_duration
-                    slot_remaining -= chunk_duration
-                    current_start = chunk_end_time
-                    part += 1
-                else:
-                    needs_split = part > 1
-                    final_title = f"{task_title} (Phần {part})" if needs_split else task_title
-
-                    final_db_tasks.append(StudyTask(
-                        profile_id=target_pid,
-                        title=final_title,
-                        duration_minutes=task_remaining,
-                        scheduled_day="Chờ xếp lịch",
-                        unlock_time="",
-                        deadline_time="",
-                        status="unscheduled"
-                    ))
-                    task_remaining = 0
-
+        db.query(StudyTask).filter(StudyTask.profile_id == target_pid).delete()
         if final_db_tasks:
-            db.query(StudyTask).filter(StudyTask.profile_id == target_pid).delete()
             db.add_all(final_db_tasks)
-            streak_record.planned_tasks_weekly = sum(1 for t in final_db_tasks if t.status != "unscheduled")
-            streak_record.total_roadmap_minutes = sum(t.duration_minutes for t in final_db_tasks)
-            streak_record.completed_roadmap_minutes = 0
-            streak_record.completed_tasks_weekly = 0
-            streak_record.discipline_score = 0.0
-            db.commit()
-            for t in final_db_tasks:
-                db.refresh(t)
+
+        # KHI TẠO LỘ TRÌNH MỚI -> RESET TOÀN BỘ DỮ LIỆU LIÊN QUAN ĐẾN LỘ TRÌNH (STREAK, HẠT GIỐNG, XP, BÁO CÁO)
+        streak_record.seed_stage = "Hạt giống"
+        streak_record.current_xp = 0
+        streak_record.weekly_xp = 0
+        streak_record.current_streak = 0
+        streak_record.last_study_date = ""
+        streak_record.last_watered_date = ""
+        streak_record.last_leave_date = ""
+        streak_record.recovery_mode = False
+        streak_record.planned_tasks_weekly = sum(1 for t in final_db_tasks if t.status != "unscheduled")
+        streak_record.total_roadmap_minutes = sum(t.duration_minutes for t in final_db_tasks)
+        streak_record.completed_roadmap_minutes = 0
+        streak_record.completed_tasks_weekly = 0
+        streak_record.discipline_score = 0.0
+
+        db.commit()
+        for t in final_db_tasks:
+            db.refresh(t)
+
+        metrics = compute_roadmap_and_plant_metrics(db, target_pid, streak_record)
+        db.commit()
 
         return {
-            "message": "Tạo lộ trình và phân bổ lịch thành công",
+            "message": "Đã tạo lộ trình mới và đặt lại toàn bộ thống kê học tập, chuỗi Streak và quá trình nuôi cây theo lộ trình mới!",
+            "reset_stats": True,
+            "roadmap_days": metrics["roadmap_days"],
+            "target_plant_xp": metrics["target_plant_xp"],
+            "stage_thresholds": metrics["stage_thresholds"],
             "tasks": [
                 {
                     "id": t.id,
@@ -1496,6 +1286,111 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
             raise e
         print("LỖI:\n", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Lỗi hệ thống: {str(e)}")
+
+
+@app.post("/study-plan/update-schedule")
+def update_study_plan_schedule(req: UpdateScheduleRequest, db: Session = Depends(get_db)):
+    """
+    Cập nhật lịch rảnh mới cho người dùng nhưng VẪN GIỮ NGUYÊN lộ trình học tập hiện tại,
+    giữ nguyên các bài đã hoàn thành, Streak, XP và quá trình nuôi cây.
+    """
+    profile, streak_record = ensure_profile_and_streak(db, req.profile_id)
+    target_pid = profile.id
+
+    existing_tasks = db.query(StudyTask).filter(StudyTask.profile_id == target_pid).order_by(StudyTask.id.asc()).all()
+    if not existing_tasks:
+        raise HTTPException(
+            status_code=400,
+            detail="Bạn chưa có lộ trình học tập nào để cập nhật lịch rảnh. Vui lòng tạo lộ trình trước!"
+        )
+
+    schedules = req.schedules if req.schedules else []
+    if not schedules:
+        raise HTTPException(status_code=400, detail="Vui lòng thêm ít nhất 1 khung giờ rảnh hợp lệ để xếp lại lịch!")
+
+    completed_tasks = [t for t in existing_tasks if t.status == "completed"]
+    pending_tasks = [t for t in existing_tasks if t.status != "completed"]
+
+    if not pending_tasks:
+        profile.free_time_json = json.dumps([s.dict() for s in schedules], ensure_ascii=False)
+        db.commit()
+        metrics = compute_roadmap_and_plant_metrics(db, target_pid, streak_record)
+        return {
+            "message": "Toàn bộ bài học trong lộ trình đã hoàn thành! Đã lưu khung giờ rảnh mới của bạn.",
+            "roadmap_days": metrics["roadmap_days"],
+            "target_plant_xp": metrics["target_plant_xp"],
+            "tasks": [
+                {
+                    "id": t.id,
+                    "title": t.title,
+                    "scheduled_day": t.scheduled_day,
+                    "duration_minutes": t.duration_minutes,
+                    "unlock_time": t.unlock_time,
+                    "deadline_time": t.deadline_time,
+                    "status": t.status
+                }
+                for t in completed_tasks
+            ]
+        }
+
+    # Gộp các phần chưa hoàn thành của cùng một bài học gốc để băm lại vừa vặn vào khung giờ rảnh mới
+    consolidated_pending = []
+    for pt in pending_tasks:
+        base_title = re.sub(r'\s*\(Phần\s+\d+\)\s*$', '', (pt.title or "Bài học chuyên môn")).strip()
+        dur = max(15, int(pt.duration_minutes or 45))
+        if consolidated_pending and consolidated_pending[-1]["title"] == base_title:
+            consolidated_pending[-1]["duration_minutes"] += dur
+        else:
+            consolidated_pending.append({"title": base_title, "duration_minutes": dur})
+
+    rescheduled_db_tasks = _slice_tasks_into_schedules(target_pid, consolidated_pending, schedules)
+
+    # Chỉ xóa các bài chưa hoàn thành, giữ nguyên các bài đã hoàn thành
+    db.query(StudyTask).filter(StudyTask.profile_id == target_pid, StudyTask.status != "completed").delete()
+    if rescheduled_db_tasks:
+        db.add_all(rescheduled_db_tasks)
+
+    profile.free_time_json = json.dumps([s.dict() for s in schedules], ensure_ascii=False)
+    db.commit()
+
+    all_updated_tasks = db.query(StudyTask).filter(StudyTask.profile_id == target_pid).order_by(StudyTask.id.asc()).all()
+    streak_record.planned_tasks_weekly = sum(1 for t in all_updated_tasks if t.status != "unscheduled")
+    metrics = compute_roadmap_and_plant_metrics(db, target_pid, streak_record)
+    db.commit()
+
+    return {
+        "message": "Đã cập nhật lịch rảnh và phân bổ lại lộ trình hiện tại thành công (Giữ nguyên tiến độ & Streak)!",
+        "roadmap_days": metrics["roadmap_days"],
+        "target_plant_xp": metrics["target_plant_xp"],
+        "stage_thresholds": metrics["stage_thresholds"],
+        "tasks": [
+            {
+                "id": t.id,
+                "title": t.title,
+                "scheduled_day": t.scheduled_day,
+                "duration_minutes": t.duration_minutes,
+                "unlock_time": t.unlock_time,
+                "deadline_time": t.deadline_time,
+                "status": t.status
+            }
+            for t in all_updated_tasks
+        ]
+    }
+
+
+@app.get("/study-plan/schedules/{profile_id}")
+def get_saved_schedules(profile_id: str, db: Session = Depends(get_db)):
+    # Chỉ đọc dữ liệu, không tự tạo hồ sơ mới khi tài khoản không tồn tại
+    profile = db.query(Profile).filter(Profile.id == resolve_profile_id(profile_id)).first()
+    if not profile:
+        return {"schedules": []}
+    try:
+        saved = json.loads(profile.free_time_json) if profile.free_time_json else []
+        if isinstance(saved, list):
+            return {"schedules": saved}
+    except Exception:
+        pass
+    return {"schedules": []}
 
 
 @app.get("/study-plan/tasks/{profile_id}")
@@ -1559,8 +1454,23 @@ def login_user(data: LoginInput, db: Session = Depends(get_db)):
     return {"message": "Đăng nhập thành công!", "profile_id": user.id, "name": user.name, "email": user.email}
 
 
+@app.get("/auth/verify/{profile_id}")
+def verify_user_session(profile_id: str, db: Session = Depends(get_db)):
+    """
+    Kiểm tra phiên đăng nhập lưu trong trình duyệt có còn hợp lệ hay không
+    (ví dụ Database vừa bị xóa / reset trong Docker thì tài khoản cũ không còn tồn tại).
+    Endpoint này KHÔNG tự tạo hồ sơ mới.
+    """
+    if not str(profile_id).strip().isdigit():
+        raise HTTPException(status_code=404, detail="Phiên đăng nhập không hợp lệ.")
+    user = db.query(Profile).filter(Profile.id == int(profile_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Tài khoản không còn tồn tại trong hệ thống.")
+    return {"valid": True, "profile_id": user.id, "name": user.name, "email": user.email}
+
+
 # ==========================================
-# PHẦN 8: HOÀN THÀNH BÀI HỌC, TƯỚI CÂY & GAMIFICATION (MÚI GIỜ VN UTC+7)
+# PHẦN 8: HOÀN THÀNH BÀI HỌC, TƯỚI CÂY, PHIẾU NGHỈ PHÉP & GAMIFICATION
 # ==========================================
 @app.post("/study-plan/complete-task")
 def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
@@ -1590,58 +1500,37 @@ def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
 
     _, record = ensure_profile_and_streak(db, profile_id)
 
-    # 1. Cập nhật Chuỗi ngày học (Streak) theo ngày Việt Nam
+    # 1. Logic 1 ngày làm bài chỉ tính tối đa 1 Streak (kèm bảo vệ bởi Phiếu nghỉ phép 1 lần/tuần)
     today = now_vn.date()
     today_str = today.strftime("%Y-%m-%d")
     yesterday_str = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+    two_days_ago_str = (today - timedelta(days=2)).strftime("%Y-%m-%d")
 
-    if record.last_study_date == yesterday_str:
-        record.current_streak += 1
-    elif record.last_study_date != today_str:
-        record.current_streak = max(1, record.current_streak) if record.current_streak > 0 and record.last_study_date == today_str else 1
-    record.last_study_date = today_str
+    if record.last_study_date == today_str:
+        # Trong cùng 1 ngày đã làm bài rồi -> giữ nguyên Streak hiện tại (không cộng dồn thêm)
+        record.current_streak = max(1, record.current_streak)
+    else:
+        # Bài học đầu tiên hoàn thành trong ngày hôm nay
+        if record.last_study_date == yesterday_str:
+            record.current_streak += 1
+        elif (
+            record.current_streak > 0
+            and record.last_leave_date in (yesterday_str, today_str)
+            and record.last_study_date in (two_days_ago_str, yesterday_str, "")
+        ):
+            record.current_streak += 1
+        else:
+            record.current_streak = 1
+        record.last_study_date = today_str
+        record.recovery_mode = False
 
-    # 2. Cộng XP
+    # 2. Cộng XP bài học (+50 XP)
     xp_reward = 50
     record.current_xp += xp_reward
     record.weekly_xp += xp_reward
 
-    # 3. Tính tiến độ dựa trên tổng số Task của lộ trình (0% -> 100%)
-    all_tasks = db.query(StudyTask).filter(StudyTask.profile_id == profile_id).order_by(StudyTask.id.asc()).all()
-    total_tasks = len(all_tasks)
-    completed_tasks = sum(1 for t in all_tasks if t.status == "completed")
-
-    progress_percent = (completed_tasks / total_tasks) * 100 if total_tasks > 0 else 0
-
-    if progress_percent == 0:
-        current_stage = "Hạt giống"
-    elif progress_percent < 25:
-        current_stage = "Nảy mầm"
-    elif progress_percent < 50:
-        current_stage = "Phát triển thân"
-    elif progress_percent < 75:
-        current_stage = "Phân cành"
-    elif progress_percent < 100:
-        current_stage = "Ra lá"
-    else:
-        current_stage = "Kết trái"
-
-    record.seed_stage = current_stage
-
-    # 4. Tính thời gian học (Phút)
-    total_mins = sum(t.duration_minutes for t in all_tasks)
-    completed_mins = sum(t.duration_minutes for t in all_tasks if t.status == "completed")
-    record.total_roadmap_minutes = total_mins
-    record.completed_roadmap_minutes = completed_mins
-
-    # 5. Tính Chỉ số Kỷ luật tuần (%)
-    record.completed_tasks_weekly = completed_tasks
-    planned = record.planned_tasks_weekly if record.planned_tasks_weekly > 0 else total_tasks
-    if planned > 0:
-        record.discipline_score = min(100.0, round((completed_tasks / planned) * 100, 1))
-    else:
-        record.discipline_score = 100.0 if total_tasks > 0 else 0.0
-
+    # 3. Tính toán tiến độ cây trồng gắn liền với lộ trình (Tổng bài * 50 XP + Số ngày lộ trình * 25 XP tưới cây)
+    metrics = compute_roadmap_and_plant_metrics(db, profile_id, record)
     db.commit()
 
     return {
@@ -1650,11 +1539,15 @@ def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
         "current_xp": record.current_xp,
         "weekly_xp": record.weekly_xp,
         "current_streak": record.current_streak,
-        "progress_percent": round(progress_percent, 1),
-        "completed_roadmap_minutes": completed_mins,
-        "total_roadmap_minutes": total_mins,
-        "discipline_score": record.discipline_score,
-        "current_seed_stage": current_stage
+        "progress_percent": metrics["progress_percent"],
+        "plant_progress_percent": metrics["plant_progress_percent"],
+        "target_plant_xp": metrics["target_plant_xp"],
+        "roadmap_days": metrics["roadmap_days"],
+        "stage_thresholds": metrics["stage_thresholds"],
+        "completed_roadmap_minutes": metrics["completed_roadmap_minutes"],
+        "total_roadmap_minutes": metrics["total_roadmap_minutes"],
+        "discipline_score": metrics["discipline_score"],
+        "current_seed_stage": metrics["seed_stage"]
     }
 
 
@@ -1663,46 +1556,92 @@ def get_gamification_data(profile_id: str, db: Session = Depends(get_db)):
     profile, record = ensure_profile_and_streak(db, profile_id)
     pid = profile.id
 
-    today_str = vn_now().strftime("%Y-%m-%d")
+    now_vn = vn_now()
+    today = now_vn.date()
+    today_str = today.strftime("%Y-%m-%d")
+    yesterday_str = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+    two_days_ago_str = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+
+    # Kiểm tra đứt chuỗi Streak nếu bỏ học quá hạn mà không có Phiếu nghỉ phép bảo vệ
+    if record.current_streak > 0 and record.last_study_date:
+        if record.last_study_date not in (today_str, yesterday_str):
+            protected_by_leave = (
+                record.last_leave_date in (yesterday_str, today_str)
+                and record.last_study_date == two_days_ago_str
+            )
+            if not protected_by_leave:
+                record.current_streak = 0
+                record.recovery_mode = True
+
     has_watered = (record.last_watered_date == today_str)
+    leave_used_this_week = bool(record.last_leave_date and _is_same_iso_week(record.last_leave_date, today_str))
+    leave_pass_remaining = 0 if leave_used_this_week else 1
+    leave_weekday = None
+    if leave_used_this_week:
+        try:
+            leave_weekday = datetime.strptime(record.last_leave_date, "%Y-%m-%d").isoweekday()
+        except Exception:
+            leave_weekday = None
 
-    all_tasks = db.query(StudyTask).filter(StudyTask.profile_id == pid).order_by(StudyTask.id.asc()).all()
-    total_tasks = len(all_tasks)
-    completed_tasks = sum(1 for t in all_tasks if t.status == "completed")
-    progress_percent = (completed_tasks / total_tasks) * 100 if total_tasks > 0 else 0
+    metrics = compute_roadmap_and_plant_metrics(db, pid, record)
+    db.commit()
 
-    total_mins = sum(t.duration_minutes for t in all_tasks)
-    completed_mins = sum(t.duration_minutes for t in all_tasks if t.status == "completed")
+    # CHỈ đánh dấu tích (✓) vào các thứ trong tuần khi người dùng đã bấm HOÀN THÀNH bài học (t.status == "completed")
+    completed_weekdays = []
+    for t in metrics["all_tasks"]:
+        if t.status == "completed":
+            if t.scheduled_day and t.scheduled_day != "Chờ xếp lịch":
+                try:
+                    task_date = datetime.strptime(t.scheduled_day, "%d/%m/%Y")
+                    iso_wd = task_date.isoweekday()
+                    if iso_wd not in completed_weekdays:
+                        completed_weekdays.append(iso_wd)
+                except ValueError:
+                    pass
 
-    registered_weekdays = []
-    for t in all_tasks:
-        if t.scheduled_day and t.scheduled_day != "Chờ xếp lịch":
-            try:
-                task_date = datetime.strptime(t.scheduled_day, "%d/%m/%Y")
-                iso_wd = task_date.isoweekday()
-                if iso_wd not in registered_weekdays:
-                    registered_weekdays.append(iso_wd)
-            except ValueError:
-                pass
+    if not completed_weekdays and metrics["completed_tasks"] > 0 and record.last_study_date and _is_same_iso_week(record.last_study_date, today_str):
+        try:
+            study_wd = datetime.strptime(record.last_study_date, "%Y-%m-%d").isoweekday()
+            if study_wd not in completed_weekdays:
+                completed_weekdays.append(study_wd)
+        except ValueError:
+            pass
 
     return {
         "current_streak": record.current_streak,
-        "seed_stage": record.seed_stage,
+        "seed_stage": metrics["seed_stage"],
         "current_xp": record.current_xp,
         "weekly_xp": record.weekly_xp,
         "has_watered_today": has_watered,
-        "completed_roadmap_minutes": completed_mins,
-        "total_roadmap_minutes": total_mins,
-        "discipline_score": record.discipline_score,
-        "progress_percent": round(progress_percent, 1),
-        "completed_tasks": completed_tasks,
-        "registered_weekdays": registered_weekdays
+        "completed_roadmap_minutes": metrics["completed_roadmap_minutes"],
+        "total_roadmap_minutes": metrics["total_roadmap_minutes"],
+        "discipline_score": metrics["discipline_score"],
+        "progress_percent": metrics["progress_percent"],
+        "plant_progress_percent": metrics["plant_progress_percent"],
+        "target_plant_xp": metrics["target_plant_xp"],
+        "roadmap_days": metrics["roadmap_days"],
+        "stage_thresholds": metrics["stage_thresholds"],
+        "completed_tasks": metrics["completed_tasks"],
+        "total_tasks": metrics["total_tasks"],
+        "completed_weekdays": completed_weekdays,
+        "registered_weekdays": completed_weekdays,
+        "leave_pass_remaining": leave_pass_remaining,
+        "last_leave_date": record.last_leave_date or "",
+        "leave_weekday": leave_weekday
     }
 
 
 @app.post("/gamification/water-plant/{profile_id}")
 def water_plant(profile_id: str, db: Session = Depends(get_db)):
-    _, record = ensure_profile_and_streak(db, profile_id)
+    profile, record = ensure_profile_and_streak(db, profile_id)
+    pid = profile.id
+
+    all_tasks = db.query(StudyTask).filter(StudyTask.profile_id == pid).all()
+    if not all_tasks:
+        raise HTTPException(
+            status_code=400,
+            detail="Bạn cần tạo lộ trình học tập trước khi bắt đầu tưới cây tích lũy XP theo lộ trình!"
+        )
 
     today_str = vn_now().strftime("%Y-%m-%d")
     if record.last_watered_date == today_str:
@@ -1711,44 +1650,92 @@ def water_plant(profile_id: str, db: Session = Depends(get_db)):
     record.last_watered_date = today_str
     record.current_xp += 25
     record.weekly_xp += 25
+
+    metrics = compute_roadmap_and_plant_metrics(db, pid, record)
     db.commit()
 
     return {
-        "message": "Tưới nước thành công! +25 XP",
+        "message": f"Tưới nước thành công (+25 XP)! Tiến độ nuôi cây theo lộ trình ({metrics['roadmap_days']} ngày): {metrics['plant_progress_percent']}%",
         "current_xp": record.current_xp,
         "weekly_xp": record.weekly_xp,
-        "seed_stage": record.seed_stage
+        "seed_stage": metrics["seed_stage"],
+        "plant_progress_percent": metrics["plant_progress_percent"],
+        "target_plant_xp": metrics["target_plant_xp"],
+        "roadmap_days": metrics["roadmap_days"],
+        "stage_thresholds": metrics["stage_thresholds"]
+    }
+
+
+@app.post("/gamification/use-leave-pass/{profile_id}")
+def use_leave_pass(profile_id: str, db: Session = Depends(get_db)):
+    """
+    Đăng ký sử dụng Thẻ Phiếu Nghỉ Phép (Giới hạn tối đa 1 lần / 1 tuần)
+    để bảo lưu chuỗi ngày học (Streak) không bị mất khi bận.
+    """
+    profile, record = ensure_profile_and_streak(db, profile_id)
+    now_vn = vn_now()
+    today_str = now_vn.strftime("%Y-%m-%d")
+
+    if record.last_leave_date and _is_same_iso_week(record.last_leave_date, today_str):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Bạn đã sử dụng Phiếu nghỉ phép trong tuần này rồi (Ngày {record.last_leave_date}). Giới hạn tối đa 1 lần/tuần!"
+        )
+
+    record.last_leave_date = today_str
+    record.recovery_mode = False
+    db.commit()
+
+    return {
+        "message": "Đăng ký Phiếu nghỉ phép hôm nay thành công! Chuỗi Streak của bạn được bảo lưu trong tuần này (Giới hạn 1 lần/tuần).",
+        "last_leave_date": today_str,
+        "leave_pass_remaining": 0,
+        "leave_weekday": now_vn.date().isoweekday(),
+        "current_streak": record.current_streak
     }
 
 
 # ==========================================
-# PHẦN 9: PHỎNG VẤN AI NGẪU NHIÊN MỖI VÒNG & CHẤM ĐIỂM STAR
+# PHẦN 9: PHỎNG VẤN AI NGẪU NHIÊN MỖI VÒNG (VI / EN) & CHẤM ĐIỂM STAR
 # ==========================================
 @app.post("/interview/generate")
 async def generate_interview_questions(payload: InterviewRequest):
     persona = payload.persona or "tech_lead"
     level = payload.level or "mid"
-    language = payload.language or "vi"
+    language = (payload.language or "vi").strip().lower()
+    is_en = (language == "en")
     context = payload.analysis_context if (payload.analysis_context and isinstance(payload.analysis_context, dict)) else {}
 
     role_id = str(context.get("role_id", "")).strip()
-    role_title_map = {
-        "backend-php": "Kỹ sư Backend PHP / Laravel",
-        "fullstack-laravel-tailwind": "Kỹ sư Fullstack Web (Laravel + Tailwind CSS)",
-        "financial-analyst": "Chuyên viên Phân tích Tài chính",
-        "general-accountant": "Kế toán tổng hợp",
-        "corporate-legal-officer": "Chuyên viên Pháp chế doanh nghiệp",
-        "legal-assistant": "Trợ lý Luật sư (Luật Kinh tế)"
-    }
+    if is_en:
+        role_title_map = {
+            "backend-php": "Backend PHP / Laravel Engineer",
+            "fullstack-laravel-tailwind": "Fullstack Web Engineer (Laravel + Tailwind CSS)",
+            "financial-analyst": "Financial Analyst",
+            "general-accountant": "General Accountant",
+            "corporate-legal-officer": "Corporate Legal Officer",
+            "legal-assistant": "Legal Assistant (Corporate & Economic Law)"
+        }
+        default_role = "Domain Specialist"
+    else:
+        role_title_map = {
+            "backend-php": "Kỹ sư Backend PHP / Laravel",
+            "fullstack-laravel-tailwind": "Kỹ sư Fullstack Web (Laravel + Tailwind CSS)",
+            "financial-analyst": "Chuyên viên Phân tích Tài chính",
+            "general-accountant": "Kế toán tổng hợp",
+            "corporate-legal-officer": "Chuyên viên Pháp chế doanh nghiệp",
+            "legal-assistant": "Trợ lý Luật sư (Luật Kinh tế)"
+        }
+        default_role = "Chuyên viên chuyên môn"
+
     target_role = (
-        context.get("target_role")
+        role_title_map.get(role_id)
+        or context.get("target_role")
         or context.get("role_title")
         or context.get("job_title")
-        or role_title_map.get(role_id)
-        or "Chuyên viên chuyên môn"
+        or default_role
     )
 
-    # Lấy danh sách kỹ năng hiện có và kỹ năng còn thiếu từ kết quả phân tích
     raw_skills = context.get("matched_skills") or context.get("skills") or []
     if not raw_skills and isinstance(context.get("radar_data"), dict):
         raw_skills = [k for k, v in context["radar_data"].items() if v and float(v) >= 50]
@@ -1759,33 +1746,95 @@ async def generate_interview_questions(payload: InterviewRequest):
         raw_gaps = [g.get("name") for g in context["gap_details"] if isinstance(g, dict) and g.get("name")]
     gaps = [str(g) for g in raw_gaps[:4]] if isinstance(raw_gaps, list) else [str(raw_gaps)]
 
-    # Chọn ngẫu nhiên chủ đề phụ cho mỗi lần bấm để AI sinh câu hỏi mới hoàn toàn ở mỗi vòng
     rng = random.SystemRandom()
-    focus_angles = [
-        "Tối ưu hóa quy trình và xử lý điểm nghẽn thực tế",
-        "Kiểm soát chất lượng đầu ra và phòng ngừa rủi ro sai sót",
-        "Giải quyết sự cố khẩn cấp khi thời hạn (deadline) cận kề",
-        "Ra quyết định dựa trên dữ liệu và số liệu đo lường",
-        "Thích nghi nhanh với công cụ/nghiệp vụ mới trong dự án",
-        "Phối hợp liên phòng ban và thuyết phục các bên liên quan",
-        "Xử lý bất đồng quan điểm chuyên môn trong nhóm",
-        "Cân bằng giữa tốc độ hoàn thành và độ chính xác tiêu chuẩn"
-    ]
-    chosen_angles = rng.sample(focus_angles, 3)
     nonce_val = payload.random_nonce or rng.randint(100000, 999999)
 
-    prompt = f"""[HỆ THỐNG]: Bạn là một chuyên gia tuyển dụng AI (Mã phiên ngẫu nhiên: #{nonce_val}). BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không kèm văn bản giải thích.
-YÊU CẦU TỐI THƯỢNG: BẠN PHẢI TẠO RA ĐÚNG 3 CÂU HỎI KHÁC NHAU, MỚI MẺ, BÁM SÁT GÓC ĐỘ ĐƯỢC CHỈ ĐỊNH DƯỚI ĐÂY:
-- Góc độ câu 1 (Chuyên môn): {chosen_angles[0]}
-- Góc độ câu 2 (Tình huống): {chosen_angles[1]}
-- Góc độ câu 3 (Kỹ năng mềm): {chosen_angles[2]}
+    if is_en:
+        focus_angles_en = [
+            "Workflow optimization and resolving real-world bottlenecks",
+            "Quality assurance and preventing operational or technical errors",
+            "Handling urgent incidents under tight deadlines",
+            "Data-driven decision making and measurable KPIs",
+            "Rapid adaptation to unfamiliar tools or domain requirements",
+            "Cross-functional collaboration and stakeholder persuasion",
+            "Resolving professional disagreements within a team",
+            "Balancing delivery speed with high quality standards"
+        ]
+        chosen_angles = rng.sample(focus_angles_en, 3)
+        prompt = f"""[SYSTEM]: You are an expert AI Interviewer (Session ID: #{nonce_val}). You MUST output ONLY valid raw JSON without markdown or explanation.
+CRITICAL LANGUAGE RULE: The user selected ENGLISH interview mode. Every single field (title, question, category, tag, suggested_star.situation, suggested_star.task, suggested_star.action, suggested_star.result) MUST be written 100% in ENGLISH. Do NOT use Vietnamese anywhere in your response.
+FORMATTING RULE: Do NOT use spaced hyphens (" - ") in any generated text; write natural sentences using commas or periods instead.
+If any input role or skill names below are in Vietnamese, translate them naturally into professional English inside your generated questions and STAR hints.
+
+Generate EXACTLY 3 distinct, realistic interview questions tailored to these specific angles:
+• Question 1 Angle (Technical / Domain Expertise): {chosen_angles[0]}
+• Question 2 Angle (Situational / Problem Solving): {chosen_angles[1]}
+• Question 3 Angle (Behavioral / Soft Skills): {chosen_angles[2]}
+
+[CANDIDATE CONTEXT]:
+• Target Role: {target_role}
+• Seniority Level: {level}
+• Interviewer Persona: {persona}
+• Current Skills: {candidate_skills}
+• Skill Gaps to Probe: {gaps}
+
+[REQUIRED JSON SCHEMA (Exactly 3 questions in English)]:
+{{
+"questions": [
+    {{
+        "id": 1,
+        "title": "Concise English Title for Question 1",
+        "question": "Full interview question 1 in English...",
+        "category": "Technical",
+        "difficulty": "3/5",
+        "tag": "Core",
+        "suggested_star": {{"situation": "English hint for Situation...", "task": "English hint for Task...", "action": "English hint for Action...", "result": "English hint for Result..."}}
+    }},
+    {{
+        "id": 2,
+        "title": "Concise English Title for Question 2",
+        "question": "Full interview question 2 in English...",
+        "category": "Situational",
+        "difficulty": "4/5",
+        "tag": "Important",
+        "suggested_star": {{"situation": "English hint for Situation...", "task": "English hint for Task...", "action": "English hint for Action...", "result": "English hint for Result..."}}
+    }},
+    {{
+        "id": 3,
+        "title": "Concise English Title for Question 3",
+        "question": "Full interview question 3 in English...",
+        "category": "Behavioral",
+        "difficulty": "5/5",
+        "tag": "Advanced",
+        "suggested_star": {{"situation": "English hint for Situation...", "task": "English hint for Task...", "action": "English hint for Action...", "result": "English hint for Result..."}}
+    }}
+]
+}}"""
+    else:
+        focus_angles_vi = [
+            "Tối ưu hóa quy trình và xử lý điểm nghẽn thực tế",
+            "Kiểm soát chất lượng đầu ra và phòng ngừa rủi ro sai sót",
+            "Giải quyết sự cố khẩn cấp khi thời hạn (deadline) cận kề",
+            "Ra quyết định dựa trên dữ liệu và số liệu đo lường",
+            "Thích nghi nhanh với công cụ/nghiệp vụ mới trong dự án",
+            "Phối hợp liên phòng ban và thuyết phục các bên liên quan",
+            "Xử lý bất đồng quan điểm chuyên môn trong nhóm",
+            "Cân bằng giữa tốc độ hoàn thành và độ chính xác tiêu chuẩn"
+        ]
+        chosen_angles = rng.sample(focus_angles_vi, 3)
+        prompt = f"""[HỆ THỐNG]: Bạn là một chuyên gia tuyển dụng AI (Mã phiên ngẫu nhiên: #{nonce_val}). BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không kèm văn bản giải thích.
+YÊU CẦU TỐI THƯỢNG: BẠN PHẢI TẠO RA ĐÚNG 3 CÂU HỎI KHÁC NHAU, MỚI MẺ BẰNG TIẾNG VIỆT, BÁM SÁT GÓC ĐỘ ĐƯỢC CHỈ ĐỊNH DƯỚI ĐÂY.
+QUY TẮC TRÌNH BÀY: Hạn chế tối đa sử dụng ký tự gạch nối (" - ") trong tiêu đề, nội dung câu hỏi và gợi ý STAR (hãy viết câu tự nhiên bằng dấu phẩy hoặc dấu chấm).
+• Góc độ câu 1 (Chuyên môn): {chosen_angles[0]}
+• Góc độ câu 2 (Tình huống): {chosen_angles[1]}
+• Góc độ câu 3 (Kỹ năng mềm): {chosen_angles[2]}
 
 [THÔNG TIN ĐẦU VÀO]:
-- Vị trí: {target_role}
-- Cấp độ: {level}
-- Phong cách người phỏng vấn: {persona}
-- Kỹ năng: {candidate_skills}
-- Cần cải thiện: {gaps}
+• Vị trí: {target_role}
+• Cấp độ: {level}
+• Phong cách người phỏng vấn: {persona}
+• Kỹ năng: {candidate_skills}
+• Cần cải thiện: {gaps}
 
 [CẤU TRÚC JSON BẮT BUỘC (Gồm đúng 3 câu)]:
 {{
@@ -1820,88 +1869,94 @@ YÊU CẦU TỐI THƯỢNG: BẠN PHẢI TẠO RA ĐÚNG 3 CÂU HỎI KHÁC NHAU
 ]
 }}"""
 
-    try:
-        print(f"--- Đang tạo bộ câu hỏi phỏng vấn ngẫu nhiên (#{nonce_val}) cho vị trí: {target_role} ---")
-        response = ollama.chat(
-            model='qwen3.5:4b',
-            messages=[{'role': 'user', 'content': prompt}],
-            options={
-                'temperature': 0.8,
-                'seed': int(nonce_val) % 2147483647,
-                'num_predict': 2500,
-            }
-        )
-
-        content = ""
-        if hasattr(response, 'message') and response.message:
-            content = getattr(response.message, 'content', '')
-        elif isinstance(response, dict):
-            content = response.get('message', {}).get('content', '')
-
-        content = content.strip()
-        if not content:
-            raise ValueError("Nội dung trả về rỗng.")
-
-        json_match = re.search(r'(\{[\s\S]*\})', content)
-        if not json_match:
-            raise ValueError("Không tìm thấy khối JSON hợp lệ.")
-
-        content = re.sub(r',\s*([\]}])', r'\1', json_match.group(1))
-        ai_output = json.loads(content)
-        questions = ai_output.get("questions", [])
-        if not isinstance(questions, list) or len(questions) < 3:
-            raise ValueError("Số lượng câu hỏi chưa đủ 3 câu.")
-        return {"questions": questions[:3]}
-
-    except Exception as e:
-        print(f"[Interview Fallback] Sinh bộ câu hỏi ngẫu nhiên từ ngân hàng đa chiều: {e}")
-        return {
-            "questions": generate_randomized_interview_questions(
-                target_role=target_role,
-                level=level,
-                candidate_skills=candidate_skills,
-                gaps=gaps,
-                persona=persona
-            )
+    print(f"--- Đang tạo bộ câu hỏi phỏng vấn ({language.upper()} | #{nonce_val}) cho vị trí: {target_role} ---")
+    response = ollama.chat(
+        model='qwen3.5:4b',
+        messages=[{'role': 'user', 'content': prompt}],
+        options={
+            'temperature': 0.8,
+            'seed': int(nonce_val) % 2147483647,
+            'num_predict': 2500,
         }
+    )
+
+    content = ""
+    if hasattr(response, 'message') and response.message:
+        content = getattr(response.message, 'content', '')
+    elif isinstance(response, dict):
+        content = response.get('message', {}).get('content', '')
+
+    content = content.strip()
+    if not content:
+        raise HTTPException(status_code=500, detail="AI trả về nội dung rỗng khi tạo câu hỏi phỏng vấn.")
+
+    json_match = re.search(r'(\{[\s\S]*\})', content)
+    if not json_match:
+        raise HTTPException(status_code=500, detail="AI không trả về định dạng JSON hợp lệ.")
+
+    content = re.sub(r',\s*([\]}])', r'\1', json_match.group(1))
+    ai_output = json.loads(content)
+    questions = _clean_spaced_hyphens(ai_output.get("questions", []))
+    if not isinstance(questions, list) or len(questions) < 3:
+        raise HTTPException(status_code=500, detail="AI tạo chưa đủ 3 câu hỏi phỏng vấn.")
+    return {"questions": questions[:3], "language": language}
 
 
 @app.post("/interview/submit-and-evaluate/{question_id}")
 async def evaluate_answer(question_id: int, payload: AnswerSubmitRequest, db: Session = Depends(get_db)):
-    prompt = f"""[HỆ THỐNG]: Bạn là một giám khảo phỏng vấn nhân sự khó tính nhưng công tâm. 
+    language = (payload.language or "vi").strip().lower()
+    is_en = (language == "en")
+
+    if is_en:
+        prompt = f"""[SYSTEM]: You are a strict but fair Senior Hiring Manager evaluating a candidate's interview answer using the STAR method (Situation, Task, Action, Result).
+You MUST output ONLY valid raw JSON without any markdown or extra text.
+CRITICAL LANGUAGE RULE: Write your entire evaluation ("feedback" and "improved_answer") 100% in ENGLISH.
+FORMATTING RULE: Do NOT use spaced hyphens (" - ") in your text; write natural sentences using commas or periods.
+
+[INPUT]:
+• Interview Question: {payload.question_text}
+• Candidate's Answer: {payload.student_answer}
+
+[REQUIRED JSON FORMAT]:
+{{
+"evaluation": {{
+    "score": <float number from 1.0 to 10.0 based on depth, realism, and STAR structure>,
+    "feedback": "Detailed constructive feedback in English: Strengths and areas for improvement.",
+    "improved_answer": "A strong sample answer written in English following the STAR structure (Situation, Task, Action, Result)."
+}}
+}}"""
+    else:
+        prompt = f"""[HỆ THỐNG]: Bạn là một giám khảo phỏng vấn nhân sự khó tính nhưng công tâm. 
 Nhiệm vụ của bạn là chấm điểm câu trả lời của ứng viên dựa trên câu hỏi phỏng vấn.
 BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không kèm theo văn bản giải thích.
+QUY TẮC TRÌNH BÀY: Không sử dụng ký tự gạch nối (" - ") trong lời nhận xét và đáp án mẫu; hãy viết câu văn mạch lạc bằng dấu chấm và dấu phẩy.
 
 [THÔNG TIN ĐẦU VÀO]:
-- Câu hỏi phỏng vấn: {payload.question_text}
-- Câu trả lời của ứng viên: {payload.student_answer}
+• Câu hỏi phỏng vấn: {payload.question_text}
+• Câu trả lời của ứng viên: {payload.student_answer}
 
 [CẤU TRÚC JSON BẮT BUỘC]:
 {{
 "evaluation": {{
     "score": <Chấm điểm số thực từ 1.0 đến 10.0 dựa trên độ chi tiết, tính thực tế và cấu trúc STAR>,
     "feedback": "Nhận xét chi tiết: Điểm tốt là gì? Cần cải thiện điều gì?",
-    "improved_answer": "Viết lại một câu trả lời mẫu xuất sắc hơn theo chuẩn STAR (Situation - Task - Action - Result)"
+    "improved_answer": "Viết lại một câu trả lời mẫu xuất sắc hơn theo chuẩn STAR (Situation, Task, Action, Result)"
 }}
 }}"""
 
-    print(f"--- Đang chấm điểm câu hỏi ID: {question_id} ---")
-    try:
-        response = ollama.chat(
-            model='qwen3.5:4b',
-            messages=[{'role': 'user', 'content': prompt}],
-            options={'temperature': 0.3, 'num_predict': 2000}
-        )
-        content = getattr(response.message, 'content', '') if hasattr(response, 'message') else response.get('message', {}).get('content', '')
-        json_match = re.search(r'(\{[\s\S]*\})', content)
-        if not json_match:
-            raise ValueError("Không tìm thấy JSON.")
-        ai_output = json.loads(re.sub(r',\s*([\]}])', r'\1', json_match.group(1)))
-    except Exception as e:
-        print(f"[Evaluate Fallback] Chấm điểm bằng bộ đánh giá STAR dự phòng: {e}")
-        ai_output = json.loads(_build_fallback_ai_content([{'role': 'user', 'content': prompt}]))
+    print(f"--- Đang chấm điểm câu hỏi ID: {question_id} ({language.upper()}) ---")
+    response = ollama.chat(
+        model='qwen3.5:4b',
+        messages=[{'role': 'user', 'content': prompt}],
+        options={'temperature': 0.3, 'num_predict': 2000}
+    )
+    content = getattr(response.message, 'content', '') if hasattr(response, 'message') else response.get('message', {}).get('content', '')
+    json_match = re.search(r'(\{[\s\S]*\})', content)
+    if not json_match:
+        raise HTTPException(status_code=500, detail="AI không trả về kết quả chấm điểm dạng JSON hợp lệ.")
+    ai_output = json.loads(re.sub(r',\s*([\]}])', r'\1', json_match.group(1)))
 
-    eval_obj = ai_output.get("evaluation", {})
+    eval_obj = _clean_spaced_hyphens(ai_output.get("evaluation", {}))
     try:
         numeric_score = round(float(eval_obj.get("score", 7.0)), 1)
     except Exception:
@@ -1914,6 +1969,7 @@ BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không k
     profile, streak_record = ensure_profile_and_streak(db, payload.profile_id)
     streak_record.current_xp += xp_reward
     streak_record.weekly_xp += xp_reward
+    compute_roadmap_and_plant_metrics(db, profile.id, streak_record)
     db.commit()
 
     new_interview = Interview(

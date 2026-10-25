@@ -191,9 +191,12 @@ function checkAndUpdateStage() {
   updateIllustration();
 }
 
-function updateIllustration() {
-  const stage = appState.user.currentStageIndex + 1; 
-  const data = appState.stages[appState.user.currentStageIndex];
+function updateIllustration(previewStageNum) {
+  const stage = (typeof previewStageNum === 'number' && previewStageNum >= 1 && previewStageNum <= 6)
+    ? previewStageNum
+    : (appState.user.currentStageIndex + 1);
+  const stageIdx = Math.max(0, Math.min(5, stage - 1));
+  const data = appState.stages[stageIdx] || appState.stages[0];
   const nextData = appState.stages[Math.min(stage, appState.stages.length - 1)];
 
   const imgSrc = makeSvgDataUri(rawSvgs[`stage${stage}`]);
@@ -201,48 +204,20 @@ function updateIllustration() {
   if (img) img.src = imgSrc;
 
   const homePlantTitle = document.getElementById('homePlantTitle');
-  if(homePlantTitle) homePlantTitle.textContent = data.name;
-  
+  if (homePlantTitle) homePlantTitle.textContent = data.name;
+
+  const homeStageBadge = document.getElementById('homeStageBadge');
+  if (homeStageBadge) homeStageBadge.textContent = `Giai đoạn ${stage}/6`;
+
   const stageBadgeText = document.getElementById('stageBadgeText');
-  if(stageBadgeText) stageBadgeText.textContent = `Giai đoạn ${stage}/6`;
-
-  const xpText = document.getElementById('homeXpRemaining');
-  if (xpText) {
-    if (stage === 6) xpText.textContent = "Đã hoàn thành lộ trình!";
-    else xpText.textContent = `Còn ${data.xpRequired - appState.user.currentXp} XP để đạt ${nextData.name}`;
-  }
-
-  const currentXpEl = document.getElementById('homeCurrentXpDisplay');
-  if (currentXpEl) {
-    currentXpEl.textContent = `${appState.user.currentXp} XP`;
-  }
-  
-  // --- ĐOẠN CODE ĐÃ ĐƯỢC CHỈNH SỬA ĐỂ THANH TIẾN TRÌNH CHẠY MƯỢT MÀ ---
-  let pct = 0;
-  if (appState.user.currentStageIndex === 0) {
-      // Đang ở cấp 1 (Hạt giống - cần 1000 XP)
-      pct = Math.min(100, Math.round((appState.user.currentXp / data.xpRequired) * 100));
-  } else if (appState.user.currentStageIndex >= 5) {
-      // Đã Max cấp (Kết trái)
-      pct = 100;
-  } else {
-      // Ở các cấp trung gian: Tính phần trăm tiến độ của mốc hiện tại
-      const prevXp = appState.stages[appState.user.currentStageIndex - 1].xpRequired;
-      const currentLevelXp = appState.user.currentXp - prevXp;
-      const targetLevelXp = data.xpRequired - prevXp;
-      pct = Math.min(100, Math.round((currentLevelXp / targetLevelXp) * 100));
-      if (pct < 0) pct = 0;
-  }
-
-  const progBar = document.getElementById('homePlantProgressBar');
-  if(progBar) progBar.style.width = `${pct}%`;
+  if (stageBadgeText) stageBadgeText.textContent = `Giai đoạn ${stage}/6`;
 
   const badge = document.getElementById('homePlantPercentBadge');
-  if(badge) badge.style.display = 'none';
-  // -------------------------------------------------------------------
+  if (badge) badge.style.display = 'none';
 
   for (let i = 1; i <= 6; i++) {
     const node = document.getElementById(`homeStageNode-${i}`);
+    const label = document.getElementById(`homeStageLabel-${i}`);
     if (node) {
       if (i < stage) {
         node.className = 'w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-emerald-100 transition-all';
@@ -254,6 +229,11 @@ function updateIllustration() {
         node.className = 'w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs transition-all';
         node.innerHTML = `0${i}`;
       }
+    }
+    if (label) {
+      label.className = (i <= stage)
+        ? 'text-[10px] sm:text-[11px] font-bold text-[#064e3b] mt-1 whitespace-nowrap'
+        : 'text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap';
     }
   }
 }
@@ -428,7 +408,7 @@ function selectProfile(id) {
       roleContainer.innerHTML = scoredRoles.map((r, i) => `
         <div class="role-option p-3 rounded-lg border ${r.id === appState.selectedRoleId ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-200 bg-white hover:border-slate-300'} cursor-pointer mb-2 transition-colors" data-role-id="${r.id}" onclick="selectRole('${r.id}')">
           <div class="flex justify-between items-center">
-            <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">⭐ Đề xuất</span>' : ''}</div>
+            <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">Đề xuất</span>' : ''}</div>
             <div class="text-[10px] px-2 py-0.5 rounded ${r.match >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'} font-bold">${r.match}%</div>
           </div>
           <div class="flex items-center justify-between mt-1.5">
@@ -1052,7 +1032,7 @@ if (cvFileInput) {
                         roleContainer.innerHTML = scoredRoles.map((r, i) => `
                           <div class="role-option p-3 rounded-lg border ${r.id === appState.selectedRoleId ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-200 bg-white hover:border-slate-300'} cursor-pointer mb-2 transition-colors" data-role-id="${r.id}" onclick="selectRole('${r.id}')">
                             <div class="flex justify-between items-center">
-                              <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">⭐ Đề xuất</span>' : ''}</div>
+                              <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">Đề xuất</span>' : ''}</div>
                               <div class="text-[10px] px-2 py-0.5 rounded ${r.match >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'} font-bold">${r.match}%</div>
                             </div>
                             <div class="flex items-center justify-between mt-1.5">
@@ -1128,8 +1108,9 @@ if (btnSubmit) {
 
     // 2. Khóa UI trong lúc chờ AI
     if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
+    const isEnLang = (appState.interviewLanguage === 'en');
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'AI Giám khảo đang chấm điểm...';
+    btnSubmit.textContent = isEnLang ? 'AI Evaluator is grading your answer...' : 'AI Giám khảo đang chấm điểm...';
 
     let numericScore = 0;
     let aiFeedback = '';
@@ -1144,36 +1125,41 @@ if (btnSubmit) {
         ? `${activeQObj.title || ''}: ${activeQObj.question || ''}`
         : (`${domTitle}: ${domQuestion}`.trim() || "Câu hỏi phỏng vấn");
     
-    // Lấy ID người dùng hiện tại từ localStorage/appState (Mặc định là 1 nếu chưa có)
     const activeProfileId = parseInt(localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId || 1, 10);
 
     try {
-      // 3. Gọi API chấm điểm và cộng XP
+      // 3. Gọi API chấm điểm và cộng XP (kèm ngôn ngữ VI / EN, không dùng fallback)
       const res = await fetch(`${API_BASE_URL}/interview/submit-and-evaluate/${currentQuestionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             profile_id: activeProfileId,
             question_text: currentQuestionText,
-            student_answer: text 
+            student_answer: text,
+            language: isEnLang ? 'en' : 'vi'
         })
       });
       
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "Không thể chấm điểm câu trả lời.");
+      }
       numericScore = parseFloat(data.evaluation?.score) || 0;
       aiFeedback = data.evaluation?.feedback || '';
       improvedAnswer = data.evaluation?.improved_answer || '';
 
-      // Đồng bộ XP trả về từ DB lên giao diện
       if (typeof appState !== 'undefined' && appState.user && data.current_xp) {
           appState.user.currentXp = data.current_xp;
       }
       
     } catch(e) {
       console.error("Lỗi gọi API chấm điểm:", e);
-      numericScore = text.length > 80 ? 8.0 : 6.0; 
-      aiFeedback = "Lỗi kết nối máy chủ chấm điểm. Điểm số tạm ước lượng theo độ chi tiết của câu trả lời.";
-      improvedAnswer = "Hãy trình bày rõ theo 4 bước: Situation (Bối cảnh) -> Task (Nhiệm vụ) -> Action (Hành động cụ thể) -> Result (Kết quả định lượng).";
+      btnSubmit.textContent = isEnLang ? 'Submit Answer & AI Grading' : 'Nộp câu trả lời & Chấm điểm AI';
+      btnSubmit.disabled = false;
+      if (typeof showToast === 'function') {
+        showToast('Lỗi chấm điểm AI', e.message || 'Không thể kết nối tới mô hình AI chấm điểm.', 'error');
+      }
+      return;
     }
 
     // 4. CẬP NHẬT UI AN TOÀN
@@ -1196,7 +1182,7 @@ if (btnSubmit) {
     if (impEl) impEl.textContent = improvedAnswer; 
 
     // 5. MỞ KHÓA LẠI NÚT CHO PHÉP NỘP LẦN NỮA VÀ LƯU STATE
-    btnSubmit.textContent = 'Cập nhật câu trả lời & Chấm lại';
+    btnSubmit.textContent = isEnLang ? 'Update Answer & Re-evaluate' : 'Cập nhật câu trả lời & Chấm lại';
     btnSubmit.disabled = false; 
     
     if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
@@ -1212,9 +1198,9 @@ if (btnSubmit) {
     // Tích hợp logic Game (Hiển thị toast & đồng bộ DB)
     if (typeof appState !== 'undefined' && appState.user) {
       if (numericScore < 7.0) {
-        showToast('Đã chấm điểm!', `Điểm: ${numericScore}/10 (+10 XP). Hãy xem nhận xét và gợi ý nâng cấp STAR bên dưới!`, 'warning');
+        showToast(isEnLang ? 'Graded!' : 'Đã chấm điểm!', `Điểm: ${numericScore}/10 (+10 XP). Hãy xem nhận xét và gợi ý nâng cấp STAR bên dưới!`, 'warning');
       } else {
-        showToast('Tuyệt vời!', `Điểm: ${numericScore}/10. Câu trả lời rất tốt, bạn nhận được +50 XP!`, 'success');
+        showToast(isEnLang ? 'Excellent!' : 'Tuyệt vời!', `Điểm: ${numericScore}/10. Câu trả lời rất tốt, bạn nhận được +50 XP!`, 'success');
       }
 
       if (typeof checkAndUpdateStage === 'function') checkAndUpdateStage();
@@ -1580,11 +1566,34 @@ if (btnSubmitLogin) {
   const savedUserId = localStorage.getItem('current_profile_id');
   const savedUserName = localStorage.getItem('current_user_name');
   if (savedUserId && savedUserName) {
-      appState.currentProfileId = savedUserId;
-      if (btnLoginOpen) btnLoginOpen.textContent = savedUserName + ' ▾';
-      if (dropdownUserName) dropdownUserName.textContent = savedUserName;
-
-      loadGamificationData();
+      // Xác thực lại với Backend xem profile_id này có thực sự tồn tại trong Database không
+      // (Phòng trường hợp Database vừa bị xóa/reset trong Docker)
+      fetch(`${API_BASE_URL}/auth/verify/${savedUserId}`)
+          .then(res => {
+              if (res.ok) {
+                  appState.currentProfileId = savedUserId;
+                  if (btnLoginOpen) btnLoginOpen.textContent = savedUserName + ' ▾';
+                  if (dropdownUserName) dropdownUserName.textContent = savedUserName;
+                  loadGamificationData();
+              } else if (res.status === 404) {
+                  // Tài khoản không còn trong Database (DB mới tinh) -> tự động dọn sạch phiên cũ trong trình duyệt
+                  Object.keys(localStorage)
+                      .filter(k => k === 'current_profile_id' || k === 'current_user_name' || k.startsWith('analysis_') || k.startsWith('has_analyzed_'))
+                      .forEach(k => localStorage.removeItem(k));
+                  sessionStorage.clear();
+                  appState.currentProfileId = null;
+                  window.userSavedStudyTasks = [];
+                  if (typeof window.renderMasterRoadmapUI === 'function') window.renderMasterRoadmapUI([]);
+                  if (btnLoginOpen) btnLoginOpen.textContent = 'Đăng nhập';
+                  if (typeof forceNavigateToHome === 'function') forceNavigateToHome();
+              }
+          })
+          .catch(() => {
+              // Nếu chưa kết nối được backend lúc load
+              appState.currentProfileId = savedUserId;
+              if (btnLoginOpen) btnLoginOpen.textContent = savedUserName + ' ▾';
+              if (dropdownUserName) dropdownUserName.textContent = savedUserName;
+          });
   }
 
 
@@ -1815,11 +1824,62 @@ if (btnSubmitLogin) {
         renderSchedules();
     };
 
-    // Sự kiện cho nút Tạo lộ trình học
+    // Hàm tải lịch rảnh đã lưu của người dùng từ Server
+    window.loadSavedSchedulesFromServer = async function() {
+        const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
+        if (!profileId || !/^\d+$/.test(String(profileId))) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/study-plan/schedules/${profileId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data && Array.isArray(data.schedules) && data.schedules.length > 0) {
+                window.userSchedules = data.schedules;
+                renderSchedules();
+            }
+        } catch (err) {
+            console.error("Lỗi tải lịch rảnh đã lưu:", err);
+        }
+    };
+
+    // Hàm mở nhanh khu vực Cập nhật lịch rảnh (Giữ lộ trình) từ Trang chủ
+    window.openQuickScheduleEditor = async function() {
+        const realProfileId = localStorage.getItem('current_profile_id') || appState.currentProfileId;
+        if (!realProfileId) {
+            if (typeof showToast === 'function') showToast('Chưa đăng nhập', 'Vui lòng đăng nhập để cập nhật lịch rảnh!', 'warning');
+            return;
+        }
+        await window.loadSavedSchedulesFromServer();
+
+        appState.currentScreen = 'screen-gap';
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('current_screen', 'screen-gap');
+        }
+        document.querySelectorAll('.screen-page').forEach(p => p.classList.add('hidden'));
+        const gapScreen = document.getElementById('screen-gap');
+        if (gapScreen) gapScreen.classList.remove('hidden');
+
+        const skeleton = document.getElementById('gapSkeletonLoading');
+        const realResults = document.getElementById('gapRealResults');
+        if (skeleton) skeleton.classList.add('hidden');
+        if (realResults) realResults.classList.remove('hidden');
+
+        if (typeof updateActiveTabHighlight === 'function') {
+            updateActiveTabHighlight('screen-gap');
+        }
+
+        const schedBox = document.getElementById('scheduleListContainer');
+        if (schedBox) {
+            setTimeout(() => schedBox.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+        }
+        if (typeof showToast === 'function') {
+            showToast('Cập nhật lịch rảnh', 'Hãy thêm/xóa khung giờ rảnh và bấm "Cập nhật lịch rảnh (Giữ lộ trình)"!', 'success');
+        }
+    };
+
+    // Sự kiện cho nút Tạo lộ trình mới (Reset lại toàn bộ thống kê, Streak và Hạt giống theo lộ trình mới)
     const btnGeneratePlan = document.getElementById('btnGenerateStudyPlan'); 
     
     if (btnGeneratePlan) {
-        // 1. CƯỠNG CHẾ MỞ KHÓA NÚT VÀ BỎ LÀM MỜ NGAY KHI TẢI TRANG
         btnGeneratePlan.disabled = false;
         btnGeneratePlan.classList.remove('opacity-50', 'cursor-not-allowed');
 
@@ -1836,11 +1896,10 @@ if (btnSubmitLogin) {
                 return;
             }
 
-            // Đổi trạng thái nút khi đang chờ AI
             const originalText = btnGeneratePlan.innerHTML;
             btnGeneratePlan.disabled = true;
             btnGeneratePlan.classList.add('opacity-50', 'cursor-not-allowed');
-            btnGeneratePlan.innerHTML = 'Đang tạo lộ trình... <span class="animate-spin ml-2"></span>';
+            btnGeneratePlan.innerHTML = 'Đang tạo lộ trình mới...';
 
             try {
                 const payload = {
@@ -1858,50 +1917,39 @@ if (btnSubmitLogin) {
                     body: JSON.stringify(payload)
                 });
                 
-                // --- THÊM ĐOẠN XỬ LÝ 404 Ở ĐÂY ---
                 if (res.status === 404) {
-                    // Nếu Backend báo không tìm thấy tài khoản -> Xóa bộ nhớ tạm và bắt đăng nhập lại
                     localStorage.removeItem('current_profile_id');
                     localStorage.removeItem('current_user_name');
                     appState.currentProfileId = null;
-                    
                     if (typeof showToast === 'function') {
-                        showToast('Phiên hết hạn', 'Tài khoản không tồn tại (có thể do DB đã bị reset). Vui lòng đăng nhập lại!', 'error');
+                        showToast('Phiên hết hạn', 'Tài khoản không tồn tại. Vui lòng đăng nhập lại!', 'error');
                     }
-                    
-                    // Đổi lại nút giao diện
                     const btnLoginOpen = document.getElementById('btnLoginOpen');
                     if (btnLoginOpen) btnLoginOpen.textContent = 'Đăng nhập';
-                    
                     throw new Error("Tài khoản không tồn tại trong hệ thống.");
                 }
 
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || "Lỗi tạo lộ trình");
 
-                if (typeof showToast === 'function') showToast('Thành công', 'Lộ trình cá nhân hóa đã được tạo!', 'success');
+                if (typeof showToast === 'function') {
+                    showToast('Đã tạo lộ trình mới', data.message || 'Đã tạo lộ trình mới và đặt lại thống kê học tập, Streak, Hạt giống!', 'success');
+                }
                 
-                // 1. Kéo dữ liệu lộ trình mới nhất và vẽ vào Sơ đồ ở Trang chủ
                 await loadSavedStudyPlan();
+                await loadGamificationData();
 
-                // 2. Chuyển ngay giao diện về Trang chủ để người dùng thấy kết quả
                 appState.currentScreen = 'screen-home';
-                
-                // Dùng sessionStorage (hoặc localStorage) theo cấu hình hiện tại của bạn để F5 không bị mất tab
                 if (typeof sessionStorage !== 'undefined') {
                     sessionStorage.setItem('current_screen', 'screen-home'); 
                 }
 
-                // Ẩn tất cả các trang và mở Trang chủ
                 document.querySelectorAll('.screen-page').forEach(p => p.classList.add('hidden'));
-                
                 const forceHideGap = document.getElementById('screen-gap');
                 if (forceHideGap) forceHideGap.classList.add('hidden');
-                
                 const homeScreen = document.getElementById('screen-home');
                 if (homeScreen) homeScreen.classList.remove('hidden');
                 
-                // Cập nhật lại màu của thanh menu
                 if (typeof updateActiveTabHighlight === 'function') {
                     updateActiveTabHighlight('screen-home');
                 }
@@ -1918,6 +1966,64 @@ if (btnSubmitLogin) {
         });
     }
 
+    // Sự kiện cho nút Cập nhật lịch rảnh (Giữ nguyên lộ trình hiện tại, tiến độ và Streak)
+    const btnUpdateScheduleKeep = document.getElementById('btnUpdateScheduleKeepRoadmap');
+    if (btnUpdateScheduleKeep) {
+        btnUpdateScheduleKeep.addEventListener('click', async () => {
+            const realProfileId = localStorage.getItem('current_profile_id') || appState.currentProfileId;
+            if (!realProfileId) {
+                if (typeof showToast === 'function') showToast('Chưa đăng nhập', 'Vui lòng đăng nhập để cập nhật lịch rảnh!', 'warning');
+                return;
+            }
+            if (window.userSchedules.length === 0) {
+                if (typeof showToast === 'function') showToast('Thiếu lịch rảnh', 'Vui lòng thêm ít nhất 1 khung giờ rảnh để xếp lại các bài học!', 'warning');
+                return;
+            }
+
+            const originalHtml = btnUpdateScheduleKeep.innerHTML;
+            btnUpdateScheduleKeep.disabled = true;
+            btnUpdateScheduleKeep.classList.add('opacity-50', 'cursor-not-allowed');
+            btnUpdateScheduleKeep.innerHTML = 'Đang cập nhật lịch rảnh...';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/study-plan/update-schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        profile_id: String(realProfileId),
+                        schedules: window.userSchedules
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Không thể cập nhật lịch rảnh');
+
+                if (typeof showToast === 'function') {
+                    showToast('Đã cập nhật lịch rảnh', data.message || 'Đã cập nhật lịch rảnh và giữ nguyên lộ trình hiện tại!', 'success');
+                }
+
+                await loadSavedStudyPlan();
+                await loadGamificationData();
+
+                appState.currentScreen = 'screen-home';
+                if (typeof sessionStorage !== 'undefined') {
+                    sessionStorage.setItem('current_screen', 'screen-home');
+                }
+                document.querySelectorAll('.screen-page').forEach(p => p.classList.add('hidden'));
+                const homeScreen = document.getElementById('screen-home');
+                if (homeScreen) homeScreen.classList.remove('hidden');
+                if (typeof updateActiveTabHighlight === 'function') {
+                    updateActiveTabHighlight('screen-home');
+                }
+            } catch (err) {
+                if (typeof showToast === 'function') showToast('Thông báo', err.message, 'warning');
+            } finally {
+                btnUpdateScheduleKeep.disabled = false;
+                btnUpdateScheduleKeep.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnUpdateScheduleKeep.innerHTML = originalHtml;
+            }
+        });
+    }
+
     // --- CẬP NHẬT LẠI HÀM LỌC GIỜ KHÔNG CHO CHỌN QUÁ KHỨ NẾU LÀ HÔM NAY ---
     function updateTimeDropdowns() {
         const hourSel = document.getElementById('startHour');
@@ -1929,27 +2035,21 @@ if (btnSubmitLogin) {
         const currentH = now.getHours();
         const currentM = now.getMinutes();
 
-        // Kiểm tra xem ngày đang chọn có phải là ngày hôm nay hay không
-        // selectedFullDate có định dạng "DD/MM/YYYY"
         let isToday = false;
         if (selectedFullDate) {
             const [d, m, y] = selectedFullDate.split('/').map(Number);
             isToday = (d === now.getDate() && m === (now.getMonth() + 1) && y === now.getFullYear());
         } else {
-            // Nếu chưa chọn ngày nào trên lịch thì mặc định coi như hôm nay để bảo vệ logic
             isToday = true;
         }
 
-        // Lấy giá trị đang chọn hiện tại để giữ lại nếu hợp lệ
         const selectedH = parseInt(hourSel.value) || currentH;
         const selectedM = parseInt(minSel.value) || currentM;
 
-        // 1. Render danh sách Giờ (00 đến 23)
         let hourOptions = '';
         let firstValidHour = -1;
 
         for (let i = 0; i < 24; i++) {
-            // Nếu là hôm nay và giờ nhỏ hơn giờ hiện tại -> Bỏ qua (không cho chọn)
             if (isToday && i < currentH) {
                 continue; 
             }
@@ -1959,20 +2059,17 @@ if (btnSubmitLogin) {
         }
         hourSel.innerHTML = hourOptions;
 
-        // Đảm bảo giờ đang chọn không bị nằm trong quá khứ
         let finalH = selectedH;
         if (isToday && selectedH < currentH) {
             finalH = (firstValidHour !== -1) ? firstValidHour : currentH;
         }
         hourSel.value = String(finalH).padStart(2, '0');
 
-        // 2. Render danh sách Phút (00 đến 59)
         let minOptions = '';
         const activeHour = parseInt(hourSel.value);
         let firstValidMin = -1;
 
         for (let i = 0; i < 60; i++) {
-            // Nếu là hôm nay, trùng với giờ hiện tại nhưng phút nhỏ hơn phút hiện tại -> Bỏ qua
             if (isToday && activeHour === currentH && i < currentM) {
                 continue;
             }
@@ -1986,13 +2083,11 @@ if (btnSubmitLogin) {
         if (isToday && activeHour === currentH && selectedM < currentM) {
             finalM = (firstValidMin !== -1) ? firstValidMin : currentM;
         }
-        // Phòng hờ nếu danh sách phút bị lọc sạch (ví dụ chọn sát nút 23:59), gán về phút hợp lệ đầu tiên
         if (!minSel.querySelector(`option[value="${String(finalM).padStart(2, '0')}"]`)) {
             finalM = firstValidMin !== -1 ? firstValidMin : 0;
         }
         minSel.value = String(finalM).padStart(2, '0');
 
-        // Cập nhật giá trị vào input ẩn
         hiddenInp.value = `${hourSel.value}:${minSel.value}`;
     }
 
@@ -2007,7 +2102,6 @@ if (btnSubmitLogin) {
 
         if (!hourSel || !minSel) return;
 
-        // Khởi tạo cứng cho ô ĐẾN (End Time) bình thường từ 00 đến 23
         let endHOptions = '';
         for (let i = 0; i < 24; i++) {
             const hStr = String(i).padStart(2, '0');
@@ -2031,7 +2125,6 @@ if (btnSubmitLogin) {
         if (endMinSel) endMinSel.addEventListener('change', updateEndValue);
         updateEndValue();
 
-        // Lắng nghe sự kiện thay đổi của ô TỪ (Start Time) để cập nhật lại ô phút/giờ tương ứng
         hourSel.addEventListener('change', () => {
             updateTimeDropdowns();
         });
@@ -2040,17 +2133,15 @@ if (btnSubmitLogin) {
             if (hiddenInp) hiddenInp.value = `${hourSel.value}:${minSel.value}`;
         });
 
-        // Chạy lần đầu tiên
         updateTimeDropdowns();
     }
 
-    // Kích hoạt ngay khi tải trang
     initModernTimeDropdowns();
   
 // --- TẢI LỘ TRÌNH ĐÃ LƯU TỪ DATABASE CỦA TÀI KHOẢN ---
     async function loadSavedStudyPlan() {
         const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
-        if (!profileId || !/^\d+$/.test(String(profileId))) return; // Chỉ tải nếu đã có ID số
+        if (!profileId || !/^\d+$/.test(String(profileId))) return;
 
         try {
             const res = await fetch(`${API_BASE_URL}/study-plan/tasks/${profileId}`);
@@ -2059,7 +2150,6 @@ if (btnSubmitLogin) {
             
             if (tasks && tasks.length > 0) {
                 window.userSavedStudyTasks = tasks;
-                // Hiển thị ra giao diện Trang chủ có chức năng Gating Khóa/Mở
                 if (typeof renderMasterRoadmapUI === 'function') {
                     renderMasterRoadmapUI(tasks);
                 }
@@ -2073,7 +2163,6 @@ if (btnSubmitLogin) {
         return /^\d+$/.test(str);
     }
 
-    // Hàm mẫu render danh sách bài học lên giao diện
     function renderSavedStudyTasksOnUI(tasks) {
         const planContainer = document.getElementById('studyPlanResultContainer');
         if (!planContainer) return;
@@ -2089,19 +2178,18 @@ if (btnSubmitLogin) {
         `).join('');
     }
 
-    // Gọi hàm load ngay khi người dùng vừa vào trang hoặc đăng nhập thành công
     loadSavedStudyPlan();
+    window.loadSavedSchedulesFromServer();
 
-    // Tự động kiểm tra mở khóa bài học theo thời gian thực mỗi 15 giây (không cần F5)
     setInterval(() => {
         if (window.userSavedStudyTasks && window.userSavedStudyTasks.length > 0 && typeof window.renderMasterRoadmapUI === 'function') {
             window.renderMasterRoadmapUI(window.userSavedStudyTasks);
         }
     }, 15000);
 
-// --- RENDER LỘ TRÌNH TỪNG BƯỚC (STEP-BY-STEP GATING) TRÊN TRANG CHỦ ---
+// --- RENDER SƠ ĐỒ LỘ TRÌNH ĐỐI XỨNG 1 TRÁI - 1 PHẢI (GIỐNG GIAO DIỆN KHI CHƯA ĐĂNG NHẬP) ĐẾN HẾT LỘ TRÌNH ---
 window.renderMasterRoadmapUI = function(tasks) {
-    const container = document.getElementById('homeRoadmapContainer'); // ID vùng hiển thị ở trang chủ
+    const container = document.getElementById('homeRoadmapContainer');
     if (!container) return;
 
     if (!tasks || tasks.length === 0) {
@@ -2109,27 +2197,23 @@ window.renderMasterRoadmapUI = function(tasks) {
         return;
     }
 
-    let html = '';
-    let unlocked = true; // Bài đầu tiên luôn được mở khóa theo thứ tự
+    let html = `<div class="absolute top-6 bottom-6 left-1/2 -translate-x-1/2 w-0 border-r-2 border-dashed border-slate-200 z-0 hidden sm:block"></div>`;
+    let unlocked = true;
     let completedCount = 0;
-    let totalMinutes = 0;
-    let completedMinutes = 0;
 
     tasks.forEach((task, index) => {
         const isCompleted = task.status === 'completed';
         const isUnscheduled = task.status === 'unscheduled';
-        
-        totalMinutes += (task.duration_minutes || 0);
+        const isLeft = (index % 2 === 0); // 1 Trái (chẵn) - 1 Phải (lẻ) luân phiên đến hết lộ trình
+        const stepNum = String(index + 1).padStart(2, '0');
+
         if (isCompleted) {
             completedCount++;
-            completedMinutes += (task.duration_minutes || 0);
         }
 
-        // Logic Gating: Nếu bài trước chưa xong và không phải bài đầu tiên -> Khóa bài này
         let isDisabled = !unlocked && !isCompleted;
         if (isUnscheduled) isDisabled = true;
 
-        // Kiểm tra thời gian thực (Unlock time nếu có, kèm dung sai 60 giây đồng bộ với Backend)
         const now = new Date();
         const unlockTime = task.unlock_time ? new Date(task.unlock_time) : null;
         const isTimeLocked = unlockTime && !isNaN(unlockTime.getTime()) && (now.getTime() + 60000 < unlockTime.getTime()) && !isCompleted;
@@ -2141,49 +2225,80 @@ window.renderMasterRoadmapUI = function(tasks) {
         const unlockTimeFormatted = (unlockTime && !isNaN(unlockTime.getTime()))
             ? `${unlockTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ${String(unlockTime.getDate()).padStart(2, '0')}/${String(unlockTime.getMonth() + 1).padStart(2, '0')}`
             : '';
-        
-        html += `
-            <div class="flex items-start gap-4 p-4 rounded-2xl border transition-all ${isCompleted ? 'bg-emerald-50/40 border-emerald-200' : (isDisabled ? 'bg-slate-50 opacity-60 border-slate-200' : 'bg-white border-indigo-100 shadow-sm')}" data-task-id="${task.id}">
-                <!-- Số thứ tự bước -->
-                <div class="w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 ${isCompleted ? 'bg-emerald-600 text-white' : (isDisabled ? 'bg-slate-200 text-slate-500' : 'bg-indigo-600 text-white')}">
-                    ${isCompleted ? '✓' : (index + 1)}
-                </div>
-                
-                <!-- Nội dung bài học -->
-                <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">${task.scheduled_day || 'Linh hoạt'}</span>
-                        <span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${task.duration_minutes || 60} phút</span>
-                    </div>
-                    <h4 class="text-xs font-bold text-slate-900 mt-1">${task.title}</h4>
-                    ${isTimeLocked ? `<p class="text-[10px] text-amber-600 font-medium mt-0.5">⏰ Mở khóa lúc: ${unlockTimeFormatted}</p>` : ''}
-                    ${isUnscheduled ? `<p class="text-[10px] text-slate-400 mt-0.5">Chờ đăng ký thêm giờ rảnh tuần tới</p>` : ''}
-                </div>
 
-                <!-- Nút hành động -->
-                <div>
-                    ${isCompleted ? 
-                        '<span class="text-xs font-bold text-emerald-600 bg-emerald-100 px-3 py-1.5 rounded-xl">Đã hoàn thành</span>' : 
-                        (isDisabled ? 
-                            `<span class="text-xs font-semibold text-slate-400 bg-slate-200 px-3 py-1.5 rounded-xl cursor-not-allowed">${isUnscheduled ? 'Chờ lịch' : (isTimeLocked ? 'Chưa đến giờ' : 'Đang khóa')}</span>` : 
-                            `<button onclick="completeTask(${task.id})" class="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer">Hoàn thành ✨</button>`
-                        )
-                    }
+        let cardClass = '';
+        let badgeLabel = '';
+        let badgeColorClass = '';
+        let centerCircleHtml = '';
+        let actionHtml = '';
+
+        if (isCompleted) {
+            cardClass = 'bg-emerald-50/60 border border-emerald-400 shadow-xs';
+            badgeLabel = `Bài ${stepNum} • Đã hoàn thành`;
+            badgeColorClass = 'text-emerald-700';
+            centerCircleHtml = `<div class="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center ring-4 ring-emerald-50 shadow-sm flex-shrink-0 hidden sm:flex">✓</div>`;
+            actionHtml = `<div class="mt-2"><span class="inline-block text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-200">Đã hoàn thành (+50 XP)</span></div>`;
+        } else if (!isDisabled) {
+            cardClass = 'bg-amber-50/50 border border-amber-400 shadow-xs hover:border-amber-500';
+            badgeLabel = `Bài ${stepNum} • Sẵn sàng`;
+            badgeColorClass = 'text-amber-700';
+            centerCircleHtml = `<div class="w-9 h-9 rounded-full bg-amber-500 text-white font-bold text-xs flex items-center justify-center ring-4 ring-amber-50 shadow-sm flex-shrink-0 hidden sm:flex">${stepNum}</div>`;
+            actionHtml = `<div class="mt-2.5"><button type="button" onclick="completeTask(${task.id})" class="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer">Hoàn thành (+50 XP)</button></div>`;
+        } else {
+            cardClass = 'bg-slate-50 border border-slate-200 opacity-80';
+            const lockReason = isUnscheduled ? 'Chờ xếp lịch' : (isTimeLocked ? 'Chưa đến giờ' : 'Khóa');
+            badgeLabel = `Bài ${stepNum} • ${lockReason}`;
+            badgeColorClass = 'text-slate-500';
+            centerCircleHtml = `
+                <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-300 text-slate-500 font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0 hidden sm:flex">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </div>`;
+            actionHtml = `<div class="mt-2"><span class="inline-block text-[10px] font-semibold text-slate-500 bg-slate-200/80 px-2.5 py-1 rounded-md">${lockReason}</span></div>`;
+        }
+
+        const timeAndDurationInfo = `
+            <div class="text-[11px] text-slate-500 mt-1">
+                <span>${task.scheduled_day || 'Linh hoạt'}</span> • <span>${task.duration_minutes || 45} phút</span>
+            </div>
+            ${isTimeLocked ? `<div class="text-[10px] text-amber-700 font-semibold mt-0.5">Mở khóa lúc: ${unlockTimeFormatted}</div>` : ''}
+            ${isUnscheduled ? `<div class="text-[10px] text-slate-400 mt-0.5">Cập nhật thêm giờ rảnh để xếp lịch</div>` : ''}
+        `;
+
+        const buildNodeCard = (alignClass) => `
+            <div class="${cardClass} rounded-lg p-3.5 transition-all ${alignClass}" data-task-id="${task.id}">
+                <span class="text-[10px] font-semibold ${badgeColorClass} uppercase tracking-wider block">${badgeLabel}</span>
+                <h4 class="font-semibold text-xs sm:text-sm text-slate-900 mt-0.5">${task.title}</h4>
+                ${timeAndDurationInfo}
+                ${actionHtml}
+            </div>
+        `;
+
+        html += `
+            <div class="relative z-10 flex items-center justify-between mb-8">
+                <div class="w-5/12 text-right pr-6 hidden sm:block">
+                    ${isLeft ? buildNodeCard('text-right') : ''}
+                </div>
+                ${centerCircleHtml}
+                <div class="w-full sm:w-5/12 sm:pl-6">
+                    <div class="hidden sm:block">
+                        ${!isLeft ? buildNodeCard('text-left') : ''}
+                    </div>
+                    <div class="sm:hidden">
+                        ${buildNodeCard('text-left')}
+                    </div>
                 </div>
             </div>
         `;
 
-        // Cập nhật thanh tiến độ tổng thể trên giao diện nếu có
-        const progressHeader = document.querySelector('#roadmapDiagramSection span.text-xs.font-semibold');
-        if (progressHeader) {
-            progressHeader.textContent = `Tiến độ: ${completedCount} / ${tasks.length} Bài Hoàn thành`;
-        }
-
-        // Nếu bài hiện tại chưa hoàn thành, các bài sau sẽ bị khóa lại theo nguyên lý step-by-step
         if (!isCompleted) {
             unlocked = false;
         }
     });
+
+    const progressBadge = document.getElementById('roadmapProgressBadge') || document.querySelector('#roadmapDiagramSection span.text-xs.font-semibold');
+    if (progressBadge) {
+        progressBadge.textContent = `Tiến độ: ${completedCount} / ${tasks.length} Bài Hoàn thành`;
+    }
 
     container.innerHTML = html;
 };
@@ -2202,10 +2317,9 @@ window.completeTask = async function(taskId) {
 
         if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
         if (typeof showToast === 'function') {
-            showToast('Tuyệt vời!', `${data.message || 'Đã hoàn thành bài học!'} | +${data.added_xp} XP | Chuỗi: ${data.current_streak} ngày`, 'success');
+            showToast('Hoàn thành bài học!', `${data.message || 'Đã hoàn thành!'} | +${data.added_xp} XP | Chuỗi: ${data.current_streak} ngày`, 'success');
         }
 
-        // Tải lại lộ trình và cập nhật toàn bộ chỉ số gamification ngay lập tức
         await loadSavedStudyPlan();
         await loadGamificationData();
         
@@ -2215,7 +2329,7 @@ window.completeTask = async function(taskId) {
 };
 
 
-// --- TẢI DỮ LIỆU GAMIFICATION (XP, STREAK) TỪ DATABASE ---
+// --- TẢI DỮ LIỆU GAMIFICATION (XP, STREAK, CÂY TRỒNG THEO LỘ TRÌNH, PHIẾU NGHỈ PHÉP) ---
 async function loadGamificationData() {
     const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
     if (!profileId || !/^\d+$/.test(String(profileId))) return;
@@ -2226,9 +2340,18 @@ async function loadGamificationData() {
         const data = await res.json();
         
         if (!data.error) {
-            // 1. SẮP XẾP CHUỖI NGÀY & ĐỒNG BỘ XP VÀO APPSTATE
             appState.user.currentXp = data.current_xp || 0;
             appState.user.streakDays = data.current_streak || 0;
+            appState.targetPlantXp = data.target_plant_xp || 0;
+            appState.roadmapDays = data.roadmap_days || 0;
+
+            if (Array.isArray(data.stage_thresholds) && data.stage_thresholds.length === 6) {
+                data.stage_thresholds.forEach((thr, idx) => {
+                    if (appState.stages[idx]) {
+                        appState.stages[idx].xpRequired = thr;
+                    }
+                });
+            }
 
             const streakEl = document.getElementById('currentStreakText');
             if (streakEl) {
@@ -2236,45 +2359,43 @@ async function loadGamificationData() {
             }
             if (typeof updateStreakColor === 'function') updateStreakColor();
 
-            // 2. CẬP NHẬT GIAI ĐOẠN MẦM CÂY ĐỘNG (Từ 1/6 đến 6/6)
             const stagesList = ["Hạt giống", "Nảy mầm", "Phát triển thân", "Phân cành", "Ra lá", "Kết trái"];
             let stageIndex = stagesList.indexOf(data.seed_stage);
             if (stageIndex === -1) stageIndex = 0;
             
             appState.user.currentStageIndex = stageIndex;
-            let currentStageNum = stageIndex + 1;
-
-            // GỌI LỆNH CẬP NHẬT LẠI HÌNH ẢNH MẦM CÂY:
             updateIllustration();
 
-            // Đổi tiêu đề tên mầm cây
-            const plantTitleEl = document.getElementById('homePlantTitle');
-            if (plantTitleEl) {
-                plantTitleEl.textContent = data.seed_stage;
-            }
+            // Cập nhật trạng thái Thẻ Phiếu Nghỉ Phép (Giới hạn 1 lần / 1 tuần)
+            const leaveBadgeEl = document.getElementById('leavePassBadge');
+            const leaveStatusEl = document.getElementById('leavePassStatusText');
+            const btnUseLeaveEl = document.getElementById('btnUseLeavePass');
+            const remainingLeave = (typeof data.leave_pass_remaining === 'number') ? data.leave_pass_remaining : 1;
 
-            // Cập nhật huy hiệu hiển thị "Giai đoạn X/6"
-            const stageBadgeEl = document.getElementById('homeStageBadge');
-            if (stageBadgeEl) {
-                stageBadgeEl.textContent = `Giai đoạn ${currentStageNum}/6`;
+            if (leaveBadgeEl) {
+                leaveBadgeEl.textContent = `Còn ${remainingLeave}/1 tuần này`;
+                leaveBadgeEl.className = remainingLeave > 0
+                    ? "text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-amber-800 border border-amber-300"
+                    : "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-300";
             }
-
-            // Tự động làm sáng/đổi màu các vòng tròn mốc (01 đến 06) theo tiến độ thực tế
-            for (let i = 1; i <= 6; i++) {
-                const nodeEl = document.getElementById(`homeStageNode-${i}`);
-                const labelEl = document.getElementById(`homeStageLabel-${i}`);
-                if (nodeEl && labelEl) {
-                    if (i <= currentStageNum) {
-                        nodeEl.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#064e3b] text-white flex items-center justify-center font-bold text-xs ring-4 ring-emerald-100 shadow-sm transition-all";
-                        labelEl.className = "text-[10px] sm:text-[11px] font-bold text-[#064e3b] mt-1 whitespace-nowrap";
-                    } else {
-                        nodeEl.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs transition-all";
-                        labelEl.className = "text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap";
-                    }
+            if (leaveStatusEl) {
+                leaveStatusEl.textContent = remainingLeave > 0
+                    ? "Được đăng ký nghỉ tối đa 1 lần/tuần để bảo lưu không mất chuỗi Streak."
+                    : `Đã đăng ký nghỉ phép ngày ${data.last_leave_date} (Đã hết lượt tuần này).`;
+            }
+            if (btnUseLeaveEl) {
+                if (remainingLeave > 0) {
+                    btnUseLeaveEl.disabled = false;
+                    btnUseLeaveEl.textContent = "Đăng ký nghỉ phép hôm nay";
+                    btnUseLeaveEl.className = "w-full py-1.5 px-3 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer";
+                } else {
+                    btnUseLeaveEl.disabled = true;
+                    btnUseLeaveEl.textContent = "Đã dùng phiếu nghỉ tuần này";
+                    btnUseLeaveEl.className = "w-full py-1.5 px-3 rounded-lg text-xs font-bold bg-slate-200 text-slate-500 cursor-not-allowed";
                 }
             }
 
-            // 3. CẬP NHẬT CÁC THÔNG SỐ THỐNG KÊ KHÁC
+            // Cập nhật các thông số thống kê báo cáo học tập
             const completedHours = ((data.completed_roadmap_minutes || 0) / 60).toFixed(1);
             const totalHours = ((data.total_roadmap_minutes || 0) / 60).toFixed(1);
             const roadmapProgressEl = document.getElementById('roadmapProgressText');
@@ -2302,16 +2423,25 @@ async function loadGamificationData() {
                 streakSubtitleEl.textContent = `${data.current_streak || 0} ngày streak`;
             }
 
-            // 4. XỬ LÝ ĐỔI MÀU 7 Ô NGÀY TRONG TUẦN
+            // Cập nhật 7 ô ngày trong tuần: CHỈ đánh dấu tích (✓) khi người dùng đã bấm Hoàn thành bài học (kèm ngày nghỉ phép 'P')
+            const completedDays = Array.isArray(data.completed_weekdays)
+                ? data.completed_weekdays
+                : (Array.isArray(data.registered_weekdays) ? data.registered_weekdays : []);
             for (let i = 1; i <= 7; i++) {
                 const dayBox = document.getElementById(`day-box-${i}`);
                 if (dayBox) {
-                    if (data.registered_weekdays && data.registered_weekdays.includes(i)) {
+                    if (completedDays.includes(i)) {
                         dayBox.className = "w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-[10px] flex items-center justify-center border border-indigo-700 shadow-sm";
                         dayBox.textContent = "✓";
+                        dayBox.title = "Ngày đã hoàn thành bài học";
+                    } else if (data.leave_weekday === i) {
+                        dayBox.className = "w-7 h-7 rounded-lg bg-amber-500 text-white font-bold text-[10px] flex items-center justify-center border border-amber-600 shadow-sm";
+                        dayBox.textContent = "P";
+                        dayBox.title = "Ngày đã đăng ký Phiếu nghỉ phép";
                     } else {
                         dayBox.className = "w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200";
                         dayBox.textContent = "•";
+                        dayBox.title = "";
                     }
                 }
             }
@@ -2320,6 +2450,37 @@ async function loadGamificationData() {
         console.error("Lỗi đồng bộ dữ liệu thống kê lên UI:", err);
     }
 }
+
+// --- HÀM ĐĂNG KÝ PHIẾU NGHỈ PHÉP (GIỚI HẠN 1 LẦN / 1 TUẦN) ---
+window.useLeavePass = async function() {
+    const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
+    if (!profileId) {
+        if (typeof showToast === 'function') {
+            showToast('Chưa đăng nhập', 'Vui lòng đăng nhập để đăng ký Phiếu nghỉ phép!', 'warning');
+        }
+        return;
+    }
+
+    try {
+        if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
+        const res = await fetch(`${API_BASE_URL}/gamification/use-leave-pass/${profileId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Không thể đăng ký Phiếu nghỉ phép");
+
+        if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
+        if (typeof showToast === 'function') {
+            showToast('Đăng ký nghỉ phép thành công', data.message, 'success');
+        }
+        await loadGamificationData();
+    } catch (err) {
+        if (typeof showToast === 'function') {
+            showToast('Thông báo', err.message, 'warning');
+        }
+    }
+};
 
 // --- HÀM XỬ LÝ TƯỚI NƯỚC CHO CÂY ---
 window.waterPlant = async function() {
@@ -2442,7 +2603,7 @@ window.renderAnalysisResult = function(data) {
       if (data.gap_details.length === 0) {
         gapContainer.innerHTML = `
           <div class="col-span-full bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 text-center">
-            <div class="font-bold text-sm text-emerald-800">🎉 Xuất sắc! Hồ sơ của bạn đã đáp ứng đầy đủ các kỹ năng trọng tâm của JD.</div>
+            <div class="font-bold text-sm text-emerald-800">Xuất sắc! Hồ sơ của bạn đã đáp ứng đầy đủ các kỹ năng trọng tâm của JD.</div>
             <p class="text-xs text-emerald-700 mt-1">Bạn có thể tạo lộ trình ôn tập chuyên sâu hoặc tiến thẳng vào Phòng Phỏng vấn AI!</p>
           </div>
         `;
@@ -2479,14 +2640,10 @@ window.renderAnalysisResult = function(data) {
   // KHÔI PHỤC MÀN HÌNH VÀ DỮ LIỆU KHI F5 XONG
   // ==========================================
   window.addEventListener('load', () => {
-      // 1. Lấy tab đã lưu từ AppStore hoặc sessionStorage
       const savedScreen = (typeof AppStore !== 'undefined') ? AppStore.state.currentScreen : (sessionStorage.getItem('current_screen') || 'screen-home');
       
       if (savedScreen) {
-          // Ẩn toàn bộ các màn hình
           document.querySelectorAll('.screen-page').forEach(p => p.classList.add('hidden'));
-          
-          // Hiển thị đúng màn hình đã lưu
           const target = document.getElementById(savedScreen);
           if (target) {
               target.classList.remove('hidden');
@@ -2498,7 +2655,6 @@ window.renderAnalysisResult = function(data) {
           }
       }
 
-      // 2. Khôi phục dữ liệu phân tích và vẽ lại giao diện nếu đang ở tab skill gap hoặc có dữ liệu cũ
       if (typeof AppStore !== 'undefined' && AppStore.state.analysisDone && AppStore.state.analysisData) {
           if (typeof window.renderAnalysisResult === 'function') {
               window.renderAnalysisResult(AppStore.state.analysisData);
@@ -2540,7 +2696,7 @@ document.querySelectorAll('.btn-lang-select').forEach(btn => {
     });
 });
 
-// --- 2. XỬ LÝ GỬI REQUEST GỌI AI TẠO BỘ CÂU HỎI NGẪU NHIÊN ĐỘC QUYỀN ---
+// --- 2. XỬ LÝ GỬI REQUEST GỌI AI TẠO BỘ CÂU HỎI NGẪU NHIÊN ĐỘC QUYỀN (VI / EN) ---
 const PERSONA_DISPLAY_LABELS = {
     hr: 'Vòng Nhân sự (HR)',
     tech_lead: 'Vòng Chuyên môn (Tech Lead)',
@@ -2548,10 +2704,19 @@ const PERSONA_DISPLAY_LABELS = {
     hiring_manager: 'Vòng Cuối (Hiring Manager)'
 };
 
+const PERSONA_DISPLAY_LABELS_EN = {
+    hr: 'HR Interview Round',
+    tech_lead: 'Technical / Domain Round',
+    culture_fit: 'Culture Fit Round',
+    hiring_manager: 'Final Hiring Manager Round'
+};
+
 async function generateNewRandomInterviewSession(triggerBtn, defaultLabelHtml) {
     const activePersona = document.querySelector('.persona-option-card.active')?.getAttribute('data-persona') || 'tech_lead';
     const activeLevel = document.querySelector('.btn-level-select.active')?.getAttribute('data-level') || 'mid';
     const activeLang = document.querySelector('.btn-lang-select.active')?.getAttribute('data-lang') || 'vi';
+    const resolvedLang = (activeLang === 'en') ? 'en' : 'vi';
+    appState.interviewLanguage = resolvedLang;
 
     const currentPid = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId || 1;
     const analysisData = (typeof AppStore !== 'undefined' && AppStore.state.analysisData) 
@@ -2568,17 +2733,20 @@ async function generateNewRandomInterviewSession(triggerBtn, defaultLabelHtml) {
     }
 
     if (triggerBtn) {
-        triggerBtn.innerHTML = `<svg class="animate-spin w-4 h-4 inline mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>AI đang sinh câu hỏi ngẫu nhiên...</span>`;
+        const loadingLabel = (resolvedLang === 'en')
+            ? 'AI is generating English interview questions...'
+            : 'AI đang sinh câu hỏi ngẫu nhiên...';
+        triggerBtn.innerHTML = `<svg class="animate-spin w-4 h-4 inline mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>${loadingLabel}</span>`;
         triggerBtn.disabled = true;
     }
 
     try {
-        // Xóa cache câu trả lời của vòng trước để bộ câu hỏi mới hoàn toàn tinh khôi
         Object.keys(interviewAnswersCache).forEach(k => delete interviewAnswersCache[k]);
 
         const enrichedContext = {
             ...analysisData,
-            role_id: analysisData.target_role || appState.selectedRoleId || 'Chuyên viên',
+            role_id: analysisData.role_id || appState.selectedRoleId || 'Chuyên viên',
+            target_role: analysisData.target_role || appState.selectedRoleId || 'Chuyên viên',
             skills: analysisData.matched_skills || (window.currentUploadedSkills ? window.currentUploadedSkills.map(s => s.topic || s) : []),
             gaps: analysisData.missing_skills || (analysisData.gap_details ? analysisData.gap_details.map(g => g.name) : [])
         };
@@ -2587,37 +2755,34 @@ async function generateNewRandomInterviewSession(triggerBtn, defaultLabelHtml) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                profile_id: currentPid,
+                profile_id: String(currentPid),
                 persona: activePersona,
                 level: activeLevel,
-                language: activeLang,
+                language: resolvedLang,
                 analysis_context: enrichedContext,
                 random_nonce: Date.now() + Math.floor(Math.random() * 100000)
             })
         });
 
-        if (!res.ok) throw new Error("Lỗi kết nối tới mô hình AI phỏng vấn.");
-
         const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Lỗi kết nối tới mô hình AI phỏng vấn.");
 
-        // Cập nhật huy hiệu vòng phỏng vấn
         const personaBadge = document.getElementById('interviewActivePersonaBadge');
         if (personaBadge) {
-            personaBadge.textContent = PERSONA_DISPLAY_LABELS[activePersona] || 'Hội đồng Phỏng vấn';
+            personaBadge.textContent = (resolvedLang === 'en')
+                ? (PERSONA_DISPLAY_LABELS_EN[activePersona] || 'Interview Panel')
+                : (PERSONA_DISPLAY_LABELS[activePersona] || 'Hội đồng Phỏng vấn');
         }
         
-        // Render câu hỏi ra giao diện
         if (typeof window.renderInterviewQuestions === 'function') {
             window.renderInterviewQuestions(data.questions);
         }
 
-        // Chuyển view sang phòng phỏng vấn trực tiếp
         const setupView = document.getElementById('interviewSetupView');
         const liveRoomView = document.getElementById('interviewLiveRoomView');
         if (setupView) setupView.classList.add('hidden');
         if (liveRoomView) liveRoomView.classList.remove('hidden');
 
-        // Chuyển highlight nút phía trên sang "Phòng phỏng vấn AI"
         const btnTabModeSetup = document.getElementById('btnTabModeSetup');
         const btnTabModeRoom = document.getElementById('btnTabModeRoom');
         if (btnTabModeSetup && btnTabModeRoom) {
@@ -2626,7 +2791,10 @@ async function generateNewRandomInterviewSession(triggerBtn, defaultLabelHtml) {
         }
 
         if (typeof showToast === 'function') {
-            showToast('Bộ câu hỏi mới sẵn sàng!', `Đã khởi tạo ngẫu nhiên 3 câu hỏi cho ${PERSONA_DISPLAY_LABELS[activePersona] || 'buổi phỏng vấn'}!`, 'success');
+            const msg = (resolvedLang === 'en')
+                ? `Generated 3 new English interview questions for ${PERSONA_DISPLAY_LABELS_EN[activePersona] || 'your session'}!`
+                : `Đã khởi tạo ngẫu nhiên 3 câu hỏi cho ${PERSONA_DISPLAY_LABELS[activePersona] || 'buổi phỏng vấn'}!`;
+            showToast(resolvedLang === 'en' ? 'Interview Ready!' : 'Bộ câu hỏi mới sẵn sàng!', msg, 'success');
         }
 
     } catch (err) {
@@ -2660,7 +2828,7 @@ if (btnRandomizeQuestions) {
         if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
         generateNewRandomInterviewSession(
             btnRandomizeQuestions,
-            `<span>🎲 Đổi bộ câu hỏi ngẫu nhiên mới</span>`
+            `<span>Đổi bộ câu hỏi ngẫu nhiên mới</span>`
         );
     });
 }
@@ -2671,48 +2839,47 @@ let activeInterviewQuestionsList = [];
 window.renderInterviewQuestions = function(questions) {
     if (!questions || !Array.isArray(questions) || questions.length === 0) return;
     activeInterviewQuestionsList = questions;
+    const isEn = (appState.interviewLanguage === 'en');
 
     const tabsContainer = document.getElementById('interviewQuestionTabsContainer');
     if (!tabsContainer) return;
 
-    // 1. Render danh sách các tab câu hỏi động từ API
     tabsContainer.innerHTML = questions.map((q, index) => {
         const qNum = String(index + 1).padStart(2, '0');
         const isActive = index === 0;
+        const prefixLabel = isEn ? `Question ${qNum}` : `Câu ${qNum}`;
+        const defaultTag = isEn ? 'Required' : 'Bắt buộc';
         return `
             <div class="interview-question-tab p-2.5 rounded-lg border ${isActive ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-200 bg-white hover:border-slate-300'} cursor-pointer" data-index="${index}">
-              <div class="text-[10px] font-bold ${isActive ? 'text-indigo-700' : 'text-slate-700'} mb-0.5">Câu ${qNum} • ${q.tag || 'Bắt buộc'}</div>
-              <div class="font-semibold text-xs text-slate-900 truncate">${q.title || q.category || 'Câu hỏi phỏng vấn'}</div>
+              <div class="text-[10px] font-bold ${isActive ? 'text-indigo-700' : 'text-slate-700'} mb-0.5">${prefixLabel} • ${q.tag || defaultTag}</div>
+              <div class="font-semibold text-xs text-slate-900 truncate">${q.title || q.category || (isEn ? 'Interview Question' : 'Câu hỏi phỏng vấn')}</div>
             </div>
         `;
     }).join('');
 
-    // 2. Hàm hiển thị chi tiết câu hỏi lên card chính
     const showQuestionDetail = (qIndex) => {
         currentSelectedQuestionIndex = qIndex;
         const q = questions[qIndex];
         if (!q) return;
 
-        // 🌟 ĐỒNG BỘ ID CÂU HỎI VÀO BIẾN TOÀN CỤC ĐỂ LƯU CACHE VÀ GỌI API ĐÚNG CÂU 🌟
         currentQuestionId = q.id || (qIndex + 1);
 
-        // Đổ dữ liệu lên các thẻ HTML đã gắn ID
         const titleEl = document.getElementById('interviewActiveTitle');
         const questionEl = document.getElementById('interviewActiveQuestion');
         const categoryEl = document.getElementById('interviewActiveCategory');
         const diffEl = document.getElementById('interviewActiveDifficulty');
         const lockedAnsEl = document.getElementById('lockedAiAnswer');
 
-        if (titleEl) titleEl.textContent = q.title || 'Câu hỏi phỏng vấn';
+        if (titleEl) titleEl.textContent = q.title || (isEn ? 'Interview Question' : 'Câu hỏi phỏng vấn');
         if (questionEl) questionEl.textContent = `"${q.question}"`;
-        if (categoryEl) categoryEl.textContent = q.category || 'Chuyên môn';
-        if (diffEl) diffEl.textContent = `Độ khó: ${q.difficulty || '3.5/5'}`;
+        if (categoryEl) categoryEl.textContent = q.category || (isEn ? 'Technical' : 'Chuyên môn');
+        if (diffEl) diffEl.textContent = isEn ? `Difficulty: ${q.difficulty || '3.5/5'}` : `Độ khó: ${q.difficulty || '3.5/5'}`;
 
-        // Đổ nội dung đáp án mẫu STAR
         if (lockedAnsEl) {
-            const star = q.suggested_star || {
-                situation: "Tình huống...", task: "Nhiệm vụ...", action: "Hành động...", result: "Kết quả..."
-            };
+            const star = q.suggested_star || (isEn
+                ? { situation: "Situation context...", task: "Your task...", action: "Actions taken...", result: "Measurable results..." }
+                : { situation: "Tình huống...", task: "Nhiệm vụ...", action: "Hành động...", result: "Kết quả..." }
+            );
             lockedAnsEl.innerHTML = `
                 <p><strong>Situation:</strong> ${star.situation}</p>
                 <p><strong>Task:</strong> ${star.task}</p>
@@ -2721,7 +2888,6 @@ window.renderInterviewQuestions = function(questions) {
             `;
         }
 
-        // Highlight tab đang được chọn
         document.querySelectorAll('.interview-question-tab').forEach((tab, idx) => {
             if (idx === qIndex) {
                 tab.className = "interview-question-tab p-2.5 rounded-lg border border-indigo-600 bg-indigo-50/50 cursor-pointer";
@@ -2734,20 +2900,22 @@ window.renderInterviewQuestions = function(questions) {
             }
         });
 
-        // ==========================================
-        // 🌟 3. KIỂM TRA BỘ NHỚ TẠM (CACHE) VÀ HIỂN THỊ 🌟
-        // ==========================================
         const answerInput = document.getElementById('userAnswerInput');
         const lockOverlay = document.getElementById('lockOverlay');
         const unlockedEval = document.getElementById('unlockedAiEvaluation');
         const btnSubmit = document.getElementById('btnSubmitAnswer');
         
+        if (answerInput) {
+            answerInput.placeholder = isEn
+                ? "Type your answer in English following the STAR structure (Situation - Task - Action - Result)..."
+                : "Gõ câu trả lời theo chuẩn STAR (Situation - Task - Action - Result)...";
+        }
+
         const scoreEl = document.getElementById('aiScoreValue') || document.querySelector('#unlockedAiEvaluation .text-2xl.font-bold');
         const fbEl = document.getElementById('aiFeedbackText');
         const impEl = document.getElementById('aiImprovedAnswerText');
 
         if (interviewAnswersCache[currentQuestionId]) {
-            // TRƯỜNG HỢP A: CÂU NÀY ĐÃ CHẤM ĐIỂM -> Đổ dữ liệu cũ ra
             const savedData = interviewAnswersCache[currentQuestionId];
             
             if (answerInput) answerInput.value = savedData.text;
@@ -2755,40 +2923,33 @@ window.renderInterviewQuestions = function(questions) {
             if (fbEl) fbEl.textContent = savedData.feedback;
             if (impEl) impEl.textContent = savedData.improved;
             
-            // Mở khóa giao diện hiển thị AI chấm điểm
             if (lockOverlay) lockOverlay.style.display = 'none';
             if (unlockedEval) unlockedEval.classList.remove('hidden');
             if (lockedAnsEl) lockedAnsEl.classList.remove('blur-md', 'select-none', 'pointer-events-none');
             
-            // Đổi nút thành "Cập nhật"
             if (btnSubmit) {
-                btnSubmit.textContent = 'Cập nhật câu trả lời & Chấm lại';
+                btnSubmit.textContent = isEn ? 'Update Answer & Re-evaluate' : 'Cập nhật câu trả lời & Chấm lại';
                 btnSubmit.disabled = false;
             }
         } else {
-            // TRƯỜNG HỢP B: CÂU NÀY CHƯA LÀM -> Trả màn hình về trạng thái trống & khóa AI
             if (answerInput) answerInput.value = '';
             if (scoreEl) scoreEl.textContent = '0 / 10';
             if (fbEl) fbEl.textContent = '';
             if (impEl) impEl.textContent = '';
             
-            // Khóa UI hiển thị AI lại
             if (lockOverlay) lockOverlay.style.display = 'flex';
             if (unlockedEval) unlockedEval.classList.add('hidden');
             if (lockedAnsEl) lockedAnsEl.classList.add('blur-md', 'select-none', 'pointer-events-none');
             
-            // Đổi nút thành "Nộp bài"
             if (btnSubmit) {
-                btnSubmit.textContent = 'Nộp câu trả lời & Chấm điểm AI';
+                btnSubmit.textContent = isEn ? 'Submit Answer & AI Grading' : 'Nộp câu trả lời & Chấm điểm AI';
                 btnSubmit.disabled = false;
             }
         }
     };
 
-    // Mặc định hiển thị câu đầu tiên
     showQuestionDetail(0);
 
-    // Gắn sự kiện click cho các tab câu hỏi
     document.querySelectorAll('.interview-question-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             const idx = parseInt(tab.getAttribute('data-index'), 10);

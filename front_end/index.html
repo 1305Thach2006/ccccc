@@ -174,9 +174,9 @@
         <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-xs flex flex-col justify-between space-y-4">
           
           <div class="space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <h2 id="homePlantTitle" class="text-2xl sm:text-3xl font-extrabold text-[#064e3b] tracking-tight">
                     Hạt giống
                   </h2>
@@ -184,13 +184,10 @@
                     Giai đoạn 1/6
                   </span>
                 </div>
-                <p class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-relaxed">
-                  Mỗi bài hoàn thành bổ sung XP cho cây. Cây lớn dần theo tiến độ của toàn bộ khoá học.
-                </p>
               </div>
 
               <!-- NÚT TƯỚI NƯỚC -->
-              <button class="btn-water-plant text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs flex-shrink-0">
+              <button class="btn-water-plant text-xs font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs flex-shrink-0 cursor-pointer">
                 <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                 <span>Tưới nước (+25 XP)</span>
               </button>
@@ -262,7 +259,7 @@
           </div>
         </div>
 
-        <!-- CỘT PHẢI (lg:col-span-4): KHỐI 'STREAK' -->
+        <!-- CỘT PHẢI (lg:col-span-4): KHỐI 'STREAK' & PHIẾU NGHỈ PHÉP 1 LẦN/TUẦN -->
         <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-xs flex flex-col justify-between text-center relative overflow-hidden group hover:border-orange-300 transition-all">
           <div class="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-orange-100/60 blur-3xl pointer-events-none"></div>
           <div class="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-amber-100/40 blur-2xl pointer-events-none"></div>
@@ -272,12 +269,13 @@
               <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping"></span>
               Kỷ luật học tập
             </span>
+            <span class="text-[10px] font-semibold text-slate-500">Tối đa 1 Streak / ngày</span>
           </div>
 
           <!-- Flame & Number -->
-          <div class="my-4 flex flex-col items-center justify-center relative z-10">
-            <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-300 flex items-center justify-center shadow-inner mb-3">
-              <svg class="w-10 h-10 fill-current text-slate-300 drop-shadow-sm" viewBox="0 0 20 20">
+          <div class="my-3 flex flex-col items-center justify-center relative z-10">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-300 flex items-center justify-center shadow-inner mb-2">
+              <svg class="w-9 h-9 fill-current text-slate-300 drop-shadow-sm" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.316.492-.53 1.05-.67 1.63-.326 1.343-.377 2.766-.145 4.126.046.269.112.533.195.792a.5.5 0 01-.762.53 7.02 7.02 0 01-1.632-1.748c-.288-.415-.47-.887-.55-1.378a1 1 0 00-1.737-.585 7.973 7.973 0 00-1.576 3.655 8 8 0 1015.008-2.658c-.378-.857-.88-1.64-1.488-2.316a9.01 9.01 0 00-2.42-1.971z" clip-rule="evenodd"/>
               </svg>
             </div>
@@ -291,13 +289,27 @@
               CHUỖI NGÀY LIÊN TỤC
             </div>
 
-            <p class="text-xs text-slate-600 mt-2 max-w-[250px] leading-relaxed">
-              Hãy bắt đầu bài học đầu tiên hôm nay để kích hoạt chuỗi ngày học tập của bạn!
+            <p id="streakStatusDesc" class="text-xs text-slate-600 mt-1.5 max-w-[260px] leading-relaxed">
+              Hoàn thành bài học trong ngày để cộng 1 ngày vào chuỗi Streak.
             </p>
           </div>
 
+          <!-- THẺ PHIẾU NGHỈ PHÉP (GIỚI HẠN 1 LẦN / 1 TUẦN) -->
+          <div id="leavePassCard" class="bg-amber-50/70 border border-amber-200/90 rounded-xl p-2.5 text-left space-y-1.5 relative z-10 mb-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Thẻ Phiếu Nghỉ Phép</span>
+              <span id="leavePassBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-amber-800 border border-amber-300">Còn 1/1 tuần này</span>
+            </div>
+            <p id="leavePassStatusText" class="text-[11px] text-slate-600 leading-snug">
+              Được đăng ký nghỉ tối đa 1 lần/tuần để bảo lưu không mất chuỗi Streak.
+            </p>
+            <button type="button" id="btnUseLeavePass" onclick="window.useLeavePass()" class="w-full py-1.5 px-3 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer">
+              Đăng ký nghỉ phép hôm nay
+            </button>
+          </div>
+
           <!-- 7-Day Indicators -->
-          <div class="pt-3 border-t border-slate-100 space-y-2 relative z-10">
+          <div class="pt-2.5 border-t border-slate-100 space-y-2 relative z-10">
             <div class="flex items-center justify-between text-[11px] text-slate-500 font-medium">
               <span>Tuần này:</span>
             </div>
@@ -324,11 +336,16 @@
         <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
         <span>Sơ đồ Lộ trình học tập</span>
       </h3>
-      <p class="text-xs text-slate-500 mt-0.5">Lộ trình sẽ được AI tự động sinh ra sau khi bạn phân tích kỹ năng ở phần Hồ sơ.</p>
+      <p class="text-xs text-slate-500 mt-0.5">Lộ trình được trình bày đối xứng Trái - Phải xuyên suốt các bài học đến khi hoàn tất.</p>
     </div>
-    <span class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-50 text-slate-500 border border-slate-200 self-start sm:self-auto">
-      Tiến độ: 0 Bài Hoàn thành
-    </span>
+    <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+      <button type="button" id="btnQuickEditSchedule" onclick="window.openQuickScheduleEditor()" class="text-xs font-semibold px-3 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors cursor-pointer">
+        Cập nhật lịch rảnh (Giữ lộ trình)
+      </button>
+      <span id="roadmapProgressBadge" class="text-xs font-semibold px-2.5 py-1 rounded bg-slate-50 text-slate-500 border border-slate-200">
+        Tiến độ: 0 Bài Hoàn thành
+      </span>
+    </div>
   </div>
 
   <!-- ĐÃ BỔ SUNG ID "homeRoadmapContainer" VÀO THẺ DIV NÀY ĐỂ JAVASCRIPT CÓ THỂ TÌM THẤY VÀ GHI ĐÈ DỮ LIỆU -->
@@ -824,10 +841,13 @@
 
               </div>
 
-              <!-- Nút Tạo lộ trình -->
-              <div class="mt-6 text-right">
-                <button type="button" id="btnGenerateStudyPlan" class="py-3 px-6 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2 w-full sm:w-auto sm:ml-auto">
-                  Tạo lộ trình học
+              <!-- Nút Cập nhật lịch rảnh (Giữ lộ trình) & Tạo lộ trình mới -->
+              <div class="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                <button type="button" id="btnUpdateScheduleKeepRoadmap" class="py-3 px-5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                  <span>Cập nhật lịch rảnh (Giữ lộ trình)</span>
+                </button>
+                <button type="button" id="btnGenerateStudyPlan" class="py-3 px-6 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl text-sm font-bold shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                  <span>Tạo lộ trình mới</span>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
                 </button>
               </div>
@@ -943,7 +963,7 @@
           <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">3. Chọn ngôn ngữ:</label>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button type="button" class="btn-lang-select py-2 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-lang="system">🌐 Theo hệ thống</button>
+              <button type="button" class="btn-lang-select py-2 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-lang="system">Theo hệ thống</button>
               <button type="button" class="btn-lang-select active py-2 px-3 rounded-lg border border-blue-600 bg-blue-50 text-xs font-bold text-blue-700 cursor-pointer" data-lang="vi">Tiếng Việt</button>
               <button type="button" class="btn-lang-select py-2 px-3 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 bg-white hover:border-slate-300 cursor-pointer" data-lang="en">Tiếng Anh</button>
             </div>
@@ -1001,11 +1021,11 @@
             </div>
           </div>
           <button id="btnRandomizeQuestions" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shadow-2xs">
-            <span>🎲 Đổi bộ câu hỏi ngẫu nhiên mới</span>
+            <span>Đổi bộ câu hỏi ngẫu nhiên mới</span>
           </button>
         </div>
 
-        <!-- 👇 BỔ SUNG LẠI KHUNG CHỨA TAB CÂU HỎI Ở ĐÂY 👇 -->
+        <!-- KHUNG CHỨA TAB CÂU HỎI -->
         <div class="space-y-1">
           <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">CHỌN CÂU HỎI PHỎNG VẤN:</div>
           <div id="interviewQuestionTabsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -1052,7 +1072,7 @@
         <div id="unlockedAiEvaluation" class="hidden bg-white rounded-xl border border-indigo-200 p-5 space-y-4 shadow-sm">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
-              <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">★</span>
+              <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">AI</span>
               <div>
                 <h4 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">Kết quả Chấm điểm & Nhận xét từ AI</h4>
                 <p class="text-[11px] text-slate-500">Đánh giá dựa trên cấu trúc STAR, độ sâu chuyên môn và tính thực tiễn</p>
@@ -1088,7 +1108,7 @@
               <!-- Nội dung đáp án mẫu động sẽ được nạp vào đây -->
             </div>
             <div id="lockOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-xs p-4 text-center z-20">
-              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-2 font-bold">🔒</div>
+              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-2 font-bold text-xs">STAR</div>
               <div class="font-bold text-xs sm:text-sm text-slate-900 mb-0.5">Khóa đáp án mẫu AI & Gợi ý STAR</div>
               <p class="text-[11px] text-slate-600 max-w-sm mb-2">Vui lòng tự trả lời và bấm Nộp câu trả lời ở trên để mở khóa đáp án.</p>
             </div>

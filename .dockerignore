@@ -9,9 +9,20 @@ venv/
 .env
 .git/
 .gitignore
+.gitattributes
 .vscode/
 .idea/
 pgdata/
 *.log
 .DS_Store
 Thumbs.db
+
+# Frontend được đóng gói riêng trong front_end/Dockerfile
+front_end/
+
+# Tài liệu & script tiện ích không cần đưa vào image Backend
+*.md
+*.bat
+*.sh
+docker-compose*.yml
+.env.example
