@@ -13,11 +13,30 @@ from datetime import datetime, timedelta
 # ==========================================
 # PHẦN 1: CẤU HÌNH DATABASE (PostgreSQL ở cổng 5433)
 # ==========================================
-import os; SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:secretpassword123@localhost:5433/career_coach")
+import os, urllib.request
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://admin:secretpassword123@localhost:5433/career_coach")
 
 _WORKING_OLLAMA_HOST = None
+
+def _probe_ollama_host(host: str, target_model: str = "qwen3.5:4b"):
+    try:
+        req = urllib.request.Request(
+            f"{host.rstrip('/')}/api/tags",
+            headers={"Host": "localhost:11434"}
+        )
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                models = [m.get("name", "") for m in data.get("models", [])]
+                has_model = any(target_model in m for m in models)
+                return True, has_model
+    except Exception:
+        pass
+    return False, False
+
 def _smart_ollama_chat(*args, **kwargs):
     global _WORKING_OLLAMA_HOST
+    target_model = kwargs.get("model", "qwen3.5:4b")
     candidates = []
     if _WORKING_OLLAMA_HOST:
         candidates.append(_WORKING_OLLAMA_HOST)
@@ -25,21 +44,51 @@ def _smart_ollama_chat(*args, **kwargs):
         os.getenv("OLLAMA_HOST", "").strip(),
         "http://host.docker.internal:11434",
         "http://192.168.65.254:11434",
+        "http://ollama:11434",
         "http://127.0.0.1:11434",
         "http://localhost:11434",
         "http://172.17.0.1:11434",
-        "http://ollama:11434",
     ]:
         if h and h not in candidates:
             candidates.append(h)
-    last_err = None
+
+    alive_with_model = []
+    alive_without_model = []
     for host in candidates:
+        is_alive, has_model = _probe_ollama_host(host, target_model)
+        if is_alive:
+            if has_model:
+                alive_with_model.append(host)
+                break
+            else:
+                alive_without_model.append(host)
+
+    ordered_hosts = alive_with_model + alive_without_model
+    if not ordered_hosts:
+        ordered_hosts = candidates
+
+    last_err = None
+    for host in ordered_hosts:
         try:
-            client = ollama.Client(host=host, headers={"Host": "localhost:11434"})
+            client = ollama.Client(host=host, headers={"Host": "localhost:11434"}, timeout=300.0)
+            if host in alive_without_model:
+                print(f"[Ollama] Máy tại {host} chưa có model {target_model}, đang tự động tải về...")
+                client.pull(target_model)
             res = client.chat(*args, **kwargs)
             _WORKING_OLLAMA_HOST = host
             return res
         except Exception as e:
+            if "not found" in str(e).lower():
+                try:
+                    print(f"[Ollama] Tự động tải model {target_model} tại {host}...")
+                    client = ollama.Client(host=host, headers={"Host": "localhost:11434"}, timeout=300.0)
+                    client.pull(target_model)
+                    res = client.chat(*args, **kwargs)
+                    _WORKING_OLLAMA_HOST = host
+                    return res
+                except Exception as pull_err:
+                    last_err = pull_err
+                    continue
             last_err = e
             print(f"[Ollama] Thử kết nối {host} thất bại: {e}")
     raise last_err

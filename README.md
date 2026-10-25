@@ -1,12 +1,14 @@
 # 🌱 AI Career Coach - Hệ Thống Định Hướng Nghề Nghiệp, Lập Lộ Trình Học Tập & Phỏng Vấn Thử AI
 
-> **Đề án / Bài thi thực hành**: Ứng dụng Trí tuệ Nhân tạo Cục bộ (**Local LLM - Qwen 3.5:4b qua Ollama**) kết hợp **FastAPI**, **PostgreSQL** và **Gamification** nhằm hỗ trợ sinh viên phân tích khoảng trống kỹ năng (Skill Gap), tự động lập lịch học theo thời gian rảnh và luyện phỏng vấn theo mô hình chuẩn **STAR**.
+> **Đề án / Bài thi thực hành**: Ứng dụng Trí tuệ Nhân tạo (**LLM Qwen 3.5:4b qua Ollama**) kết hợp **FastAPI**, **PostgreSQL 15** và **Gamification** nhằm hỗ trợ sinh viên phân tích khoảng trống kỹ năng (Skill Gap), tự động lập lịch học theo thời gian rảnh và luyện phỏng vấn theo mô hình chuẩn **STAR**.
+>
+> **Đặc điểm nổi bật khi triển khai**: Toàn bộ hệ thống gồm **4 thành phần (Database + AI Server Ollama + Backend + Frontend)** đã được đóng gói **100% bên trong Docker**. Người chấm bài / người dùng tải về từ GitHub **không cần cài đặt Python, Node.js, PostgreSQL hay Ollama ngoài máy thật**, chỉ cần chạy duy nhất lệnh `docker compose up --build -d`.
 
 ---
 
 ## 📌 1. Giới thiệu tổng quan
 
-**AI Career Coach** giải quyết bài toán mông lung nghề nghiệp của sinh viên thông qua quy trình khép kín 4 bước:
+**AI Career Coach** giải quyết bài toán định hướng nghề nghiệp của sinh viên thông qua quy trình khép kín 4 bước:
 1. **Đánh giá năng lực hiện tại**: Trích xuất kỹ năng từ CV tự do bằng AI hoặc chọn bộ hồ sơ mẫu đa ngành (CNTT, Kinh tế - Tài chính, Luật).
 2. **Phân tích độ khớp công việc (Job Matching & Skill-Gap)**: So khớp hồ sơ với Mô tả công việc (JD), chấm điểm theo công thức trọng số và trực quan hóa bằng biểu đồ Radar.
 3. **Lên lộ trình học tập & Băm giờ thông minh (Smart Study Planner)**: AI thiết kế các bài học bù đắp đúng các kỹ năng còn thiếu, sau đó thuật toán Python tự động cắt nhỏ thời lượng bài học để lấp vừa khít các khung giờ rảnh thực tế của người học.
@@ -14,7 +16,7 @@
 
 ---
 
-## ✨ 2. Các tính năng nổi bật
+## ✨ 2. Các tính năng cốt lõi
 
 | Phân hệ | Chi tiết tính năng |
 | :--- | :--- |
@@ -26,53 +28,43 @@
 
 ---
 
-## 🏗️ 3. Kiến trúc hệ thống & Công nghệ sử dụng
+## 🏗️ 3. Kiến trúc hệ thống (4 Containers tự động hoàn toàn)
 
 ```mermaid
 flowchart LR
     subgraph Client["Trình duyệt người dùng"]
-        UI["Frontend SPA\n(HTML5 / CSS3 / Vanilla JS)"]
+        UI["Giao diện Web SPA\nhttp://localhost:5050"]
     end
 
-    subgraph Docker["Môi trường Docker Compose"]
-        FE["Container: career_coach_frontend\nNode.js 20 Alpine (Port 5050)"]
-        BE["Container: career_coach_backend\nFastAPI Python 3.11 (Port 8000)"]
-        DB[("Container: career_coach_pg\nPostgreSQL 15 (Port 5433 -> 5432)")]
+    subgraph Docker["Môi trường Docker Compose (Tự động 100%)"]
+        FE["1. career_coach_frontend\nNode.js 20 Alpine (Port 5050)"]
+        BE["2. career_coach_backend\nFastAPI Python 3.11 (Port 8000)"]
+        DB[("3. career_coach_pg\nPostgreSQL 15 (Port 5433)")]
+        AI["4. career_coach_ollama\nOllama AI + Model qwen3.5:4b\n(Port 11435 -> 11434)"]
     end
 
-    subgraph AI["AI Engine"]
-        OLLAMA["Ollama Server\nModel: qwen3.5:4b (Port 11434)"]
-    end
-
-    UI -->|HTTP :5050| FE
-    UI -->|REST API :8000| BE
-    BE -->|SQLAlchemy / psycopg2| DB
-    BE -->|Ollama SDK :11434| OLLAMA
+    UI -->|Truy cập Web :5050| FE
+    UI -->|Gọi REST API :8000| BE
+    BE -->|SQLAlchemy ORM| DB
+    BE -->|Tự động dò & gọi AI| AI
 ```
 
-* **Backend**: Python 3.11, FastAPI, Uvicorn, SQLAlchemy ORM, Pydantic, Psycopg2.
-* **Frontend**: Vanilla JavaScript (ES6+), HTML5, CSS3, SVG Animation, Web Audio API, Node.js Static HTTP Server.
-* **Cơ sở dữ liệu**: PostgreSQL 15 (lưu trữ bền vững qua Docker Volume `pgdata`).
-* **Mô hình AI**: Ollama (`qwen3.5:4b`) chạy cục bộ, đảm bảo quyền riêng tư dữ liệu CV và không tốn phí API.
-* **Đóng gói & Triển khai**: Docker, Docker Compose (hỗ trợ cả chế độ tiêu chuẩn và chế độ GPU NVIDIA).
+> **Cơ chế kết nối AI thông minh (`_smart_ollama_chat` trong `main.py`)**:
+> * Nếu máy tính của bạn **đã cài sẵn Ollama và đã tải `qwen3.5:4b`**, Backend sẽ ưu tiên kết nối ngay với Ollama trên máy thật để phản hồi tức thì.
+> * Nếu máy tính mới tải từ GitHub về **chưa cài Ollama hoặc chưa có model `qwen3.5:4b`**, hệ thống sẽ tự động chuyển sang dùng container **`career_coach_ollama`** đi kèm bên trong Docker và tự động tải model `qwen3.5:4b` về chạy.
 
 ---
 
-## 🚀 4. Hướng dẫn cài đặt và khởi chạy chi tiết (Từ A - Z)
+## 🚀 4. Hướng dẫn cài đặt và chạy dự án từ GitHub (Từng bước chi tiết)
 
-Để chạy dự án, bạn chỉ cần thực hiện lần lượt **3 bước** dưới đây:
-
-### Bước 1: Chuẩn bị môi trường
-1. Cài đặt và mở **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (đảm bảo Docker đang ở trạng thái *Running*).
-2. Cài đặt **[Ollama](https://ollama.com/download)** trên máy tính và tải mô hình `qwen3.5:4b` bằng cách mở Terminal / PowerShell gõ:
-   ```bash
-   ollama pull qwen3.5:4b
-   ```
-   *(Lưu ý: Nếu máy bạn có card rời NVIDIA và muốn chạy luôn Ollama bên trong Docker mà không cần cài Ollama ngoài máy thật, hãy xem **Cách 3** ở Bước 3).*
+### Yêu cầu duy nhất trước khi chạy
+* Máy tính đã cài đặt và mở sẵn **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** (đảm bảo biểu tượng con cá voi Docker ở góc màn hình đang ở trạng thái **Running**).
+* **Không cần** cài Python, **không cần** cài Node.js, **không cần** cài PostgreSQL.
 
 ---
 
-### Bước 2: Tải mã nguồn dự án về máy
+### Bước 1: Tải mã nguồn từ GitHub về máy
+Mở **Terminal** hoặc **PowerShell**, chạy lệnh:
 ```bash
 git clone https://github.com/1305Thach2006/ccccc.git
 cd ccccc
@@ -80,105 +72,120 @@ cd ccccc
 
 ---
 
-### Bước 3: Khởi chạy hệ thống bằng Docker (Chọn 1 trong 3 cách)
-
-#### ✅ Cách 1: Khởi chạy bằng 1 lệnh Docker Compose duy nhất (Khuyên dùng)
-Tại thư mục gốc của dự án, chạy lệnh:
+### Bước 2: Khởi chạy toàn bộ hệ thống bằng 1 lệnh duy nhất
+Tại thư mục dự án, chạy lệnh:
 ```bash
 docker compose up --build -d
 ```
-> **Giải thích**: Chỉ với 1 lệnh này, Docker sẽ tự động:
-> 1. Tải và khởi tạo cơ sở dữ liệu **PostgreSQL 15** (cổng `5433`) cùng đầy đủ các bảng dữ liệu.
-> 2. Đóng gói và khởi chạy **Backend FastAPI** (cổng `8000`), tự động kết nối vào Database và Ollama.
-> 3. Đóng gói và khởi chạy **Frontend Web Server** (cổng `5050`).
 
-#### ✅ Cách 2: Chạy tự động 1-Click bằng Script (Tự động xử lý trùng cổng)
-* **Trên Windows**: Nhấp đúp chuột vào file **`run.bat`** hoặc gõ trong PowerShell:
-  ```powershell
-  .\run.bat
-  ```
-  *(Script sẽ tự động tạo file `.env` từ `.env.example`, tự động giải phóng cổng `5050` nếu đang bị ứng dụng khác chiếm dụng, chạy `docker compose up --build -d` và tự mở trình duyệt).*
-* **Trên Linux / macOS**:
-  ```bash
-  chmod +x run.sh
-  ./run.sh
-  ```
+*(💡 **Ghi chú**: Bạn **không bắt buộc** phải dùng `run.bat` hay `run.sh`. Chỉ cần đúng 1 lệnh `docker compose up --build -d` ở trên là đủ! Các file `run.bat` / `run.sh` chỉ là tiện ích phụ nếu bạn muốn nhấp đúp chuột thay vì gõ lệnh).*
 
-#### ✅ Cách 3: Chạy trọn bộ kèm Container Ollama GPU (Dành cho máy có GPU NVIDIA)
-Nếu muốn đóng gói cả Ollama chạy bằng card đồ họa rời bên trong Docker:
+---
+
+### Bước 3: Chờ tải mô hình AI `qwen3.5:4b` (Chỉ mất vài phút ở lần chạy đầu tiên)
+
+Nếu máy tính của bạn **mới tải dự án về lần đầu và chưa từng có mô hình AI `qwen3.5:4b`** (dung lượng khoảng ~2.5 GB), container `career_coach_ollama` sẽ tự động tải mô hình này ở chế độ chạy ngầm.
+
+Để xem tiến trình tải mô hình AI đã đạt bao nhiêu phần trăm (%), bạn gõ lệnh sau vào Terminal:
 ```bash
-docker compose -f docker-compose.gpu.yml up --build -d
+docker logs -f career_coach_ollama
 ```
+* Khi màn hình hiện `pulling ... 100%` và báo **`success`**, nghĩa là mô hình AI đã sẵn sàng 100%!
+* Bạn nhấn tổ hợp phím **`Ctrl + C`** để thoát khỏi màn hình xem log (container vẫn tiếp tục chạy bình thường).
+* *(Từ những lần chạy sau trở đi, mô hình đã được lưu vĩnh viễn trong Docker Volume `ollama_data` nên hệ thống sẽ dùng được ngay lập tức mà không cần tải lại).*
 
 ---
 
-### Bước 4: Truy cập và kiểm thử ứng dụng
+### Bước 4: Mở trình duyệt và sử dụng
 
-Sau khi lệnh chạy hoàn tất (khoảng 10–30 giây), mở trình duyệt và truy cập:
+Sau khi khởi chạy xong, bạn mở trình duyệt web và truy cập theo bảng dưới đây:
 
-| Thành phần | Đường dẫn truy cập | Mô tả |
+| Thành phần | Đường dẫn truy cập | Mô tả chi tiết |
 | :--- | :--- | :--- |
-| 🌐 **Giao diện Web (Frontend)** | **[http://localhost:5050](http://localhost:5050)** | Giao diện chính dành cho người dùng cuối |
-| 📄 **Tài liệu API (Swagger UI)** | **[http://localhost:8000/docs](http://localhost:8000/docs)** | Giao diện kiểm thử trực tiếp các API Backend |
-| 🩺 **Kiểm tra trạng thái Backend** | **[http://localhost:8000/](http://localhost:8000/)** | Trả về JSON xác nhận Backend đang hoạt động |
+| 🌐 **Giao diện Web chính (Frontend)** | **[http://localhost:5050](http://localhost:5050)** | Giao diện sử dụng đầy đủ các tính năng của ứng dụng |
+| 📄 **Tài liệu API (Swagger UI)** | **[http://localhost:8000/docs](http://localhost:8000/docs)** | Giao diện kiểm thử trực tiếp các API của Backend |
+| 🩺 **Kiểm tra trạng thái Backend** | **[http://localhost:8000/](http://localhost:8000/)** | Trả về thông điệp JSON xác nhận server đang hoạt động |
 | 🗄️ **PostgreSQL Database** | `localhost:5433` | **User**: `admin` \| **Pass**: `secretpassword123` \| **DB**: `career_coach` |
+| 🤖 **Ollama AI Container** | `localhost:11435` | Cổng AI nội bộ trong Docker (ánh xạ ra cổng `11435` để tránh trùng cổng `11434`) |
 
 ---
 
-## 🔌 5. Danh mục API Endpoints chính
+## ⚡ 5. Các tùy chọn khởi chạy mở rộng (Không bắt buộc)
 
-| Phương thức | Endpoint | Chức năng |
+Ngoài lệnh chuẩn `docker compose up --build -d`, dự án cung cấp thêm các công cụ hỗ trợ tiện lợi:
+
+1. **Chạy nhanh 1-Click trên Windows (`run.bat`)**:
+   * Nhấp đúp chuột vào `run.bat` (hoặc gõ `.\run.bat` trong PowerShell). Script sẽ tự động giải phóng cổng `5050`/`8000` nếu đang bị kẹt bởi tiến trình cũ, chạy `docker compose up --build -d` và tự mở trình duyệt web.
+   * Để tắt toàn bộ hệ thống trên Windows, nhấp đúp vào `stop.bat`.
+2. **Chạy nhanh trên Linux / macOS (`run.sh`)**:
+   ```bash
+   chmod +x run.sh && ./run.sh
+   ```
+3. **Chạy chế độ tăng tốc GPU NVIDIA (`docker-compose.gpu.yml`)**:
+   * Nếu máy có card đồ họa rời NVIDIA và đã cài NVIDIA Container Toolkit, chạy lệnh sau để Ollama xử lý bằng GPU nhanh gấp nhiều lần:
+   ```bash
+   docker compose -f docker-compose.gpu.yml up --build -d
+   ```
+
+---
+
+## 🔌 6. Danh mục 13 API Endpoints trong hệ thống
+
+| Phương thức | Endpoint | Chức năng xử lý |
 | :---: | :--- | :--- |
-| `POST` | `/auth/register` | Đăng ký tài khoản học viên mới & khởi tạo chậu cây Gamification |
-| `POST` | `/auth/login` | Đăng nhập hệ thống |
-| `POST` | `/profiles/extract-cv/` | Dùng AI (`qwen3.5:4b`) trích xuất thông tin và kỹ năng từ văn bản CV |
-| `POST` | `/jobs/extract-advanced/` | Dùng AI trích xuất danh sách kỹ năng chuyên môn kèm bằng chứng từ JD |
-| `POST` | `/analyses/match/{profile_id}/{role_id}` | Phân tích độ khớp CV - JD, trả về điểm số, biểu đồ Radar và khoảng trống kỹ năng |
-| `POST` | `/study-plan/generate` | AI tạo bài học bù đắp kỹ năng thiếu & thuật toán Python băm giờ theo lịch rảnh |
-| `GET` | `/study-plan/tasks/{profile_id}` | Lấy danh sách lộ trình học tập đã lưu của tài khoản |
-| `POST` | `/study-plan/complete-task` | Đánh dấu hoàn thành bài học, cộng XP, tính chuỗi Streak và cập nhật giai đoạn cây |
-| `GET` | `/gamification/{profile_id}` | Lấy thông tin mầm cây, XP, chuỗi Streak và chỉ số kỷ luật tuần |
-| `POST` | `/gamification/water-plant/{profile_id}` | Tưới nước cho cây mỗi ngày (+25 XP) |
-| `POST` | `/interview/generate` | AI sinh 3 câu hỏi phỏng vấn theo vị trí & điểm yếu kèm gợi ý khung STAR |
-| `POST` | `/interview/submit-and-evaluate/{question_id}` | AI chấm điểm câu trả lời phỏng vấn (1–10), nhận xét và thưởng XP |
-| `DELETE` | `/system/reset-database/` | Làm sạch và khởi tạo lại toàn bộ bảng trong Database để kiểm thử |
+| `POST` | `/auth/register` | Đăng ký tài khoản học viên mới & tự động khởi tạo chậu cây Gamification |
+| `POST` | `/auth/login` | Đăng nhập hệ thống và trả về `profile_id` |
+| `POST` | `/profiles/extract-cv/` | **[AI]** Bóc tách thông tin ứng viên và danh sách kỹ năng từ văn bản CV |
+| `POST` | `/jobs/extract-advanced/` | **[AI]** Trích xuất kỹ năng chuyên môn kèm bằng chứng từ Mô tả công việc (JD) |
+| `POST` | `/analyses/match/{profile_id}/{role_id}` | **[AI + Thuật toán]** Phân tích độ khớp CV - JD, biểu đồ Radar và khoảng trống kỹ năng |
+| `POST` | `/study-plan/generate` | **[AI + Băm giờ]** Sinh bài học bù kỹ năng thiếu và tự động chia nhỏ theo lịch rảnh |
+| `GET` | `/study-plan/tasks/{profile_id}` | Lấy danh sách các bài học trong lộ trình đã lưu của học viên |
+| `POST` | `/study-plan/complete-task` | Hoàn thành bài học (kiểm tra giờ mở khóa `unlock_time`), cộng XP & tính chuỗi Streak |
+| `GET` | `/gamification/{profile_id}` | Lấy dữ liệu giai đoạn mầm cây, XP, chuỗi Streak và chỉ số kỷ luật tuần |
+| `POST` | `/gamification/water-plant/{profile_id}` | Tưới nước cho cây mỗi ngày một lần (+25 XP) |
+| `POST` | `/interview/generate` | **[AI]** Sinh 3 câu hỏi phỏng vấn theo vị trí & điểm yếu kèm gợi ý khung STAR |
+| `POST` | `/interview/submit-and-evaluate/{question_id}` | **[AI]** Chấm điểm câu trả lời phỏng vấn (1.0 – 10.0), nhận xét chi tiết và thưởng XP |
+| `DELETE` | `/system/reset-database/` | Xóa và khởi tạo lại toàn bộ bảng trong Database để phục vụ kiểm thử |
 
 ---
 
-## 🛠️ 6. Các lệnh quản lý Docker & Xử lý sự cố (Troubleshooting)
+## 🛠️ 7. Lệnh quản lý & Xử lý sự cố thường gặp (Troubleshooting)
 
-### Quản lý Container hằng ngày
+### Các lệnh kiểm tra và dừng hệ thống
 ```bash
-# Kiểm tra danh sách các container đang chạy
+# 1. Xem trạng thái 4 container đang chạy
 docker compose ps
 
-# Xem nhật ký (logs) hoạt động của Backend và AI theo thời gian thực
+# 2. Xem nhật ký hoạt động của Backend và AI theo thời gian thực
 docker compose logs -f backend
 
-# Dừng toàn bộ hệ thống (hoặc chạy file stop.bat trên Windows)
+# 3. Xem tiến độ tải model AI qwen3.5:4b trong container Ollama
+docker logs -f career_coach_ollama
+
+# 4. Dừng toàn bộ hệ thống (giữ nguyên dữ liệu Database và Model AI đã tải)
 docker compose down
 
-# Dừng hệ thống và xóa sạch dữ liệu Database để làm mới từ đầu
+# 5. Dừng hệ thống và xóa sạch dữ liệu để làm mới từ đầu
 docker compose down -v
 ```
 
-### Xử lý lỗi thường gặp
+### Xử lý sự cố thường gặp
 
-1. **Lỗi trùng cổng `5050` (`bind: Only one usage of each socket address is normally permitted`)**:
-   * **Nguyên nhân**: Cổng `5050` đang bị một tiến trình Node.js cũ hoặc container khác chiếm giữ.
-   * **Cách khắc phục**: Chạy file `.\run.bat` (script sẽ tự động tìm và tắt tiến trình chiếm cổng `5050`), hoặc chạy lệnh sau trong PowerShell:
-     ```powershell
-     Stop-Process -Id (Get-NetTCPConnection -LocalPort 5050).OwningProcess -Force
-     docker compose up --build -d
-     ```
-   * Hoặc mở file `.env` (tạo từ `.env.example`) và đổi `FRONTEND_PORT=5055` để chuyển giao diện sang cổng `5055`.
+* **Vấn đề 1: Bấm các nút gọi AI (Phân tích JD / Tạo lộ trình / Phỏng vấn) ở lần đầu tiên thấy quay lâu hoặc báo lỗi?**
+  * **Nguyên nhân**: Ở lần đầu tiên chạy trên máy mới, container `career_coach_ollama` đang tải model `qwen3.5:4b` (~2.5 GB) về máy.
+  * **Cách xử lý**: Gõ `docker logs -f career_coach_ollama` để đợi quá trình tải model báo `success` (100%), sau đó bấm lại trên web là chạy mượt ngay.
 
-2. **Lỗi AI không phản hồi khi phân tích JD / Phỏng vấn**:
-   * Đảm bảo ứng dụng **Ollama** đang bật trên máy và đã tải xong model bằng lệnh `ollama pull qwen3.5:4b`.
+* **Vấn đề 2: Báo lỗi trùng cổng `5050` hoặc `8000` (`bind: Only one usage of each socket address is normally permitted`)?**
+  * **Nguyên nhân**: Trên máy đang có một cửa sổ chạy `node server.js` hoặc `uvicorn` cũ chiếm cổng.
+  * **Cách xử lý**: Chạy `.\run.bat` để script tự động tắt tiến trình chiếm cổng, hoặc chạy lệnh PowerShell:
+    ```powershell
+    Stop-Process -Id (Get-NetTCPConnection -LocalPort 5050).OwningProcess -Force
+    docker compose up --build -d
+    ```
 
 ---
 
-## 📂 7. Cấu trúc thư mục dự án
+## 📂 8. Cấu trúc thư mục dự án
 
 ```text
 ai-career-coach/
@@ -193,16 +200,16 @@ ai-career-coach/
 │   ├── sample-profiles.json   # Hồ sơ sinh viên mẫu phục vụ chấm thử nhanh
 │   └── server.js              # HTTP Server Node.js phục vụ giao diện tại cổng 5050
 ├── Dockerfile                 # Dockerfile chính đóng gói Backend FastAPI (Python 3.11 - Cổng 8000)
-├── docker-compose.yml         # Điều phối trọn bộ PostgreSQL + Backend + Frontend
-├── docker-compose.gpu.yml     # Điều phối trọn bộ kèm container Ollama sử dụng GPU NVIDIA
+├── docker-compose.yml         # Điều phối trọn bộ 4 container: Postgres + Ollama AI + Backend + Frontend
+├── docker-compose.gpu.yml     # Cấu hình mở rộng cho phép Ollama sử dụng GPU rời NVIDIA
 ├── requirements.txt           # Danh sách thư viện Python cần thiết
 ├── .env.example               # File mẫu cấu hình biến môi trường (Ports, DB, Ollama)
 ├── .gitattributes             # Chuẩn hóa ký tự xuống dòng LF/CRLF giữa Windows và Linux/macOS
 ├── .dockerignore              # Loại trừ file thừa khi build Docker image
 ├── .gitignore                 # Loại trừ file rác (__pycache__, .env...) khi đẩy lên GitHub
-├── run.bat                    # Script khởi chạy tự động 1-Click trên Windows
-├── stop.bat                   # Script dừng toàn bộ container trên Windows
-├── run.sh                     # Script khởi chạy tự động trên Linux / macOS
+├── run.bat                    # Tiện ích phụ: Khởi chạy tự động 1-Click trên Windows
+├── stop.bat                   # Tiện ích phụ: Dừng toàn bộ container trên Windows
+├── run.sh                     # Tiện ích phụ: Khởi chạy tự động trên Linux / macOS
 ├── README.md                  # Tài liệu hướng dẫn chi tiết dự án
 └── main.py                    # Mã nguồn Backend FastAPI + Thuật toán xếp lịch + AI + Gamification
 ```

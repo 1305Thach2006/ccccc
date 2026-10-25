@@ -17,8 +17,8 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# 3. Build và khởi chạy các container
-echo "[INFO] Đang build và khởi chạy các container (PostgreSQL, Backend, Frontend)..."
+# 3. Build và khởi chạy các container (PostgreSQL + Ollama AI + Backend + Frontend)
+echo "[INFO] Đang build và khởi chạy các container (PostgreSQL, Ollama AI, Backend, Frontend)..."
 docker compose up --build -d
 
 echo ""

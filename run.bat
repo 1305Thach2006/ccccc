@@ -35,8 +35,8 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000 ^| findstr LISTENING') 
     taskkill /F /PID %%a >nul 2>&1
 )
 
-REM 5. Khoi chay Docker Compose
-echo [INFO] Dang build lai va khoi chay cac container (PostgreSQL, Backend, Frontend)...
+REM 5. Khoi chay Docker Compose (PostgreSQL + Ollama AI + Backend + Frontend)
+echo [INFO] Dang build va khoi chay cac container (PostgreSQL, Ollama AI, Backend, Frontend)...
 docker compose up --build -d
 
 if %errorlevel% neq 0 (

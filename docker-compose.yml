@@ -19,7 +19,19 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Cấu hình cho Backend API (FastAPI + SQLAlchemy + Ollama Qwen 3.5:4b)
+  # 2. Cấu hình AI Server (Tự động chạy Ollama & tải model qwen3.5:4b trên mọi máy tải từ GitHub về)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: career_coach_ollama
+    restart: always
+    ports:
+      # Dùng cổng 11435 ngoài máy host để không bao giờ bị đụng cổng 11434 nếu máy đã cài sẵn Ollama
+      - "${OLLAMA_DOCKER_PORT:-11435}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull ${OLLAMA_MODEL:-qwen3.5:4b} && wait"]
+
+  # 3. Cấu hình cho Backend API (FastAPI + SQLAlchemy + Ollama Qwen 3.5:4b)
   backend:
     build:
       context: .
@@ -34,8 +46,10 @@ services:
     depends_on:
       postgres_db:
         condition: service_healthy
+      ollama:
+        condition: service_started
 
-  # 3. Cấu hình cho Frontend Giao diện Web (Node.js Static Server)
+  # 4. Cấu hình cho Frontend Giao diện Web (Node.js Static Server)
   frontend:
     build:
       context: ./front_end
@@ -49,3 +63,4 @@ services:
 
 volumes:
   pgdata:
+  ollama_data:
