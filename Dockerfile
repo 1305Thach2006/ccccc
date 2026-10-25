@@ -1,9 +1,10 @@
 # Sử dụng Python 3.11 bản gọn nhẹ (slim)
 FROM python:3.11-slim
 
-# Thiết lập biến môi trường tối ưu cho Python trong Docker
+# Thiết lập biến môi trường tối ưu cho Python trong Docker và múi giờ Việt Nam (UTC+7)
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TZ=Asia/Ho_Chi_Minh
 
 # Thiết lập thư mục làm việc trong container
 WORKDIR /app

@@ -128,5 +128,53 @@ const ROLES = [
       "Luật Doanh nghiệp",
       "Luật Lao động"
     ]
+  },
+  {
+    "id": "digital-marketing-specialist",
+    "title": "Chuyên viên Digital Marketing & Content",
+    "field": "Marketing",
+    "requiredSkills": [
+      "Digital Marketing",
+      "SEO / SEM",
+      "Content Marketing",
+      "Social Media Marketing",
+      "Nghiên cứu thị trường"
+    ]
+  },
+  {
+    "id": "hr-talent-acquisition",
+    "title": "Chuyên viên Tuyển dụng & Nhân sự (HR / C&B)",
+    "field": "Nhân sự",
+    "requiredSkills": [
+      "Tuyển dụng (Talent Acquisition)",
+      "Chính sách lương thưởng (C&B)",
+      "Luật Lao động",
+      "Đào tạo & Phát triển (L&D)",
+      "Giao tiếp & Thuyết trình"
+    ]
+  },
+  {
+    "id": "data-business-analyst",
+    "title": "Chuyên viên Phân tích Dữ liệu & Nghiệp vụ (DA / BA)",
+    "field": "Dữ liệu & Kinh doanh",
+    "requiredSkills": [
+      "SQL / Quản trị CSDL",
+      "Power BI / Tableau",
+      "Excel nâng cao",
+      "Phân tích dữ liệu (Data Analysis)",
+      "Business Analysis (BA)"
+    ]
+  },
+  {
+    "id": "logistics-supply-chain",
+    "title": "Chuyên viên Xuất nhập khẩu & Chuỗi cung ứng (Logistics)",
+    "field": "Logistics",
+    "requiredSkills": [
+      "Quản trị chuỗi cung ứng (Supply Chain)",
+      "Chứng từ xuất nhập khẩu (Incoterms)",
+      "Quản lý kho & Mua hàng (Procurement)",
+      "Excel nâng cao",
+      "Tiếng Anh chuyên ngành"
+    ]
   }
 ];

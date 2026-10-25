@@ -301,15 +301,18 @@ function updateStreakColor() {
 
 function getDetailedRoleMatch(role, profile) {
   if (!profile || !role) return { matchScore: 10, skillScore: 10, expScore: 10, interestScore: 10 };
-  const pSkills = profile.skills.map(s => s.toLowerCase());
-  const rSkills = role.requiredSkills.map(s => s.toLowerCase());
+  const pSkills = (profile.skills || []).map(s => (typeof s === 'object' ? s.topic : String(s)).toLowerCase());
+  const rSkills = (role.requiredSkills || []).map(s => String(s).toLowerCase());
   let matched = 0;
   rSkills.forEach(r => { if (pSkills.some(p => p.includes(r) || r.includes(p))) matched++; });
   
-  const skillScore = Math.round((matched / rSkills.length) * 100);
-  const isFieldMatch = profile.major.toLowerCase().includes(role.field.toLowerCase()) || role.field === 'CNTT';
-  const expScore = isFieldMatch ? 85 : 40;
-  const interestScore = isFieldMatch ? 90 : 30;
+  const skillScore = rSkills.length > 0 ? Math.round((matched / rSkills.length) * 100) : 50;
+  const majorLower = (profile.major || '').toLowerCase();
+  const fieldLower = (role.field || '').toLowerCase();
+  const isFieldMatch = majorLower.includes(fieldLower) ||
+    (fieldLower === 'cntt' && (majorLower.includes('công nghệ') || majorLower.includes('it') || majorLower.includes('phần mềm')));
+  const expScore = isFieldMatch ? 85 : (matched > 0 ? 60 : 40);
+  const interestScore = isFieldMatch ? 90 : (matched > 0 ? 65 : 35);
 
   const matchScore = Math.round((skillScore * 0.50) + (expScore * 0.25) + (interestScore * 0.25));
   return { matchScore, skillScore, expScore, interestScore };
@@ -391,7 +394,8 @@ function selectProfile(id) {
   if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
   
   appState.selectedProfileId = id;
-  appState.currentProfileId = null; // Xóa ID của CV tải lên (nếu có)
+  appState.uploadedProfileId = null;
+  appState.cvMode = 'sample';
   
   const p = DEFAULT_SAMPLE_PROFILES.find(x => x.id === id);
   if (!p) return;
@@ -400,10 +404,7 @@ function selectProfile(id) {
   if(expInput) expInput.value = p.experience;
   
   if (p.skills) {
-      // Nếu CV mẫu chỉ lưu mảng dạng chuỗi ["Python", "React"], ta chuyển đổi thành định dạng có điểm số mặc định (ví dụ mức 4/5)
-      // Hoặc nếu p.skills đã là object có sẵn điểm số thì giữ nguyên.
       window.currentUploadedSkills = p.skills.map(skillName => {
-          // Nếu skillName là dạng object {topic, score} thì dùng luôn, nếu là string thì gán mức thành thạo mặc định là 4
           if (typeof skillName === 'object' && skillName !== null) {
               return skillName;
           }
@@ -418,7 +419,7 @@ function selectProfile(id) {
   // 1. Tính toán điểm khớp để tìm ra JD phù hợp nhất
   const scoredRoles = ROLES.map(r => ({ ...r, match: getDetailedRoleMatch(r, p).matchScore })).sort((a,b) => b.match - a.match);
   
-  // 2. SỬA LỖI TẠI ĐÂY: Xóa bỏ điều kiện cũ, BẮT BUỘC chọn JD đứng Top 1 làm mặc định
+  // 2. Chọn JD đứng Top 1 làm mặc định
   appState.selectedRoleId = scoredRoles[0].id; 
   
   // 3. Render lại danh sách JD và tự động highlight JD Top 1
@@ -464,6 +465,40 @@ async function startAnalysis() {
       return; // Dừng ngay nếu chưa đăng nhập
   }
 
+  const contentCvUpload = document.getElementById('contentCvUpload');
+  const isUploadTabActive = contentCvUpload && !contentCvUpload.classList.contains('hidden');
+  const isSampleMode = !isUploadTabActive;
+  const currentInterests = window.currentUploadedSkills || [];
+
+  if (isSampleMode && !appState.selectedProfileId) {
+      if (typeof showToast === 'function') showToast("Chưa chọn hồ sơ", "Vui lòng click chọn 1 CV mẫu hoặc tải lên CV PDF!", "warning");
+      return;
+  }
+  if (!isSampleMode && currentInterests.length === 0 && !appState.uploadedProfileId) {
+      if (typeof showToast === 'function') showToast("Chưa có dữ liệu CV", "Vui lòng tải lên file CV PDF hoặc thêm kỹ năng thủ công trước khi phân tích!", "warning");
+      return;
+  }
+
+  const tabRolePaste = document.getElementById('tabRolePaste');
+  const contentRolePaste = document.getElementById('contentRolePaste');
+  const isPasteMode = (contentRolePaste && !contentRolePaste.classList.contains('hidden')) ||
+                      (tabRolePaste && tabRolePaste.classList.contains('text-indigo-700'));
+  const customJdInput = document.getElementById('customJdTextarea') || document.querySelector('#contentRolePaste textarea');
+  const pasteRoleTitleInput = document.getElementById('pasteRoleTitle');
+
+  if (isPasteMode) {
+      if (!customJdInput || customJdInput.value.trim() === "") {
+          if (typeof showToast === 'function') showToast("Chưa nhập JD", "Vui lòng dán Mô tả công việc (JD) vào ô trống!", "warning");
+          return;
+      }
+  } else {
+      const roleKeyCheck = String(appState.selectedRoleId || '').trim();
+      if (!appState.selectedRoleId || roleKeyCheck === 'null' || roleKeyCheck === '') {
+          if (typeof showToast === 'function') showToast("Chưa chọn vị trí", "Vui lòng chọn 1 vị trí ứng tuyển (JD mẫu) hoặc chuyển sang Dán JD Tự do!", "warning");
+          return;
+      }
+  }
+
   const btn = document.getElementById('btnStartAnalysis');
   if (btn) { 
     btn.innerHTML = `<svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Đang phân tích...</span>`; 
@@ -477,6 +512,7 @@ async function startAnalysis() {
   // Lưu màn hình vào bộ nhớ để F5 không bị văng
   appState.currentScreen = 'screen-gap';
   localStorage.setItem('current_screen', 'screen-gap');
+  sessionStorage.setItem('current_screen', 'screen-gap');
   if (typeof updateActiveTabHighlight === 'function') updateActiveTabHighlight('screen-gap');
   
   const skeleton = document.getElementById('gapSkeletonLoading');
@@ -485,47 +521,28 @@ async function startAnalysis() {
   if (realResults) realResults.classList.add('hidden');
 
   try {
-    const isSampleMode = !appState.currentProfileId;
-    const profileId = appState.currentProfileId || appState.selectedProfileId;
-
-    if (isSampleMode && !profileId) {
-        if (typeof showToast === 'function') showToast("Chưa chọn hồ sơ", "Vui lòng click chọn 1 CV mẫu hoặc tải lên CV!", "warning");
-        throw new Error("Dừng phân tích - Thiếu hồ sơ");
-    }
-
-    // --- BẮT ĐẦU FIX LOGIC LẤY JD DÁN TỰ DO ---
-    const tabRolePaste = document.getElementById('tabRolePaste');
-    // Nhận diện tab Paste đang active dựa vào class màu xanh
-    const isPasteMode = tabRolePaste && tabRolePaste.classList.contains('text-indigo-700');
-    // Bắt thẻ textarea thông minh (Quét cả ID chuẩn lẫn thẻ con phòng khi HTML của bạn bị sai ID)
-    const customJdInput = document.getElementById('customJdTextarea') || document.querySelector('#contentRolePaste textarea');
+    const profileId = localStorage.getItem('current_profile_id') || appState.uploadedProfileId || appState.currentProfileId || appState.selectedProfileId || 1;
 
     let jdSkillsArray = [];
     let jdTextContent = "";
     let roleKey = String(appState.selectedRoleId || 'custom').trim();
 
     if (isPasteMode) {
-        // NẾU ĐANG Ở TAB DÁN TỰ DO
-        if (!customJdInput || customJdInput.value.trim() === "") {
-            if (typeof showToast === 'function') showToast("Chưa nhập JD", "Vui lòng dán Mô tả công việc vào ô trống!", "warning");
-            throw new Error("Dừng phân tích - Thiếu JD");
-        }
-        jdTextContent = customJdInput.value.trim(); // Lấy văn bản để gửi cho AI đọc
-        roleKey = "custom"; // Ép role thành custom để Backend biết
+        const customTitle = pasteRoleTitleInput ? pasteRoleTitleInput.value.trim() : "";
+        const rawJdBody = customJdInput.value.trim();
+        jdTextContent = customTitle ? `Vị trí tuyển dụng: ${customTitle}\n${rawJdBody}` : rawJdBody;
+        roleKey = customTitle ? encodeURIComponent(customTitle) : "custom";
     } else {
-        // NẾU ĐANG Ở TAB JD MẪU CÓ SẴN
-        if (!appState.selectedRoleId || roleKey === 'null') {
-            if (typeof showToast === 'function') showToast("Chưa chọn vị trí", "Vui lòng chọn 1 vị trí ứng tuyển!", "warning");
-            throw new Error("Dừng phân tích - Thiếu JD");
-        }
         const selectedRole = (typeof ROLES !== 'undefined' && Array.isArray(ROLES)) 
             ? ROLES.find(r => String(r.id) === roleKey || String(r.slug) === roleKey) || ROLES[0] : null;
         jdSkillsArray = (selectedRole && selectedRole.requiredSkills) ? selectedRole.requiredSkills : [];
+        if (selectedRole && selectedRole.title) {
+            jdTextContent = `${selectedRole.title} (${selectedRole.field || ''}): ${jdSkillsArray.join(', ')}`;
+        }
     }
 
     const expInput = document.getElementById('experienceInput');
     const currentExp = expInput ? expInput.value.trim() : "";
-    const currentInterests = window.currentUploadedSkills || [];
 
     let requestBody = {
         is_sample: isSampleMode,
@@ -537,13 +554,14 @@ async function startAnalysis() {
 
     if (isSampleMode) {
         const sampleProfile = (typeof DEFAULT_SAMPLE_PROFILES !== 'undefined' && Array.isArray(DEFAULT_SAMPLE_PROFILES)) 
-            ? DEFAULT_SAMPLE_PROFILES.find(p => String(p.id) === String(profileId)) : null;
+            ? DEFAULT_SAMPLE_PROFILES.find(p => String(p.id) === String(appState.selectedProfileId)) : null;
 
         if (sampleProfile) {
             requestBody.name = sampleProfile.name;
             let hardSkills = sampleProfile.skills || [];
-            requestBody.skills = [...hardSkills, ...currentInterests];
-            if (currentInterests.length === 0) requestBody.interests = sampleProfile.interests;
+            requestBody.skills = currentInterests.length > 0 ? currentInterests : hardSkills;
+            requestBody.interests = currentInterests.length > 0 ? currentInterests : (sampleProfile.interests || []);
+            if (!requestBody.experience) requestBody.experience = sampleProfile.experience || "";
         } else {
             requestBody.name = "Ứng viên mẫu";
             requestBody.skills = currentInterests;
@@ -587,6 +605,15 @@ async function startAnalysis() {
     if (gapScr) gapScr.classList.remove('hidden');
     if (typeof updateActiveTabHighlight === 'function') updateActiveTabHighlight('screen-gap');
 
+    if (typeof showToast === 'function') {
+      showToast('Phân tích hoàn tất!', `Độ tương thích với vị trí mục tiêu: ${data.final_total_score || 0}%`, 'success');
+    }
+
+  } catch (err) {
+    console.error("Lỗi phân tích:", err);
+    if (typeof showToast === 'function') {
+      showToast('Lỗi phân tích', err.message || 'Không thể kết nối máy chủ phân tích.', 'error');
+    }
   } finally {
     if (btn) { 
       btn.innerHTML = `<span>Phân tích lại</span><svg class="w-4 h-4 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
@@ -816,8 +843,14 @@ document.addEventListener('DOMContentLoaded', () => {
     tabCvSample.className = 'flex-1 py-1.5 text-xs font-medium rounded-md text-slate-500 hover:text-slate-800 transition-all';
     if(contentCvUpload) contentCvUpload.classList.remove('hidden');
     if(contentCvSample) contentCvSample.classList.add('hidden');
-    if(experienceContainer) experienceContainer.classList.add('hidden');
-    if(interestsContainer) interestsContainer.classList.add('hidden');
+    appState.cvMode = 'upload';
+    if (!appState.uploadedProfileId) {
+      if(experienceContainer) experienceContainer.classList.add('hidden');
+      if(interestsContainer) interestsContainer.classList.add('hidden');
+    } else {
+      if(experienceContainer) experienceContainer.classList.remove('hidden');
+      if(interestsContainer) interestsContainer.classList.remove('hidden');
+    }
   }
 
   function setCvSampleMode() {
@@ -827,7 +860,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if(contentCvUpload) contentCvUpload.classList.add('hidden');
     if(experienceContainer) experienceContainer.classList.remove('hidden');
     if(interestsContainer) interestsContainer.classList.remove('hidden');
-    appState.currentProfileId = null;
+    appState.cvMode = 'sample';
+    if (appState.selectedProfileId) {
+      selectProfile(appState.selectedProfileId);
+    }
   }
 
   function setRolePasteMode() {
@@ -858,22 +894,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', async () => {
       if(typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
       
-      const realProfileId = localStorage.getItem('current_profile_id') || appState.currentProfileId;
+      const realProfileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
       if (!realProfileId) {
           if (typeof showToast === 'function') showToast('Chưa đăng nhập', 'Vui lòng đăng nhập để chăm sóc cây!', 'warning');
           return;
-      }
-
-      if(appState.user.hasWateredToday) {
-        if (typeof showToast === 'function') showToast('Đã tưới cây hôm nay', 'Mỗi ngày chỉ được tưới 1 lần. Hãy quay lại vào ngày mai nhé!', 'warning');
-        return; 
       }
       
       try {
           const res = await fetch(`${API_BASE_URL}/gamification/water-plant/${realProfileId}`, { method: 'POST' });
           const data = await res.json();
           
-          if (!res.ok) throw new Error(data.detail);
+          if (!res.ok) throw new Error(data.detail || 'Không thể tưới cây lúc này');
 
           if(typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
           appState.user.currentXp = data.current_xp; 
@@ -881,8 +912,11 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (typeof showToast === 'function') showToast('Đã tưới nước', data.message, 'success');
           checkAndUpdateStage(); // Gọi hàm cập nhật giao diện mầm cây
+          if (typeof loadGamificationData === 'function') {
+              await loadGamificationData();
+          }
       } catch (err) {
-          if (typeof showToast === 'function') showToast('Lỗi', err.message, 'error');
+          if (typeof showToast === 'function') showToast('Thông báo', err.message, 'warning');
       }
     });
   });
@@ -944,11 +978,10 @@ if (cvFileInput) {
                      return;
                 }
 
-                if (uploadStatusText) uploadStatusText.textContent = "AI đang trích xuất kỹ năng...";
+                if (uploadStatusText) uploadStatusText.textContent = "AI đang trích xuất kỹ năng đa ngành...";
 
-                // Đã gỡ bỏ việc gửi userSchedules lúc upload CV
                 const payload = {
-                    name: "Ứng viên", 
+                    name: localStorage.getItem('current_user_name') || "Ứng viên", 
                     email: "temp_" + Date.now() + "@example.com", 
                     cv_text: extractedText, 
                     free_time_json: "[]"
@@ -965,7 +998,11 @@ if (cvFileInput) {
                 }
 
                 const data = await response.json();
-                appState.currentProfileId = data.id;
+                appState.uploadedProfileId = data.id;
+                appState.cvMode = 'upload';
+                if (!localStorage.getItem('current_profile_id')) {
+                    appState.currentProfileId = data.id;
+                }
 
                 if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
                 if (uploadStatusText) uploadStatusText.textContent = "Trích xuất CV thành công!";
@@ -982,15 +1019,49 @@ if (cvFileInput) {
                     }
                 } else {
                     if (typeof showToast === 'function') {
-                        showToast('Hoàn tất!', `Đã tìm thấy ${window.currentUploadedSkills.length} kỹ năng.`, 'success');
+                        showToast('Hoàn tất!', `Đã trích xuất thành công ${window.currentUploadedSkills.length} kỹ năng từ CV.`, 'success');
                     }
                 }
                 
+                const expContainer = document.getElementById('experienceContainer');
+                if (expContainer) expContainer.classList.remove('hidden');
+                const expInput = document.getElementById('experienceInput');
+                if (expInput) {
+                    expInput.value = data.experience_text || extractedText.trim().slice(0, 600);
+                }
+
                 const interestsContainer = document.getElementById('interestsContainer');
                 if (interestsContainer) interestsContainer.classList.remove('hidden');
                 
                 if (typeof renderInterestsSliders === 'function') {
                     renderInterestsSliders(window.currentUploadedSkills);
+                }
+
+                // Tự động gợi ý và sắp xếp lại danh sách JD mẫu theo kỹ năng vừa trích xuất
+                if (typeof ROLES !== 'undefined' && Array.isArray(ROLES)) {
+                    const tempProfile = {
+                        skills: window.currentUploadedSkills.map(s => s.topic),
+                        major: extractedText.slice(0, 300)
+                    };
+                    const scoredRoles = ROLES.map(r => ({ ...r, match: getDetailedRoleMatch(r, tempProfile).matchScore })).sort((a,b) => b.match - a.match);
+                    if (!appState.selectedRoleId && scoredRoles.length > 0) {
+                        appState.selectedRoleId = scoredRoles[0].id;
+                    }
+                    const roleContainer = document.getElementById('contentRoleStandard');
+                    if (roleContainer) {
+                        roleContainer.innerHTML = scoredRoles.map((r, i) => `
+                          <div class="role-option p-3 rounded-lg border ${r.id === appState.selectedRoleId ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-200 bg-white hover:border-slate-300'} cursor-pointer mb-2 transition-colors" data-role-id="${r.id}" onclick="selectRole('${r.id}')">
+                            <div class="flex justify-between items-center">
+                              <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">⭐ Đề xuất</span>' : ''}</div>
+                              <div class="text-[10px] px-2 py-0.5 rounded ${r.match >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'} font-bold">${r.match}%</div>
+                            </div>
+                            <div class="flex items-center justify-between mt-1.5">
+                              <span class="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${r.field}</span>
+                              <span class="text-[9px] text-indigo-600 font-medium">${r.requiredSkills.length} kỹ năng yêu cầu</span>
+                            </div>
+                          </div>
+                        `).join('');
+                    }
                 }
 
             } catch (error) {
@@ -1016,7 +1087,7 @@ if (btnAddCustomSkill && customSkillInput) {
                 window.currentUploadedSkills = [];
             }
             
-            window.currentUploadedSkills.push({ topic: newSkillName, score: 1 });
+            window.currentUploadedSkills.push({ topic: newSkillName, score: 3 });
             renderInterestsSliders(window.currentUploadedSkills);
             
             customSkillInput.value = "";
@@ -1036,7 +1107,7 @@ if (btnAddCustomSkill && customSkillInput) {
 
   // 0. KHỞI TẠO BỘ NHỚ TẠM (Đặt bên ngoài event listener để lưu dữ liệu xuyên suốt)
 const interviewAnswersCache = {};
-let currentQuestionId = 1; // Biến này bạn cần cập nhật khi user click đổi câu hỏi
+let currentQuestionId = 1; // Biến này cập nhật khi user click đổi câu hỏi
 
 const btnSubmit = document.getElementById('btnSubmitAnswer');
 if (btnSubmit) {
@@ -1046,29 +1117,43 @@ if (btnSubmit) {
     if (!inputEl) return;
     
     const text = inputEl.value.trim();
-    if (text.length < 20) return alert('Trả lời quá ngắn! Tối thiểu 20 ký tự.');
+    if (text.length < 15) {
+      if (typeof showToast === 'function') {
+        showToast('Câu trả lời quá ngắn', 'Vui lòng nhập tối thiểu 15 ký tự để AI có đủ dữ liệu chấm điểm!', 'warning');
+      } else {
+        alert('Trả lời quá ngắn! Tối thiểu 15 ký tự.');
+      }
+      return;
+    }
 
     // 2. Khóa UI trong lúc chờ AI
     if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Qwen 3.5 đang chấm điểm...';
+    btnSubmit.textContent = 'AI Giám khảo đang chấm điểm...';
 
     let numericScore = 0;
     let aiFeedback = '';
     let improvedAnswer = '';
 
-    const currentQuestionText = document.getElementById('currentQuestionTitle')?.innerText || "Câu hỏi phỏng vấn";
+    const activeQObj = (typeof activeInterviewQuestionsList !== 'undefined' && activeInterviewQuestionsList[currentSelectedQuestionIndex])
+        ? activeInterviewQuestionsList[currentSelectedQuestionIndex]
+        : null;
+    const domTitle = document.getElementById('interviewActiveTitle')?.innerText || '';
+    const domQuestion = document.getElementById('interviewActiveQuestion')?.innerText || '';
+    const currentQuestionText = activeQObj
+        ? `${activeQObj.title || ''}: ${activeQObj.question || ''}`
+        : (`${domTitle}: ${domQuestion}`.trim() || "Câu hỏi phỏng vấn");
     
-    // Lấy ID người dùng hiện tại từ appState (Mặc định là 1 nếu chưa có)
-    const activeProfileId = parseInt(localStorage.getItem('current_profile_id') || appState.currentProfileId || 1, 10);
+    // Lấy ID người dùng hiện tại từ localStorage/appState (Mặc định là 1 nếu chưa có)
+    const activeProfileId = parseInt(localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId || 1, 10);
 
     try {
-      // 3. Gọi API (Đã truyền ID câu hỏi động và đính kèm profile_id)
+      // 3. Gọi API chấm điểm và cộng XP
       const res = await fetch(`${API_BASE_URL}/interview/submit-and-evaluate/${currentQuestionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-            profile_id: activeProfileId,  // <-- Đẩy ID xuống DB để cộng XP
+            profile_id: activeProfileId,
             question_text: currentQuestionText,
             student_answer: text 
         })
@@ -1086,21 +1171,22 @@ if (btnSubmit) {
       
     } catch(e) {
       console.error("Lỗi gọi API chấm điểm:", e);
-      numericScore = text.length > 80 ? 8.5 : 5.5; 
-      aiFeedback = "Lỗi kết nối AI. Điểm ước lượng dựa trên độ dài.";
+      numericScore = text.length > 80 ? 8.0 : 6.0; 
+      aiFeedback = "Lỗi kết nối máy chủ chấm điểm. Điểm số tạm ước lượng theo độ chi tiết của câu trả lời.";
+      improvedAnswer = "Hãy trình bày rõ theo 4 bước: Situation (Bối cảnh) -> Task (Nhiệm vụ) -> Action (Hành động cụ thể) -> Result (Kết quả định lượng).";
     }
 
-    // 4. CẬP NHẬT UI AN TOÀN (Ngăn chặn JS crash nếu thiếu thẻ HTML)
+    // 4. CẬP NHẬT UI AN TOÀN
     const overlayEl = document.getElementById('lockOverlay');
     if (overlayEl) overlayEl.style.display = 'none';
 
     const lockedAnswerEl = document.getElementById('lockedAiAnswer');
-    if (lockedAnswerEl) lockedAnswerEl.classList.remove('blur-md');
+    if (lockedAnswerEl) lockedAnswerEl.classList.remove('blur-md', 'select-none', 'pointer-events-none');
 
     const unlockedEvalEl = document.getElementById('unlockedAiEvaluation');
     if (unlockedEvalEl) unlockedEvalEl.classList.remove('hidden');
     
-    const scoreEl = document.querySelector('.text-2xl.font-bold');
+    const scoreEl = document.getElementById('aiScoreValue') || document.querySelector('#unlockedAiEvaluation .text-2xl.font-bold');
     if (scoreEl) scoreEl.textContent = numericScore + ' / 10';
 
     const fbEl = document.getElementById('aiFeedbackText');
@@ -1110,12 +1196,12 @@ if (btnSubmit) {
     if (impEl) impEl.textContent = improvedAnswer; 
 
     // 5. MỞ KHÓA LẠI NÚT CHO PHÉP NỘP LẦN NỮA VÀ LƯU STATE
-    btnSubmit.textContent = 'Cập nhật câu trả lời';
+    btnSubmit.textContent = 'Cập nhật câu trả lời & Chấm lại';
     btnSubmit.disabled = false; 
     
     if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
     
-    // 6. LƯU TRẠNG THÁI VÀO CACHE (Chống mất dữ liệu khi đổi câu hỏi)
+    // 6. LƯU TRẠNG THÁI VÀO CACHE (Chống mất dữ liệu khi đổi câu hỏi trong cùng vòng)
     interviewAnswersCache[currentQuestionId] = {
         text: text,
         score: numericScore,
@@ -1123,19 +1209,18 @@ if (btnSubmit) {
         improved: improvedAnswer
     };
 
-    // Tích hợp logic Game (Hiển thị toast)
+    // Tích hợp logic Game (Hiển thị toast & đồng bộ DB)
     if (typeof appState !== 'undefined' && appState.user) {
       if (numericScore < 7.0) {
-        showToast('Cần đào sâu thêm', `Điểm: ${numericScore}. Bạn chỉ được +10 XP. Hãy đọc đáp án mẫu để cải thiện.`, 'warning');
+        showToast('Đã chấm điểm!', `Điểm: ${numericScore}/10 (+10 XP). Hãy xem nhận xét và gợi ý nâng cấp STAR bên dưới!`, 'warning');
       } else {
-        showToast('Tuyệt vời!', `Điểm: ${numericScore}. Hoàn thành bài tập xuất sắc, nhận +50 XP!`, 'success');
+        showToast('Tuyệt vời!', `Điểm: ${numericScore}/10. Câu trả lời rất tốt, bạn nhận được +50 XP!`, 'success');
       }
 
-      if(appState.user.streakDays === 0) appState.user.streakDays = 1;
-      else appState.user.streakDays += 1;
-      
-      if (typeof updateStreakColor === 'function') updateStreakColor();
-      if (typeof checkAndUpdateStage === 'function') checkAndUpdateStage(); 
+      if (typeof checkAndUpdateStage === 'function') checkAndUpdateStage();
+      if (typeof loadGamificationData === 'function') {
+        await loadGamificationData();
+      }
     }
   });
 }
@@ -1594,6 +1679,7 @@ if (btnSubmitLogin) {
                     displaySelectedDate.classList.add('text-indigo-600');
                     
                     renderMonthCalendar(); // Render lại để cập nhật màu ô được chọn
+                    updateTimeDropdowns(); // Cập nhật lại danh sách giờ theo ngày đã chọn (hôm nay vs tương lai)
                 });
             }
             calendarDaysGrid.appendChild(dayDiv);
@@ -1963,8 +2049,8 @@ if (btnSubmitLogin) {
   
 // --- TẢI LỘ TRÌNH ĐÃ LƯU TỪ DATABASE CỦA TÀI KHOẢN ---
     async function loadSavedStudyPlan() {
-        const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId;
-        if (!profileId || !/^\d+$/.test(profileId)) return; // Chỉ tải nếu đã đăng nhập (ID là số)
+        const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
+        if (!profileId || !/^\d+$/.test(String(profileId))) return; // Chỉ tải nếu đã có ID số
 
         try {
             const res = await fetch(`${API_BASE_URL}/study-plan/tasks/${profileId}`);
@@ -1987,9 +2073,9 @@ if (btnSubmitLogin) {
         return /^\d+$/.test(str);
     }
 
-    // Hàm mẫu render danh sách bài học lên giao diện (bạn có thể điều chỉnh lại tên thẻ HTML cho khớp với code của bạn)
+    // Hàm mẫu render danh sách bài học lên giao diện
     function renderSavedStudyTasksOnUI(tasks) {
-        const planContainer = document.getElementById('studyPlanResultContainer'); // ID vùng hiển thị lộ trình
+        const planContainer = document.getElementById('studyPlanResultContainer');
         if (!planContainer) return;
 
         planContainer.innerHTML = tasks.map((t, index) => `
@@ -2006,6 +2092,13 @@ if (btnSubmitLogin) {
     // Gọi hàm load ngay khi người dùng vừa vào trang hoặc đăng nhập thành công
     loadSavedStudyPlan();
 
+    // Tự động kiểm tra mở khóa bài học theo thời gian thực mỗi 15 giây (không cần F5)
+    setInterval(() => {
+        if (window.userSavedStudyTasks && window.userSavedStudyTasks.length > 0 && typeof window.renderMasterRoadmapUI === 'function') {
+            window.renderMasterRoadmapUI(window.userSavedStudyTasks);
+        }
+    }, 15000);
+
 // --- RENDER LỘ TRÌNH TỪNG BƯỚC (STEP-BY-STEP GATING) TRÊN TRANG CHỦ ---
 window.renderMasterRoadmapUI = function(tasks) {
     const container = document.getElementById('homeRoadmapContainer'); // ID vùng hiển thị ở trang chủ
@@ -2017,7 +2110,7 @@ window.renderMasterRoadmapUI = function(tasks) {
     }
 
     let html = '';
-    let unlocked = true; // Bài đầu tiên luôn được mở khóa
+    let unlocked = true; // Bài đầu tiên luôn được mở khóa theo thứ tự
     let completedCount = 0;
     let totalMinutes = 0;
     let completedMinutes = 0;
@@ -2036,14 +2129,18 @@ window.renderMasterRoadmapUI = function(tasks) {
         let isDisabled = !unlocked && !isCompleted;
         if (isUnscheduled) isDisabled = true;
 
-        // Kiểm tra thời gian thực (Unlock time nếu có)
+        // Kiểm tra thời gian thực (Unlock time nếu có, kèm dung sai 60 giây đồng bộ với Backend)
         const now = new Date();
         const unlockTime = task.unlock_time ? new Date(task.unlock_time) : null;
-        const isTimeLocked = unlockTime && now < unlockTime && !isCompleted;
+        const isTimeLocked = unlockTime && !isNaN(unlockTime.getTime()) && (now.getTime() + 60000 < unlockTime.getTime()) && !isCompleted;
 
         if (isTimeLocked) {
             isDisabled = true;
         }
+
+        const unlockTimeFormatted = (unlockTime && !isNaN(unlockTime.getTime()))
+            ? `${unlockTime.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ${String(unlockTime.getDate()).padStart(2, '0')}/${String(unlockTime.getMonth() + 1).padStart(2, '0')}`
+            : '';
         
         html += `
             <div class="flex items-start gap-4 p-4 rounded-2xl border transition-all ${isCompleted ? 'bg-emerald-50/40 border-emerald-200' : (isDisabled ? 'bg-slate-50 opacity-60 border-slate-200' : 'bg-white border-indigo-100 shadow-sm')}" data-task-id="${task.id}">
@@ -2059,7 +2156,7 @@ window.renderMasterRoadmapUI = function(tasks) {
                         <span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${task.duration_minutes || 60} phút</span>
                     </div>
                     <h4 class="text-xs font-bold text-slate-900 mt-1">${task.title}</h4>
-                    ${isTimeLocked ? `<p class="text-[10px] text-amber-600 mt-0.5">Mở khóa lúc: ${unlockTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>` : ''}
+                    ${isTimeLocked ? `<p class="text-[10px] text-amber-600 font-medium mt-0.5">⏰ Mở khóa lúc: ${unlockTimeFormatted}</p>` : ''}
                     ${isUnscheduled ? `<p class="text-[10px] text-slate-400 mt-0.5">Chờ đăng ký thêm giờ rảnh tuần tới</p>` : ''}
                 </div>
 
@@ -2068,8 +2165,8 @@ window.renderMasterRoadmapUI = function(tasks) {
                     ${isCompleted ? 
                         '<span class="text-xs font-bold text-emerald-600 bg-emerald-100 px-3 py-1.5 rounded-xl">Đã hoàn thành</span>' : 
                         (isDisabled ? 
-                            `<span class="text-xs font-semibold text-slate-400 bg-slate-200 px-3 py-1.5 rounded-xl cursor-not-allowed">${isUnscheduled ? 'Chờ lịch' : 'Đang khóa'}</span>` : 
-                            `<button onclick="completeTask(${task.id})" class="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1.5 rounded-xl shadow-sm transition-all">Hoàn thành ✨</button>`
+                            `<span class="text-xs font-semibold text-slate-400 bg-slate-200 px-3 py-1.5 rounded-xl cursor-not-allowed">${isUnscheduled ? 'Chờ lịch' : (isTimeLocked ? 'Chưa đến giờ' : 'Đang khóa')}</span>` : 
+                            `<button onclick="completeTask(${task.id})" class="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer">Hoàn thành ✨</button>`
                         )
                     }
                 </div>
@@ -2103,8 +2200,9 @@ window.completeTask = async function(taskId) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Lỗi hoàn thành bài học");
 
+        if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
         if (typeof showToast === 'function') {
-            showToast('Tuyệt vời!', `Đã hoàn thành bài học! +${data.added_xp} XP | Chuỗi: ${data.current_streak} ngày`, 'success');
+            showToast('Tuyệt vời!', `${data.message || 'Đã hoàn thành bài học!'} | +${data.added_xp} XP | Chuỗi: ${data.current_streak} ngày`, 'success');
         }
 
         // Tải lại lộ trình và cập nhật toàn bộ chỉ số gamification ngay lập tức
@@ -2112,15 +2210,15 @@ window.completeTask = async function(taskId) {
         await loadGamificationData();
         
     } catch (err) {
-        if (typeof showToast === 'function') showToast('Lỗi', err.message, 'error');
+        if (typeof showToast === 'function') showToast('Thông báo', err.message, 'warning');
     }
 };
 
 
 // --- TẢI DỮ LIỆU GAMIFICATION (XP, STREAK) TỪ DATABASE ---
 async function loadGamificationData() {
-    const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId;
-    if (!profileId || !/^\d+$/.test(profileId)) return;
+    const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
+    if (!profileId || !/^\d+$/.test(String(profileId))) return;
 
     try {
         const res = await fetch(`${API_BASE_URL}/gamification/${profileId}`);
@@ -2128,26 +2226,28 @@ async function loadGamificationData() {
         const data = await res.json();
         
         if (!data.error) {
-            // 1. SẮP XẾP CHUỖI NGÀY (Chỉ truyền con số vào thẻ, tránh bị lặp chữ "Ngày")
+            // 1. SẮP XẾP CHUỖI NGÀY & ĐỒNG BỘ XP VÀO APPSTATE
+            appState.user.currentXp = data.current_xp || 0;
+            appState.user.streakDays = data.current_streak || 0;
+
             const streakEl = document.getElementById('currentStreakText');
             if (streakEl) {
                 streakEl.textContent = data.current_streak || 0;
             }
+            if (typeof updateStreakColor === 'function') updateStreakColor();
 
             // 2. CẬP NHẬT GIAI ĐOẠN MẦM CÂY ĐỘNG (Từ 1/6 đến 6/6)
             const stagesList = ["Hạt giống", "Nảy mầm", "Phát triển thân", "Phân cành", "Ra lá", "Kết trái"];
             let stageIndex = stagesList.indexOf(data.seed_stage);
             if (stageIndex === -1) stageIndex = 0;
             
-            // BỔ SUNG DÒNG NÀY ĐỂ ĐỒNG BỘ VÀO STATE CHUNG:
             appState.user.currentStageIndex = stageIndex;
-            
             let currentStageNum = stageIndex + 1;
 
             // GỌI LỆNH CẬP NHẬT LẠI HÌNH ẢNH MẦM CÂY:
             updateIllustration();
 
-            // Đổi tiêu đề tên mầm cây (Ví dụ: "Hạt giống" -> "Nảy mầm")
+            // Đổi tiêu đề tên mầm cây
             const plantTitleEl = document.getElementById('homePlantTitle');
             if (plantTitleEl) {
                 plantTitleEl.textContent = data.seed_stage;
@@ -2165,11 +2265,9 @@ async function loadGamificationData() {
                 const labelEl = document.getElementById(`homeStageLabel-${i}`);
                 if (nodeEl && labelEl) {
                     if (i <= currentStageNum) {
-                        // Đã đạt hoặc đang ở chặng này -> Tô màu xanh đậm đặc trưng
                         nodeEl.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#064e3b] text-white flex items-center justify-center font-bold text-xs ring-4 ring-emerald-100 shadow-sm transition-all";
                         labelEl.className = "text-[10px] sm:text-[11px] font-bold text-[#064e3b] mt-1 whitespace-nowrap";
                     } else {
-                        // Chưa tới chặng này -> Màu xám chờ mở khóa
                         nodeEl.className = "w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border border-slate-300 text-slate-400 flex items-center justify-center font-medium text-xs transition-all";
                         labelEl.className = "text-[10px] sm:text-[11px] font-normal text-slate-400 mt-1 whitespace-nowrap";
                     }
@@ -2177,48 +2275,41 @@ async function loadGamificationData() {
             }
 
             // 3. CẬP NHẬT CÁC THÔNG SỐ THỐNG KÊ KHÁC
-            // Phân số Giờ học
-            const completedHours = (data.completed_roadmap_minutes / 60).toFixed(1);
-            const totalHours = (data.total_roadmap_minutes / 60).toFixed(1);
+            const completedHours = ((data.completed_roadmap_minutes || 0) / 60).toFixed(1);
+            const totalHours = ((data.total_roadmap_minutes || 0) / 60).toFixed(1);
             const roadmapProgressEl = document.getElementById('roadmapProgressText');
             if (roadmapProgressEl) {
                 roadmapProgressEl.textContent = `${completedHours} / ${totalHours} giờ`;
             }
 
-            // Chỉ số Kỷ luật (%)
             const disciplineEl = document.getElementById('disciplineScoreText');
             if (disciplineEl) {
-                disciplineEl.textContent = `${data.discipline_score}%`;
+                disciplineEl.textContent = `${data.discipline_score || 0}%`;
             }
 
-            // XP tích lũy trong tuần
             const weeklyXpEl = document.getElementById('weeklyXpText');
             if (weeklyXpEl) {
-                weeklyXpEl.textContent = `+${data.weekly_xp} XP`;
+                weeklyXpEl.textContent = `+${data.weekly_xp || 0} XP`;
             }
 
-            // Số bài luyện hoàn thành
             const completedTasksEl = document.getElementById('completedTasksCountText');
             if (completedTasksEl) {
                 completedTasksEl.textContent = `${data.completed_tasks || 0} bài`;
             }
 
-            // Subtitle Streak
             const streakSubtitleEl = document.getElementById('streakSubtitleText');
             if (streakSubtitleEl) {
                 streakSubtitleEl.textContent = `${data.current_streak || 0} ngày streak`;
             }
 
-            // 4. XỬ LÝ ĐỔI MÀU 7 Ô NGÀY TRONG TUẦN (Đã đưa vào trong phạm vi của data)
+            // 4. XỬ LÝ ĐỔI MÀU 7 Ô NGÀY TRONG TUẦN
             for (let i = 1; i <= 7; i++) {
                 const dayBox = document.getElementById(`day-box-${i}`);
                 if (dayBox) {
                     if (data.registered_weekdays && data.registered_weekdays.includes(i)) {
-                        // Có lịch học -> Đổi sang màu indigo nổi bật
                         dayBox.className = "w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-[10px] flex items-center justify-center border border-indigo-700 shadow-sm";
                         dayBox.textContent = "✓";
                     } else {
-                        // Không có lịch -> Trạng thái xám nhạt mặc định
                         dayBox.className = "w-7 h-7 rounded-lg bg-slate-100 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-200";
                         dayBox.textContent = "•";
                     }
@@ -2232,10 +2323,10 @@ async function loadGamificationData() {
 
 // --- HÀM XỬ LÝ TƯỚI NƯỚC CHO CÂY ---
 window.waterPlant = async function() {
-    const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId;
-    if (!profileId || !/^\d+$/.test(profileId)) {
+    const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
+    if (!profileId) {
         if (typeof showToast === 'function') {
-            showToast('Thông báo', 'Vui lòng chọn profile trước!', 'warning');
+            showToast('Thông báo', 'Vui lòng đăng nhập để chăm sóc mầm cây!', 'warning');
         }
         return;
     }
@@ -2249,16 +2340,20 @@ window.waterPlant = async function() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Lỗi tưới nước");
 
+        if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
+        appState.user.currentXp = data.current_xp;
+        appState.user.hasWateredToday = true;
+
         if (typeof showToast === 'function') {
             showToast('Thành công!', data.message || 'Tưới nước thành công! +25 XP', 'success');
         }
 
-        // Gọi lại hàm loadGamificationData để giao diện cập nhật XP và tiến độ ngay lập tức
+        checkAndUpdateStage();
         await loadGamificationData();
 
     } catch (err) {
         if (typeof showToast === 'function') {
-            showToast('Lỗi', err.message, 'error');
+            showToast('Thông báo', err.message, 'warning');
         }
     }
 };
@@ -2281,7 +2376,26 @@ window.renderAnalysisResult = function(data) {
     setTxt('valMetSkills', data.met_skills_count || 0);
     setTxt('valGapSkills', data.gap_skills_count || 0);
     setTxt('gapCountTitle', data.gap_skills_count || 0);
-    setTxt('aiReasoningText', data.ai_reasoning || "");
+    setTxt('aiReasoningText', data.ai_reasoning || "Hệ thống đã hoàn tất đối chiếu năng lực ứng viên và yêu cầu công việc.");
+    if (data.target_role) {
+      setTxt('targetRoleBadge', data.target_role);
+    }
+
+    // Hiển thị các kỹ năng đã đáp ứng (matched_skills)
+    const matchedContainer = document.getElementById('matchedSkillsContainer');
+    const matchedList = document.getElementById('matchedSkillsList');
+    if (matchedContainer && matchedList) {
+      if (data.matched_skills && Array.isArray(data.matched_skills) && data.matched_skills.length > 0) {
+        matchedContainer.classList.remove('hidden');
+        matchedList.innerHTML = data.matched_skills.map(s => `
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200 shadow-2xs">
+            ✓ ${s}
+          </span>
+        `).join('');
+      } else {
+        matchedContainer.classList.add('hidden');
+      }
+    }
 
     // Vẽ biểu đồ Radar ứng dụng công thức Khoa học & Định lượng
     const ctx = document.getElementById('skillsRadarCanvas');
@@ -2289,30 +2403,9 @@ window.renderAnalysisResult = function(data) {
       if (window.myRadarChart) window.myRadarChart.destroy();
       
       const labels = Object.keys(data.radar_data);
-      
-      // Áp dụng công thức tính điểm cho từng trục (category) trên Radar dựa trên kỹ năng thực tế (1-5)
-      const dataPoints = Object.values(data.radar_data).map((val, index) => {
-          let categoryName = labels[index].toLowerCase();
-          
-          // Nếu danh mục này có kỹ năng mà ứng viên sở hữu
-          if (val > 0 && window.currentUploadedSkills && window.currentUploadedSkills.length > 0) {
-              // Lọc các kỹ năng của người dùng khớp với nhóm này
-              let matchedSkills = window.currentUploadedSkills.filter(s => 
-                  categoryName.includes(s.topic.toLowerCase()) || s.topic.toLowerCase().includes(categoryName)
-              );
-              
-              if (matchedSkills.length > 0) {
-                  // Tính điểm trung bình mức độ thành thạo (1-5) của nhóm đó
-                  let avgLevel = matchedSkills.reduce((sum, s) => sum + (s.score || 3), 0) / matchedSkills.length;
-                  
-                  // Chuẩn hóa theo công thức Min-Max / Tỷ lệ phần trăm năng lực (Thang 1-5 -> 0-100%)
-                  // Công thức: ((avgLevel - 1) / 4) * 100 hoặc (avgLevel / 5) * 100
-                  return Math.round((avgLevel / 5) * 100);
-              }
-          }
-          
-          // Nếu không có kỹ năng nào hoặc mức độ = 0 thì điểm trục đó = 0%
-          return val > 0 ? 60 : 0; // Mặc định 60% nếu API trả về có mà chưa khớp được tên chi tiết slider
+      const dataPoints = Object.values(data.radar_data).map(val => {
+          const numVal = Number(val) || 0;
+          return Math.min(100, Math.max(0, Math.round(numVal)));
       });
 
       window.myRadarChart = new Chart(ctx, {
@@ -2330,7 +2423,7 @@ window.renderAnalysisResult = function(data) {
         },
         options: { 
           responsive: true,
-          maintainAspectRatio: false, // Cố định kích thước, chống lỗi lúc to lúc nhỏ
+          maintainAspectRatio: false,
           scales: { 
             r: { 
               min: 0, 
@@ -2346,20 +2439,29 @@ window.renderAnalysisResult = function(data) {
     const gapContainer = document.getElementById('gapDetailsContainer');
     if (gapContainer && data.gap_details) {
       appState.gapDetails = data.gap_details;
-      gapContainer.innerHTML = data.gap_details.map(gap => `
-        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-orange-300 transition-colors">
-          <div class="flex justify-between items-start mb-2">
-            <div class="flex items-center gap-2">
-              <h5 class="font-bold text-slate-900">${gap.name}</h5>
-            </div>
-            <div class="flex items-center gap-1.5">
-              ${gap.is_required ? '<span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">Bắt buộc</span>' : '<span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">Ưu tiên</span>'}
-              <span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">${gap.status}</span>
-            </div>
+      if (data.gap_details.length === 0) {
+        gapContainer.innerHTML = `
+          <div class="col-span-full bg-emerald-50/60 border border-emerald-200 rounded-xl p-5 text-center">
+            <div class="font-bold text-sm text-emerald-800">🎉 Xuất sắc! Hồ sơ của bạn đã đáp ứng đầy đủ các kỹ năng trọng tâm của JD.</div>
+            <p class="text-xs text-emerald-700 mt-1">Bạn có thể tạo lộ trình ôn tập chuyên sâu hoặc tiến thẳng vào Phòng Phỏng vấn AI!</p>
           </div>
-          <p class="text-xs text-slate-600 mb-2">${gap.reason}</p>
-        </div>
-      `).join('');
+        `;
+      } else {
+        gapContainer.innerHTML = data.gap_details.map(gap => `
+          <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-orange-300 transition-colors">
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex items-center gap-2">
+                <h5 class="font-bold text-slate-900">${gap.name}</h5>
+              </div>
+              <div class="flex items-center gap-1.5">
+                ${gap.is_required ? '<span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">Bắt buộc</span>' : '<span class="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded border border-sky-100">Ưu tiên</span>'}
+                <span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded border border-orange-100">${gap.status}</span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-600 mb-2">${gap.reason}</p>
+          </div>
+        `).join('');
+      }
     }
 
     // Hiển thị kết quả và mở khóa phỏng vấn
@@ -2438,84 +2540,128 @@ document.querySelectorAll('.btn-lang-select').forEach(btn => {
     });
 });
 
-// --- 2. XỬ LÝ GỬI REQUEST GỌI AI TẠO BỘ CÂU HỎI ĐỘC QUYỀN ---
+// --- 2. XỬ LÝ GỬI REQUEST GỌI AI TẠO BỘ CÂU HỎI NGẪU NHIÊN ĐỘC QUYỀN ---
+const PERSONA_DISPLAY_LABELS = {
+    hr: 'Vòng Nhân sự (HR)',
+    tech_lead: 'Vòng Chuyên môn (Tech Lead)',
+    culture_fit: 'Vòng Văn hóa (Culture Fit)',
+    hiring_manager: 'Vòng Cuối (Hiring Manager)'
+};
+
+async function generateNewRandomInterviewSession(triggerBtn, defaultLabelHtml) {
+    const activePersona = document.querySelector('.persona-option-card.active')?.getAttribute('data-persona') || 'tech_lead';
+    const activeLevel = document.querySelector('.btn-level-select.active')?.getAttribute('data-level') || 'mid';
+    const activeLang = document.querySelector('.btn-lang-select.active')?.getAttribute('data-lang') || 'vi';
+
+    const currentPid = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId || 1;
+    const analysisData = (typeof AppStore !== 'undefined' && AppStore.state.analysisData) 
+        ? AppStore.state.analysisData 
+        : JSON.parse(localStorage.getItem(`analysis_data_${currentPid}`) || localStorage.getItem('analysis_data') || '{}');
+
+    if (!analysisData || Object.keys(analysisData).length === 0) {
+        if (typeof showToast === 'function') {
+            showToast('Chưa có dữ liệu', 'Vui lòng hoàn thành phân tích kỹ năng (Skill Gap) trước khi vào phòng phỏng vấn!', 'warning');
+        } else {
+            alert('Vui lòng hoàn thành phân tích kỹ năng trước khi vào phòng phỏng vấn!');
+        }
+        return;
+    }
+
+    if (triggerBtn) {
+        triggerBtn.innerHTML = `<svg class="animate-spin w-4 h-4 inline mr-1.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>AI đang sinh câu hỏi ngẫu nhiên...</span>`;
+        triggerBtn.disabled = true;
+    }
+
+    try {
+        // Xóa cache câu trả lời của vòng trước để bộ câu hỏi mới hoàn toàn tinh khôi
+        Object.keys(interviewAnswersCache).forEach(k => delete interviewAnswersCache[k]);
+
+        const enrichedContext = {
+            ...analysisData,
+            role_id: analysisData.target_role || appState.selectedRoleId || 'Chuyên viên',
+            skills: analysisData.matched_skills || (window.currentUploadedSkills ? window.currentUploadedSkills.map(s => s.topic || s) : []),
+            gaps: analysisData.missing_skills || (analysisData.gap_details ? analysisData.gap_details.map(g => g.name) : [])
+        };
+
+        const res = await fetch(`${API_BASE_URL}/interview/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: currentPid,
+                persona: activePersona,
+                level: activeLevel,
+                language: activeLang,
+                analysis_context: enrichedContext,
+                random_nonce: Date.now() + Math.floor(Math.random() * 100000)
+            })
+        });
+
+        if (!res.ok) throw new Error("Lỗi kết nối tới mô hình AI phỏng vấn.");
+
+        const data = await res.json();
+
+        // Cập nhật huy hiệu vòng phỏng vấn
+        const personaBadge = document.getElementById('interviewActivePersonaBadge');
+        if (personaBadge) {
+            personaBadge.textContent = PERSONA_DISPLAY_LABELS[activePersona] || 'Hội đồng Phỏng vấn';
+        }
+        
+        // Render câu hỏi ra giao diện
+        if (typeof window.renderInterviewQuestions === 'function') {
+            window.renderInterviewQuestions(data.questions);
+        }
+
+        // Chuyển view sang phòng phỏng vấn trực tiếp
+        const setupView = document.getElementById('interviewSetupView');
+        const liveRoomView = document.getElementById('interviewLiveRoomView');
+        if (setupView) setupView.classList.add('hidden');
+        if (liveRoomView) liveRoomView.classList.remove('hidden');
+
+        // Chuyển highlight nút phía trên sang "Phòng phỏng vấn AI"
+        const btnTabModeSetup = document.getElementById('btnTabModeSetup');
+        const btnTabModeRoom = document.getElementById('btnTabModeRoom');
+        if (btnTabModeSetup && btnTabModeRoom) {
+            btnTabModeSetup.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer";
+            btnTabModeRoom.className = "px-3 py-1.5 rounded-md bg-white text-blue-700 font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer";
+        }
+
+        if (typeof showToast === 'function') {
+            showToast('Bộ câu hỏi mới sẵn sàng!', `Đã khởi tạo ngẫu nhiên 3 câu hỏi cho ${PERSONA_DISPLAY_LABELS[activePersona] || 'buổi phỏng vấn'}!`, 'success');
+        }
+
+    } catch (err) {
+        console.error("Lỗi phỏng vấn:", err);
+        if (typeof showToast === 'function') {
+            showToast('Lỗi hệ thống', err.message || 'Không thể tạo bộ câu hỏi.', 'error');
+        } else {
+            alert(err.message);
+        }
+    } finally {
+        if (triggerBtn) {
+            triggerBtn.innerHTML = defaultLabelHtml;
+            triggerBtn.disabled = false;
+        }
+    }
+}
+
 const btnStartInterview = document.getElementById('btnStartInterviewSession');
 if (btnStartInterview) {
-    btnStartInterview.addEventListener('click', async () => {
-        const activePersona = document.querySelector('.persona-option-card.active')?.getAttribute('data-persona') || 'tech_lead';
-        const activeLevel = document.querySelector('.btn-level-select.active')?.getAttribute('data-level') || 'mid';
-        const activeLang = document.querySelector('.btn-lang-select.active')?.getAttribute('data-lang') || 'vi';
+    btnStartInterview.addEventListener('click', () => {
+        generateNewRandomInterviewSession(
+            btnStartInterview,
+            `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span>Bắt đầu phỏng vấn ngay</span>`
+        );
+    });
+}
 
-        const currentPid = localStorage.getItem('current_profile_id');
-        const analysisData = (typeof AppStore !== 'undefined' && AppStore.state.analysisData) 
-            ? AppStore.state.analysisData 
-            : JSON.parse(localStorage.getItem(`analysis_data_${currentPid}`) || localStorage.getItem('analysis_data') || '{}');
-
-        if (!analysisData || Object.keys(analysisData).length === 0) {
-            if (typeof showToast === 'function') {
-                showToast('Chưa có dữ liệu', 'Vui lòng hoàn thành phân tích kỹ năng (Skill Gap) trước khi vào phòng phỏng vấn!', 'warning');
-            } else {
-                alert('Vui lòng hoàn thành phân tích kỹ năng trước khi vào phòng phỏng vấn!');
-            }
-            return;
-        }
-
-        btnStartInterview.innerHTML = `<svg class="animate-spin w-5 h-5 text-white inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>AI đang tạo bộ câu hỏi...</span>`;
-        btnStartInterview.disabled = true;
-
-        try {
-            const res = await fetch(`${API_BASE_URL}/interview/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    profile_id: currentPid,
-                    persona: activePersona,
-                    level: activeLevel,
-                    language: activeLang,
-                    analysis_context: analysisData,
-                    random_nonce: Date.now()
-                })
-            });
-
-            if (!res.ok) throw new Error("Lỗi kết nối tới mô hình AI phỏng vấn.");
-
-            const data = await res.json();
-            
-            // Render câu hỏi ra giao diện
-            if (typeof window.renderInterviewQuestions === 'function') {
-                window.renderInterviewQuestions(data.questions);
-            }
-
-            // Chuyển view sang phòng phỏng vấn trực tiếp
-            const setupView = document.getElementById('interviewSetupView');
-            const liveRoomView = document.getElementById('interviewLiveRoomView');
-            if (setupView) setupView.classList.add('hidden');
-            if (liveRoomView) liveRoomView.classList.remove('hidden');
-
-            // 👇 TỰ ĐỘNG CHUYỂN HIGHLIGHT NÚT PHÍA TRÊN SANG "PHÒNG PHỎNG VẤN AI" 👇
-            const btnTabModeSetup = document.getElementById('btnTabModeSetup');
-            const btnTabModeRoom = document.getElementById('btnTabModeRoom');
-            if (btnTabModeSetup && btnTabModeRoom) {
-                btnTabModeSetup.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer";
-                btnTabModeRoom.className = "px-3 py-1.5 rounded-md bg-white text-blue-700 font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer";
-            }
-            // -----------------------------------------------------------------------
-
-            if (typeof showToast === 'function') {
-                showToast('Thành công', 'Phòng phỏng vấn đã sẵn sàng với bộ câu hỏi mới!', 'success');
-            }
-
-        } catch (err) {
-            console.error("Lỗi phỏng vấn:", err);
-            if (typeof showToast === 'function') {
-                showToast('Lỗi hệ thống', err.message || 'Không thể tạo bộ câu hỏi.', 'error');
-            } else {
-                alert(err.message);
-            }
-        } finally {
-            btnStartInterview.innerHTML = `<span>Bắt đầu phỏng vấn ngay</span>`;
-            btnStartInterview.disabled = false;
-        }
+const btnRandomizeQuestions = document.getElementById('btnRandomizeQuestions');
+if (btnRandomizeQuestions) {
+    btnRandomizeQuestions.addEventListener('click', () => {
+        if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
+        generateNewRandomInterviewSession(
+            btnRandomizeQuestions,
+            `<span>🎲 Đổi bộ câu hỏi ngẫu nhiên mới</span>`
+        );
     });
 }
 
@@ -2596,7 +2742,7 @@ window.renderInterviewQuestions = function(questions) {
         const unlockedEval = document.getElementById('unlockedAiEvaluation');
         const btnSubmit = document.getElementById('btnSubmitAnswer');
         
-        const scoreEl = document.querySelector('.text-2xl.font-bold');
+        const scoreEl = document.getElementById('aiScoreValue') || document.querySelector('#unlockedAiEvaluation .text-2xl.font-bold');
         const fbEl = document.getElementById('aiFeedbackText');
         const impEl = document.getElementById('aiImprovedAnswerText');
 
@@ -2616,7 +2762,7 @@ window.renderInterviewQuestions = function(questions) {
             
             // Đổi nút thành "Cập nhật"
             if (btnSubmit) {
-                btnSubmit.textContent = 'Cập nhật câu trả lời';
+                btnSubmit.textContent = 'Cập nhật câu trả lời & Chấm lại';
                 btnSubmit.disabled = false;
             }
         } else {
@@ -2633,7 +2779,7 @@ window.renderInterviewQuestions = function(questions) {
             
             // Đổi nút thành "Nộp bài"
             if (btnSubmit) {
-                btnSubmit.textContent = 'Nộp câu trả lời';
+                btnSubmit.textContent = 'Nộp câu trả lời & Chấm điểm AI';
                 btnSubmit.disabled = false;
             }
         }
@@ -2652,21 +2798,42 @@ window.renderInterviewQuestions = function(questions) {
 };
 
 
-// 4. Xử lý nút quay lại thiết lập
+// 4. Xử lý nút quay lại thiết lập & nút chuyển đổi chế độ ở trên cùng
 const btnBackToSetup = document.getElementById('btnBackToSetup');
-if (btnBackToSetup) {
-    btnBackToSetup.addEventListener('click', () => {
-        const setupView = document.getElementById('interviewSetupView');
-        const liveRoomView = document.getElementById('interviewLiveRoomView');
-        if (setupView) setupView.classList.remove('hidden');
-        if (liveRoomView) liveRoomView.classList.add('hidden');
+const btnTabModeSetup = document.getElementById('btnTabModeSetup');
+const btnTabModeRoom = document.getElementById('btnTabModeRoom');
 
-        // 👇 TRẢ HIGHLIGHT NÚT PHÍA TRÊN VỀ LẠI "THIẾT LẬP BUỔI LUYỆN" 👇
-        const btnTabModeSetup = document.getElementById('btnTabModeSetup');
-        const btnTabModeRoom = document.getElementById('btnTabModeRoom');
-        if (btnTabModeSetup && btnTabModeRoom) {
-            btnTabModeSetup.className = "px-3 py-1.5 rounded-md bg-white text-blue-700 font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer";
-            btnTabModeRoom.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer";
+function switchToInterviewSetupView() {
+    const setupView = document.getElementById('interviewSetupView');
+    const liveRoomView = document.getElementById('interviewLiveRoomView');
+    if (setupView) setupView.classList.remove('hidden');
+    if (liveRoomView) liveRoomView.classList.add('hidden');
+
+    if (btnTabModeSetup && btnTabModeRoom) {
+        btnTabModeSetup.className = "px-3 py-1.5 rounded-md bg-white text-blue-700 font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer";
+        btnTabModeRoom.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer";
+    }
+}
+
+if (btnBackToSetup) {
+    btnBackToSetup.addEventListener('click', switchToInterviewSetupView);
+}
+if (btnTabModeSetup) {
+    btnTabModeSetup.addEventListener('click', switchToInterviewSetupView);
+}
+if (btnTabModeRoom) {
+    btnTabModeRoom.addEventListener('click', () => {
+        if (activeInterviewQuestionsList && activeInterviewQuestionsList.length > 0) {
+            const setupView = document.getElementById('interviewSetupView');
+            const liveRoomView = document.getElementById('interviewLiveRoomView');
+            if (setupView) setupView.classList.add('hidden');
+            if (liveRoomView) liveRoomView.classList.remove('hidden');
+            if (btnTabModeSetup && btnTabModeRoom) {
+                btnTabModeSetup.className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 cursor-pointer";
+                btnTabModeRoom.className = "px-3 py-1.5 rounded-md bg-white text-blue-700 font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer";
+            }
+        } else if (btnStartInterview) {
+            btnStartInterview.click();
         }
     });
 }

@@ -690,6 +690,23 @@
         </div>
 
         <!-- KHỐI 2: LÝ DO AI GỢI Ý & CHI TIẾT GAP -->
+        <div class="bg-gradient-to-r from-indigo-50/80 via-blue-50/50 to-white rounded-xl border border-indigo-100 p-5 shadow-2xs space-y-3">
+          <div class="flex items-center justify-between border-b border-indigo-100/80 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shadow-2xs">AI</span>
+              <h4 class="font-bold text-slate-900 text-sm">Kết luận & Đánh giá Chuyên sâu từ AI Career Coach</h4>
+            </div>
+            <span id="targetRoleBadge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white text-indigo-700 border border-indigo-200 shadow-2xs">Đa ngành nghề</span>
+          </div>
+          <div id="aiReasoningText" class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line font-sans">
+            Đang tổng hợp kết luận phân tích...
+          </div>
+          <div id="matchedSkillsContainer" class="pt-2 border-t border-indigo-100/60 hidden">
+            <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-1.5">Kỹ năng đã đáp ứng yêu cầu JD:</div>
+            <div id="matchedSkillsList" class="flex flex-wrap gap-1.5"></div>
+          </div>
+        </div>
+
         <div class="space-y-4 pb-4 border-b border-slate-200">
           <div class="flex items-center justify-between">
             <h4 class="font-bold text-slate-900 text-sm">Chi tiết Khoảng cách Kỹ năng (<span id="gapCountTitle">0</span> Gaps)</h4>
@@ -983,6 +1000,9 @@
               </div>
             </div>
           </div>
+          <button id="btnRandomizeQuestions" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shadow-2xs">
+            <span>🎲 Đổi bộ câu hỏi ngẫu nhiên mới</span>
+          </button>
         </div>
 
         <!-- 👇 BỔ SUNG LẠI KHUNG CHỨA TAB CÂU HỎI Ở ĐÂY 👇 -->
@@ -1001,7 +1021,7 @@
               <span id="interviewActiveCategory" class="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">Đang cập nhật...</span>
               <span id="interviewActiveDifficulty" class="text-xs text-slate-500">Độ khó: --</span>
             </div>
-            <span class="text-xs text-blue-700 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Technical Lead</span>
+            <span id="interviewActivePersonaBadge" class="text-xs text-blue-700 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Vòng Chuyên môn</span>
           </div>
 
           <div class="space-y-2">
@@ -1021,10 +1041,39 @@
             <div class="flex items-center justify-between">
               <label for="userAnswerInput" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Câu trả lời của bạn:</label>
             </div>
-            <textarea id="userAnswerInput" rows="5" placeholder="Gõ câu trả lời theo chuẩn STAR..." class="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-sans leading-relaxed text-slate-800 placeholder-slate-400"></textarea>
+            <textarea id="userAnswerInput" rows="5" placeholder="Gõ câu trả lời theo chuẩn STAR (Situation - Task - Action - Result)..." class="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-sans leading-relaxed text-slate-800 placeholder-slate-400"></textarea>
             <button id="btnSubmitAnswer" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2">
-              <span>Nộp câu trả lời</span>
+              <span>Nộp câu trả lời & Chấm điểm AI</span>
             </button>
+          </div>
+        </div>
+
+        <!-- KẾT QUẢ CHẤM ĐIỂM & NHẬN XÉT TỪ AI GIÁM KHẢO -->
+        <div id="unlockedAiEvaluation" class="hidden bg-white rounded-xl border border-indigo-200 p-5 space-y-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">★</span>
+              <div>
+                <h4 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">Kết quả Chấm điểm & Nhận xét từ AI</h4>
+                <p class="text-[11px] text-slate-500">Đánh giá dựa trên cấu trúc STAR, độ sâu chuyên môn và tính thực tiễn</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 bg-indigo-50 px-3.5 py-1.5 rounded-xl border border-indigo-200 self-start sm:self-auto">
+              <span class="text-xs font-semibold text-indigo-700">Điểm số:</span>
+              <span id="aiScoreValue" class="text-2xl font-bold text-indigo-700">0 / 10</span>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 space-y-1">
+              <div class="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">Nhận xét chi tiết từ Hội đồng Tuyển dụng AI:</div>
+              <p id="aiFeedbackText" class="text-xs text-slate-700 leading-relaxed whitespace-pre-line"></p>
+            </div>
+
+            <div class="bg-emerald-50/60 rounded-xl p-3.5 border border-emerald-200 space-y-1">
+              <div class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Gợi ý Nâng cấp Câu trả lời Chuẩn STAR:</div>
+              <p id="aiImprovedAnswerText" class="text-xs text-slate-800 leading-relaxed whitespace-pre-line"></p>
+            </div>
           </div>
         </div>
 
