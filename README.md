@@ -185,7 +185,43 @@ docker compose down -v
 
 ---
 
-## 📂 8. Cấu trúc thư mục dự án
+## 🗑️ 8. Hướng dẫn gỡ bỏ sạch sẽ (Reset hoàn toàn để cài đặt lại từ đầu)
+
+Nếu bạn muốn xóa sạch toàn bộ hệ thống để tải và kiểm thử lại phiên bản mới nhất từ GitHub như một máy mới tinh, hãy thực hiện lần lượt **3 bước sau**:
+
+### Bước 1: Dọn sạch Container, Image và Volume
+Tại thư mục dự án đang mở, chạy lệnh sau để dừng và xóa toàn bộ dữ liệu database cũng như model AI cũ:
+```bash
+docker compose down -v --rmi all
+```
+
+### Bước 2: Thoát ra ngoài và xóa thư mục dự án cũ
+1. Di chuyển ra thư mục cha bên ngoài:
+   ```bash
+   cd ..
+   ```
+2. Xóa bỏ thư mục dự án cũ:
+   * **Trên Windows (PowerShell)**:
+     ```powershell
+     Remove-Item -Recurse -Force ccccc
+     ```
+     *(Lưu ý: Thay `ccccc` bằng đúng tên thư mục dự án bạn đã clone về nếu có đổi tên).*
+   * **Trên Linux / macOS / Git Bash**:
+     ```bash
+     rm -rf ccccc
+     ```
+
+### Bước 3: Tải lại từ đầu và khởi chạy lại
+```bash
+git clone https://github.com/1305Thach2006/ccccc.git
+cd ccccc
+docker compose up --build -d
+```
+Sau đó mở trình duyệt tại: **[http://localhost:5050](http://localhost:5050)**.
+
+---
+
+## 📂 9. Cấu trúc thư mục dự án
 
 ```text
 ai-career-coach/
