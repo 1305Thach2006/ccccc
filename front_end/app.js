@@ -955,7 +955,10 @@ if (cvFileInput) {
             }
             
             if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
-            if (uploadStatusText) uploadStatusText.textContent = "Đang đọc nội dung file PDF...";
+            if (uploadStatusText) {
+                uploadStatusText.classList.remove('text-rose-600');
+                uploadStatusText.textContent = "Đang đọc nội dung file PDF...";
+            }
             if (uploadFileName) uploadFileName.textContent = `Đang xử lý: ${file.name}`;
             
             try {
@@ -982,15 +985,7 @@ if (cvFileInput) {
 
                 const words = (extractedText || '').trim().split(/\s+/).filter(Boolean);
                 if (words.length < 15) {
-                    const msg = 'Nội dung file quá ngắn hoặc không đọc được chữ (file ảnh scan / không có dữ liệu văn bản). Vui lòng tải lên CV định dạng PDF có chứa chữ!';
-                    if (errBox && errText) {
-                        errText.textContent = msg;
-                        errBox.classList.remove('hidden');
-                    }
-                    showToast('Lỗi đọc file', msg, 'error');
-                    if (uploadStatusText) uploadStatusText.textContent = "Không tìm thấy văn bản hợp lệ trong PDF!";
-                    e.target.value = '';
-                    return;
+                    throw new Error('Nội dung file quá ngắn hoặc không đọc được chữ (file ảnh scan / không có dữ liệu văn bản). Vui lòng tải lên CV định dạng PDF có chứa chữ!');
                 }
 
                 if (uploadStatusText) uploadStatusText.textContent = "AI đang trích xuất kỹ năng đa ngành...";
@@ -1008,18 +1003,10 @@ if (cvFileInput) {
                     body: JSON.stringify(payload)
                 });
 
+                // BẮT LỖI NẾU SERVER TRẢ VỀ MÃ LỖI (400, 422, 500...)
                 if (!response.ok) {
                     const errData = await response.json().catch(() => ({}));
-                    const errorMsg = errData.detail || "File không hợp lệ hoặc là file rác (không tìm thấy kỹ năng).";
-                    if (errBox && errText) {
-                        errText.textContent = errorMsg;
-                        errBox.classList.remove('hidden');
-                    }
-                    if (uploadStatusText) uploadStatusText.textContent = "Tải file thất bại!";
-                    if (uploadFileName) uploadFileName.textContent = file.name;
-                    showToast('Lỗi nội dung CV', errorMsg, 'error');
-                    e.target.value = '';
-                    return;
+                    throw new Error(errData.detail || "File PDF không hợp lệ hoặc không phải là CV!");
                 }
 
                 if (errBox) errBox.classList.add('hidden');
@@ -1032,7 +1019,10 @@ if (cvFileInput) {
                 }
 
                 if (typeof sfx !== 'undefined' && sfx.playSuccess) sfx.playSuccess();
-                if (uploadStatusText) uploadStatusText.textContent = "Trích xuất CV thành công!";
+                if (uploadStatusText) {
+                    uploadStatusText.classList.remove('text-rose-600');
+                    uploadStatusText.textContent = "Trích xuất CV thành công!";
+                }
                 
                 const skillsObj = JSON.parse(data.skills_json || "{}");
                 window.currentUploadedSkills = Object.keys(skillsObj).map(skillName => ({
@@ -1093,8 +1083,21 @@ if (cvFileInput) {
 
             } catch (error) {
                 console.error("Lỗi Trích xuất CV:", error);
-                if (uploadStatusText) uploadStatusText.textContent = "Lỗi khi xử lý file CV!";
-                showToast('Lỗi trích xuất', 'Không thể đọc file PDF hoặc AI xử lý thất bại.', 'error');
+                if (errBox && errText) {
+                    errText.textContent = error.message || "File PDF không hợp lệ hoặc không phải là CV!";
+                    errBox.classList.remove('hidden');
+                }
+                if (uploadStatusText) {
+                    uploadStatusText.textContent = "Trích xuất thất bại. Vui lòng tải lên đúng file CV (PDF)!";
+                    uploadStatusText.classList.add('text-rose-600');
+                }
+                if (uploadFileName) uploadFileName.textContent = "";
+                e.target.value = ''; // Reset input để người dùng chọn lại file khác
+                window.currentUploadedSkills = []; // Xóa sạch danh sách kỹ năng tạm
+                
+                if (typeof showToast === 'function') {
+                    showToast('Lỗi đọc CV', error.message, 'error');
+                }
             }
         }
     });
@@ -1107,21 +1110,24 @@ if (btnAddCustomSkill && customSkillInput) {
     btnAddCustomSkill.addEventListener('click', () => {
         const newSkillName = customSkillInput.value.trim();
         
-        if (newSkillName !== "") {
-            sfx.playClick();
-            
-            if (!window.currentUploadedSkills) {
-                window.currentUploadedSkills = [];
+        if (newSkillName.length < 2 || newSkillName.length > 50) {
+            if (typeof showToast === 'function') {
+                showToast('Kỹ năng không hợp lệ', 'Kỹ năng phải dài từ 2 đến 50 ký tự', 'error');
             }
-            
-            window.currentUploadedSkills.push({ topic: newSkillName, score: 3 });
-            renderInterestsSliders(window.currentUploadedSkills);
-            
-            customSkillInput.value = "";
-            showToast('Đã thêm', `Đã bổ sung kỹ năng "${newSkillName}" vào danh sách.`, 'success');
-        } else {
-            showToast('Chưa nhập tên', 'Vui lòng nhập tên kỹ năng hoặc sở thích muốn thêm.', 'warning');
+            return;
         }
+
+        sfx.playClick();
+        
+        if (!window.currentUploadedSkills) {
+            window.currentUploadedSkills = [];
+        }
+        
+        window.currentUploadedSkills.push({ topic: newSkillName, score: 3 });
+        renderInterestsSliders(window.currentUploadedSkills);
+        
+        customSkillInput.value = "";
+        showToast('Đã thêm', `Đã bổ sung kỹ năng "${newSkillName}" vào danh sách.`, 'success');
     });
     
     customSkillInput.addEventListener('keypress', (e) => {
@@ -1535,6 +1541,14 @@ if (btnSubmitLogin) {
 
           if (!name || !email || !pass) {
               showToast('Thiếu thông tin', 'Vui lòng điền đầy đủ Họ và tên, Email và Mật khẩu!', 'warning');
+              return;
+          }
+
+          // KIỂM TRA ĐỊNH DẠNG EMAIL HỢP LỆ (Chặn các chuỗi thiếu @domain.com như "nguyenvana")
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+          if (!emailRegex.test(email)) {
+              showToast('Email không hợp lệ', 'Vui lòng nhập đúng định dạng Email (Ví dụ: ten@gmail.com)!', 'error');
+              emailInput.focus();
               return;
           }
 
@@ -1977,7 +1991,7 @@ if (btnSubmitLogin) {
             btnGeneratePlan.innerHTML = 'Đang tạo lộ trình mới...';
 
             try {
-                const customJdEl = document.getElementById('customJdInput');
+                const customJdEl = document.getElementById('customJdTextarea') || document.getElementById('customJdInput');
                 const jdText = (customJdEl ? customJdEl.value.trim() : '') || (appState.customJdText || '');
                 const targetRole = appState.targetRoleTitle || (document.getElementById('targetRoleBadge') ? document.getElementById('targetRoleBadge').textContent.trim() : '');
 
@@ -1987,7 +2001,7 @@ if (btnSubmitLogin) {
                     schedules: window.userSchedules,
                     gaps: (appState.gapDetails && appState.gapDetails.length > 0) 
                             ? appState.gapDetails.map(g => g.name) 
-                            : ["Kỹ năng chuyên ngành"],
+                            : ["Nâng cao chuyên môn tổng hợp", "Kỹ năng mềm"],
                     jd_text: jdText,
                     target_role: targetRole
                 };
@@ -2141,8 +2155,8 @@ if (btnSubmitLogin) {
         hourSel.innerHTML = hourOptions;
 
         let finalH = selectedH;
-        if (isToday && selectedH < currentH) {
-            finalH = (firstValidHour !== -1) ? firstValidHour : currentH;
+        if (isToday) {
+            finalH = (selectedH < currentH) ? currentH : selectedH;
         }
         hourSel.value = String(finalH).padStart(2, '0');
 
@@ -2161,8 +2175,8 @@ if (btnSubmitLogin) {
         minSel.innerHTML = minOptions;
 
         let finalM = selectedM;
-        if (isToday && activeHour === currentH && selectedM < currentM) {
-            finalM = (firstValidMin !== -1) ? firstValidMin : currentM;
+        if (isToday && finalH === currentH) {
+            finalM = (selectedM <= currentM) ? Math.min(59, currentM + 2) : selectedM;
         }
         if (!minSel.querySelector(`option[value="${String(finalM).padStart(2, '0')}"]`)) {
             finalM = firstValidMin !== -1 ? firstValidMin : 0;

@@ -499,7 +499,7 @@
 
             <div id="contentCvUpload" class="hidden space-y-3">
               <label for="cvFileUpload" class="block border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-lg p-5 text-center bg-slate-50 transition-colors cursor-pointer group">
-                <input type="file" id="cvFileUpload" class="hidden" accept=".pdf,application/pdf" />
+                <input type="file" id="cvFileUpload" class="hidden" accept=".pdf" />
                 <svg class="w-7 h-7 mx-auto text-slate-400 group-hover:text-indigo-500 mb-1.5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                 </svg>
@@ -543,7 +543,7 @@
 
               <!-- Ô cho phép người dùng tự nhập thêm sở thích -->
               <div id="customSkillAddContainer" class="mt-3 pt-3 border-t border-slate-100 flex gap-2">
-                <input type="text" id="customSkillInput" placeholder="Nhập thêm kỹ năng/sở thích của bạn..." class="flex-1 text-xs py-2 px-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+                <input type="text" id="customSkillInput" maxlength="50" placeholder="Nhập thêm kỹ năng/sở thích của bạn (2-50 ký tự)..." class="flex-1 text-xs py-2 px-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
                 <button id="btnAddCustomSkill" type="button" class="py-2 px-4 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex-shrink-0">
                   + Thêm
                 </button>
@@ -588,7 +588,7 @@
               </div>
               <div>
                 <label class="block text-xs font-medium text-slate-700 mb-1">Mô tả công việc (JD):</label>
-                <textarea rows="4" placeholder="Dán nội dung yêu cầu công việc vào đây..." class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all"></textarea>
+                <textarea id="customJdTextarea" rows="4" maxlength="5000" placeholder="Dán nội dung yêu cầu công việc vào đây (tối đa 5000 ký tự)..." class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all"></textarea>
               </div>
             </div>
           </div>
@@ -1078,7 +1078,7 @@
             <div class="flex items-center justify-between">
               <label for="userAnswerInput" class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Câu trả lời của bạn:</label>
             </div>
-            <textarea id="userAnswerInput" rows="5" placeholder="Gõ câu trả lời theo chuẩn STAR (Situation - Task - Action - Result)..." class="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-sans leading-relaxed text-slate-800 placeholder-slate-400"></textarea>
+            <textarea id="userAnswerInput" rows="5" maxlength="2000" placeholder="Gõ câu trả lời theo chuẩn STAR (Situation - Task - Action - Result)..." class="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-sans leading-relaxed text-slate-800 placeholder-slate-400"></textarea>
             <button id="btnSubmitAnswer" class="w-full py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2">
               <span>Nộp câu trả lời & Chấm điểm AI</span>
             </button>
@@ -1132,8 +1132,8 @@
         <h3 class="text-xl font-bold text-slate-900 mb-1 text-center">Chào mừng trở lại!</h3>
         <p class="text-xs text-slate-500 text-center mb-5">Đăng nhập để lưu tiến độ mầm cây của bạn</p>
         <div class="space-y-3.5">
-          <input type="email" placeholder="Email của bạn" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
-          <input type="password" placeholder="Mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="email" required placeholder="Email của bạn" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="password" required placeholder="Mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
           <!-- Đã thêm id="btnSubmitLogin" -->
           <button id="btnSubmitLogin" class="w-full py-3 mt-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all text-sm">
             Đăng nhập
@@ -1149,13 +1149,13 @@
         <h3 class="text-xl font-bold text-slate-900 mb-1 text-center">Tạo tài khoản mới</h3>
         <p class="text-xs text-slate-500 text-center mb-5">Bắt đầu hành trình phát triển sự nghiệp</p>
         <div class="space-y-3.5">
-          <input type="text" placeholder="Họ và tên" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
-          <input type="email" placeholder="Email" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="text" required placeholder="Họ và tên" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="email" required placeholder="Email (VD: ten@gmail.com)" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
           <div>
-            <input type="password" placeholder="Mật khẩu (tối thiểu 6 ký tự)" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+            <input type="password" required minlength="6" placeholder="Mật khẩu (tối thiểu 6 ký tự)" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
             <p class="text-[10px] text-slate-400 mt-1 pl-1">Yêu cầu: Tối thiểu 6 ký tự, kết hợp chữ và số để tăng bảo mật.</p>
           </div>
-          <input type="password" placeholder="Xác nhận mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <input type="password" required minlength="6" placeholder="Xác nhận mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
           <!-- Đã thêm id="btnSubmitRegister" -->
           <button id="btnSubmitRegister" class="w-full py-3 mt-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all text-sm">
             Đăng ký
