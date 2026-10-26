@@ -499,7 +499,7 @@
 
             <div id="contentCvUpload" class="hidden space-y-3">
               <label for="cvFileUpload" class="block border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-lg p-5 text-center bg-slate-50 transition-colors cursor-pointer group">
-                <input type="file" id="cvFileUpload" class="hidden" accept=".pdf,.doc,.docx" />
+                <input type="file" id="cvFileUpload" class="hidden" accept=".pdf,application/pdf" />
                 <svg class="w-7 h-7 mx-auto text-slate-400 group-hover:text-indigo-500 mb-1.5 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                 </svg>
@@ -507,9 +507,14 @@
                   Kéo thả file CV tại đây hoặc Chọn từ máy tính
                 </div>
                 <div id="uploadFileName" class="text-[11px] text-slate-500 mt-0.5">
-                  Định dạng hỗ trợ: PDF(≤ 5MB)
+                  Định dạng hỗ trợ: Chỉ chấp nhận PDF (≤ 5MB)
                 </div>
               </label>
+              <!-- Thông báo lỗi trực tiếp tại ô tải file khi gặp file rác hoặc sai định dạng -->
+              <div id="cvUploadErrorMsg" class="hidden p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2">
+                <svg class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span id="cvUploadErrorText"></span>
+              </div>
             </div>
 
             <div id="experienceContainer" class="pt-4 border-t border-slate-200 space-y-2 transition-all">
@@ -721,6 +726,18 @@
           <div id="matchedSkillsContainer" class="pt-2 border-t border-indigo-100/60 hidden">
             <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-1.5">Kỹ năng đã đáp ứng yêu cầu JD:</div>
             <div id="matchedSkillsList" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <!-- Phản hồi người dùng về độ chính xác (Lưu vào bảng feedbacks trong Database) -->
+          <div id="matchingFeedbackContainer" class="pt-2 border-t border-indigo-100/60 flex items-center justify-between text-xs">
+            <span class="text-slate-600">Đánh giá này có hữu ích và chính xác với bạn không?</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="submitMatchFeedback(true)" id="btnFeedbackMatchYes" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-all font-semibold text-[11px] flex items-center gap-1 cursor-pointer">
+                <span>👍</span> Chính xác
+              </button>
+              <button type="button" onclick="submitMatchFeedback(false)" id="btnFeedbackMatchNo" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 transition-all font-semibold text-[11px] flex items-center gap-1 cursor-pointer">
+                <span>👎</span> Chưa khớp
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1097,24 +1114,6 @@
           </div>
         </div>
 
-        <!-- AI Locked Answer Container -->
-        <div id="lockedAiContainer" class="bg-white rounded-xl border border-slate-200 p-5 space-y-3 shadow-2xs">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Khung Gợi ý STAR & Đáp án Mẫu từ AI</h4>
-          </div>
-
-          <div class="relative rounded-xl overflow-hidden border border-slate-200">
-            <div id="lockedAiAnswer" class="blur-md select-none pointer-events-none p-4 bg-slate-50 text-xs text-slate-800 space-y-2">
-              <!-- Nội dung đáp án mẫu động sẽ được nạp vào đây -->
-            </div>
-            <div id="lockOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 backdrop-blur-xs p-4 text-center z-20">
-              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-2 font-bold text-xs">STAR</div>
-              <div class="font-bold text-xs sm:text-sm text-slate-900 mb-0.5">Khóa đáp án mẫu AI & Gợi ý STAR</div>
-              <p class="text-[11px] text-slate-600 max-w-sm mb-2">Vui lòng tự trả lời và bấm Nộp câu trả lời ở trên để mở khóa đáp án.</p>
-            </div>
-          </div>
-        </div>
-
     </section>
 
   </main>
@@ -1152,7 +1151,10 @@
         <div class="space-y-3.5">
           <input type="text" placeholder="Họ và tên" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
           <input type="email" placeholder="Email" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
-          <input type="password" placeholder="Mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+          <div>
+            <input type="password" placeholder="Mật khẩu (tối thiểu 6 ký tự)" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
+            <p class="text-[10px] text-slate-400 mt-1 pl-1">Yêu cầu: Tối thiểu 6 ký tự, kết hợp chữ và số để tăng bảo mật.</p>
+          </div>
           <input type="password" placeholder="Xác nhận mật khẩu" class="w-full text-sm p-3 rounded-xl border border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all">
           <!-- Đã thêm id="btnSubmitRegister" -->
           <button id="btnSubmitRegister" class="w-full py-3 mt-2 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all text-sm">

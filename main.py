@@ -145,20 +145,51 @@ UNIVERSAL_SKILL_CATALOG = {
     "Ngoại ngữ thứ 2 (Trung / Nhật / Hàn)": ["tiếng trung", "hsk", "tiếng nhật", "jlpt", "tiếng hàn", "topik", "tiếng pháp"],
 }
 
-# TỪ ĐIỂN KỸ NĂNG MỀM (SOFT SKILLS) DÙNG KHI CV KHÔNG CÓ KỸ NĂNG CHUYÊN NGÀNH HOẶC CẦN BÓC TÁCH KỸ NĂNG MỀM
-SOFT_SKILLS_CATALOG = {
-    "Giao tiếp & Trình bày (Communication)": ["giao tiếp", "communication", "ứng xử", "trình bày", "diễn đạt", "lắng nghe"],
-    "Làm việc nhóm (Teamwork)": ["làm việc nhóm", "teamwork", "team work", "phối hợp nhóm", "hợp tác", "collaboration", "team player"],
-    "Giải quyết vấn đề (Problem Solving)": ["giải quyết vấn đề", "problem solving", "xử lý tình huống", "xử lý sự cố"],
-    "Tư duy phản biện & Phân tích (Critical Thinking)": ["tư duy phản biện", "critical thinking", "tư duy logic", "analytical thinking", "tư duy phân tích"],
-    "Quản lý thời gian & Tổ chức công việc": ["quản lý thời gian", "time management", "lập kế hoạch", "planning", "tổ chức công việc", "sắp xếp công việc", "đa nhiệm", "multitasking"],
-    "Kỹ năng Thuyết trình (Presentation)": ["thuyết trình", "presentation", "public speaking"],
-    "Đàm phán & Thuyết phục (Negotiation)": ["đàm phán", "thương lượng", "negotiation", "thuyết phục"],
-    "Lãnh đạo & Quản lý đội nhóm (Leadership)": ["lãnh đạo", "leadership", "quản lý nhóm", "team lead", "mentor", "dẫn dắt", "điều phối"],
-    "Làm việc dưới áp lực & Thích nghi nhanh": ["chịu áp lực", "áp lực cao", "under pressure", "thích nghi", "adaptability", "linh hoạt", "ham học hỏi", "tự học", "chủ động"],
-    "Tư duy sáng tạo (Creativity)": ["sáng tạo", "creativity", "creative", "ý tưởng mới", "đổi mới"],
-    "Chăm sóc & Dịch vụ khách hàng": ["chăm sóc khách hàng", "customer service", "tư vấn khách hàng", "dịch vụ khách hàng", "tận tâm"],
+# TỪ ĐIỂN KỸ NĂNG MỀM TIẾNG VIỆT & TIẾNG ANH ĐỘC LẬP (TRÁNH LẪN LỘN NGÔN NGỮ)
+SOFT_SKILLS_VI = {
+    "Giao tiếp & Trình bày": ["giao tiếp", "trình bày", "diễn đạt", "lắng nghe", "ứng xử"],
+    "Làm việc nhóm": ["làm việc nhóm", "teamwork", "team work", "phối hợp nhóm", "hợp tác", "collaboration", "team player"],
+    "Giải quyết vấn đề": ["giải quyết vấn đề", "problem solving", "xử lý tình huống", "xử lý sự cố"],
+    "Tư duy phản biện & Phân tích": ["tư duy phản biện", "critical thinking", "tư duy logic", "analytical thinking", "tư duy phân tích"],
+    "Quản lý thời gian & Tiến độ": ["quản lý thời gian", "time management", "lập kế hoạch", "planning", "tổ chức công việc", "sắp xếp công việc", "đa nhiệm"],
+    "Kỹ năng Thuyết trình": ["thuyết trình", "presentation", "public speaking"],
+    "Đàm phán & Thuyết phục": ["đàm phán", "thương lượng", "negotiation", "thuyết phục"],
+    "Lãnh đạo & Quản lý đội nhóm": ["lãnh đạo", "leadership", "quản lý nhóm", "team lead", "mentor", "dẫn dắt", "điều phối"],
+    "Thích ứng & Học hỏi nhanh": ["chịu áp lực", "áp lực cao", "thích nghi", "adaptability", "linh hoạt", "ham học hỏi", "tự học", "chủ động"],
+    "Tư duy sáng tạo": ["sáng tạo", "creativity", "creative", "ý tưởng mới", "đổi mới"],
+    "Chăm sóc khách hàng": ["chăm sóc khách hàng", "customer service", "tư vấn khách hàng", "dịch vụ khách hàng", "tận tâm"]
 }
+
+SOFT_SKILLS_EN = {
+    "Communication & Presentation": ["communication", "presentation", "public speaking", "listening", "speaking"],
+    "Teamwork & Collaboration": ["teamwork", "team work", "collaboration", "team player", "cooperation"],
+    "Problem Solving": ["problem solving", "troubleshooting", "incident resolution"],
+    "Critical Thinking & Analysis": ["critical thinking", "analytical thinking", "analytical skills", "logical reasoning"],
+    "Time Management & Planning": ["time management", "planning", "organization", "multitasking", "prioritization"],
+    "Negotiation & Persuasion": ["negotiation", "persuasion", "deal closing"],
+    "Leadership & Mentoring": ["leadership", "mentoring", "team lead", "supervision"],
+    "Adaptability & Agility": ["adaptability", "agility", "fast learner", "flexibility", "working under pressure"],
+    "Creative Thinking": ["creativity", "creative thinking", "innovation"],
+    "Customer Service": ["customer service", "client relationship", "customer care"]
+}
+
+# Giữ tương thích ngược với catalog cũ
+SOFT_SKILLS_CATALOG = {**SOFT_SKILLS_VI}
+
+
+def detect_language(text: str) -> str:
+    """Xác định ngôn ngữ chính của văn bản: Tiếng Việt ('vi') hoặc Tiếng Anh ('en')."""
+    if not text:
+        return 'vi'
+    vn_chars = set("àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ"
+                   "ÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬĐÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ")
+    vn_char_count = sum(1 for c in text if c in vn_chars)
+    words = [w.strip().lower() for w in re.split(r'\s+', text) if w.strip()]
+    vn_words = {"và", "của", "các", "có", "trong", "được", "người", "kỹ", "năng", "kinh", "nghiệm", "học", "dự", "án", "với", "cho", "là", "tại", "năm", "tháng"}
+    vn_word_count = sum(1 for w in words if w in vn_words)
+    if vn_char_count >= 8 or vn_word_count >= 4:
+        return 'vi'
+    return 'en'
 
 
 def _kw_in_text(kw: str, text_lower: str) -> bool:
@@ -170,13 +201,14 @@ def _kw_in_text(kw: str, text_lower: str) -> bool:
     return bool(re.search(pattern, text_lower))
 
 
-def extract_soft_skills_from_text(text: str, max_skills: int = 10) -> list[str]:
-    """Tìm các kỹ năng mềm mà ứng viên có liệt kê trên CV."""
+def extract_soft_skills_from_text(text: str, max_skills: int = 10, lang: str = "vi") -> list[str]:
+    """Tìm các kỹ năng mềm mà ứng viên có liệt kê trên CV theo đúng ngôn ngữ đã phát hiện (vi / en)."""
     if not text or not text.strip():
         return []
     text_lower = " " + text.lower() + " "
+    catalog = SOFT_SKILLS_EN if lang == "en" else SOFT_SKILLS_VI
     found_soft = []
-    for skill_name, keywords in SOFT_SKILLS_CATALOG.items():
+    for skill_name, keywords in catalog.items():
         for kw in keywords:
             if _kw_in_text(kw, text_lower):
                 if skill_name not in found_soft:
@@ -185,7 +217,7 @@ def extract_soft_skills_from_text(text: str, max_skills: int = 10) -> list[str]:
     return found_soft[:max_skills]
 
 
-def extract_skills_universal_from_text(text: str, max_skills: int = 12, include_soft: bool = True) -> list[str]:
+def extract_skills_universal_from_text(text: str, max_skills: int = 12, include_soft: bool = True, lang: str = "vi") -> list[str]:
     """
     Trích xuất kỹ năng chuyên ngành từ văn bản CV hoặc JD.
     Nếu không tìm thấy kỹ năng chuyên ngành (hoặc include_soft=True), tìm tiếp các kỹ năng mềm được liệt kê trong văn bản.
@@ -218,7 +250,7 @@ def extract_skills_universal_from_text(text: str, max_skills: int = 12, include_
 
     # Nếu không có kỹ năng chuyên ngành (hoặc cần bổ sung kỹ năng mềm có liệt kê trên CV/JD)
     if include_soft or len(found) == 0:
-        soft_found = extract_soft_skills_from_text(text, max_skills=max_skills)
+        soft_found = extract_soft_skills_from_text(text, max_skills=max_skills, lang=lang)
         for sf in soft_found:
             if not any(sf.lower() in f.lower() or f.lower() in sf.lower() for f in found):
                 found.append(sf)
@@ -354,6 +386,8 @@ class AnswerSubmitRequest(BaseModel):
     question_text: str
     student_answer: str
     language: str | None = "vi"
+    job_id: int | None = None
+    question_category: str | None = None
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -471,6 +505,11 @@ class CVInput(BaseModel):
 class StarAnswerInput(BaseModel):
     student_answer: str
 
+class FeedbackInput(BaseModel):
+    profile_id: int | str
+    job_id: int | None = None
+    is_match: bool
+
 class ScheduleItem(BaseModel):
     id: int
     exactDate: str
@@ -480,9 +519,11 @@ class ScheduleItem(BaseModel):
 
 class StudyPlanRequest(BaseModel):
     profile_id: str
-    role_id: str
-    schedules: List[ScheduleItem]
-    gaps: List[str]
+    role_id: str | None = "1"
+    schedules: List[ScheduleItem] = []
+    gaps: List[str] = []
+    jd_text: str | None = ""
+    target_role: str | None = ""
 
 class UpdateScheduleRequest(BaseModel):
     profile_id: str | int
@@ -767,25 +808,57 @@ def create_job_with_advanced_ai(job: JobCreateAI, db: Session = Depends(get_db))
 
 @app.post("/profiles/extract-cv/")
 def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
-    cv_text_short = cv_input.cv_text[:2500]
+    raw_text = (cv_input.cv_text or "").strip()
+    words = raw_text.split()
+    if len(words) < 15:
+        raise HTTPException(
+            status_code=400,
+            detail="Nội dung file quá ngắn hoặc không đọc được chữ (file ảnh quét / scan / không có dữ liệu văn bản). Vui lòng tải lên file CV định dạng PDF hợp lệ!"
+        )
 
-    prompt_text = f"""Extract candidate info and skills from the CV text below (any industry: IT, Finance, Accounting, Law, F&B, Marketing, HR, Logistics, Engineering, etc.).
-IMPORTANT RULE:
-1. Extract all specialized domain/hard skills mentioned in the CV.
-2. If the CV does NOT contain specialized domain skills (or only has general experience), you MUST carefully search the CV text for any SOFT SKILLS (Kỹ năng mềm: communication, teamwork, problem solving, time management, presentation, leadership, adaptability, critical thinking, customer service, negotiation, etc.) listed by the candidate and include them in "skills".
-Output ONLY a valid JSON object without any explanation.
-        CV TEXT:
-        {cv_text_short}
+    cv_lang = detect_language(raw_text)
+    cv_text_short = raw_text[:2500]
 
-        REQUIRED JSON FORMAT:
-        {{
-            "name": "Candidate Name",
-            "email": "email@example.com",
-            "skills": {{"Skill 1": 4, "Skill 2": 5}},
-            "soft_skills": ["Soft skill 1", "Soft skill 2"],
-            "experience": "Brief summary of work experience and projects from CV"
-        }}
-    """
+    if cv_lang == "en":
+        prompt_text = f"""Extract candidate info and skills from the English CV text below.
+CRITICAL LANGUAGE RULE: The CV is in English. You MUST extract all skills, soft skills, and experience summary 100% in ENGLISH. Do NOT output any Vietnamese.
+1. Extract all specialized technical/domain skills mentioned in the CV.
+2. If the candidate lists soft skills (communication, teamwork, problem solving, time management, adaptability, etc.), extract them into "soft_skills" in English.
+Output ONLY a valid JSON object without markdown or explanation.
+
+CV TEXT:
+{cv_text_short}
+
+REQUIRED JSON FORMAT:
+{{
+    "name": "Candidate Name",
+    "email": "email@example.com",
+    "skills": {{"Skill 1": 4, "Skill 2": 5}},
+    "soft_skills": ["Soft Skill 1", "Soft Skill 2"],
+    "experience": "Brief summary of work experience and projects in English"
+}}
+"""
+    else:
+        prompt_text = f"""Trích xuất thông tin ứng viên và các kỹ năng từ nội dung CV tiếng Việt dưới đây.
+QUY TẮC BẮT BUỘC VỀ NGÔN NGỮ:
+1. CV này là TIẾNG VIỆT. Bạn PHẢI trích xuất toàn bộ tên kỹ năng (đặc biệt là kỹ năng mềm, kỹ năng nghiệp vụ) và tóm tắt kinh nghiệm 100% bằng TIẾNG VIỆT chuẩn mực, tự nhiên.
+2. Với các thuật ngữ công nghệ/công cụ quốc tế (như Python, SQL, Docker, React, Git, Laravel) thì giữ nguyên tên công nghệ chuẩn.
+3. TUYỆT ĐỐI KHÔNG trộn lẫn nửa Anh nửa Việt (ví dụ: không viết 'Giao tiếp (Communication)' hay 'Teamwork làm việc nhóm').
+4. Nếu CV ít kỹ năng chuyên ngành nhưng có liệt kê kỹ năng mềm (giao tiếp, làm việc nhóm, giải quyết vấn đề, quản lý thời gian...), hãy trích xuất chúng vào "soft_skills" bằng tiếng Việt.
+CHỈ trả về JSON hợp lệ, KHÔNG thêm lời giải thích.
+
+NỘI DUNG CV:
+{cv_text_short}
+
+CẤU TRÚC JSON BẮT BUỘC:
+{{
+    "name": "Họ và tên ứng viên",
+    "email": "email@example.com",
+    "skills": {{"Tên kỹ năng 1": 4, "Tên kỹ năng 2": 5}},
+    "soft_skills": ["Kỹ năng mềm 1", "Kỹ năng mềm 2"],
+    "experience": "Tóm tắt ngắn gọn kinh nghiệm làm việc và dự án bằng tiếng Việt"
+}}
+"""
 
     response = ollama.chat(
         model='qwen3.5:4b',
@@ -801,14 +874,14 @@ Output ONLY a valid JSON object without any explanation.
         content = response.get('message', {}).get('content', '')
 
     content = content.strip()
-    print(f"--- CÂU TRẢ LỜI GỐC CỦA AI (CV) ---:\n{content}\n-----------------------------")
+    print(f"--- CÂU TRẢ LỜI GỐC CỦA AI (CV - {cv_lang.upper()}) ---:\n{content}\n-----------------------------")
 
     json_match = re.search(r'(\{[\s\S]*\})', content)
     cleaned = json_match.group(1) if json_match else content
     ai_data = json.loads(cleaned.strip()) if cleaned else {}
 
     ai_name = str(ai_data.get("name", "")).strip()
-    if not ai_name or ai_name == "Candidate Name":
+    if not ai_name or ai_name in ("Candidate Name", "Họ và tên ứng viên"):
         lines = [ln.strip() for ln in cv_input.cv_text.splitlines() if ln.strip() and 2 < len(ln.strip()) < 55]
         ai_name = lines[0] if lines else cv_input.name
 
@@ -831,9 +904,10 @@ Output ONLY a valid JSON object without any explanation.
                 except Exception:
                     final_skills[str(k).strip()] = 4
 
-    # Phân tách kỹ năng chuyên ngành và kỹ năng mềm
-    soft_catalog_labels = {lbl.lower() for lbl in SOFT_SKILLS_CATALOG.keys()}
-    universal_detected = extract_skills_universal_from_text(cv_input.cv_text, max_skills=10, include_soft=False)
+    # Phân tách kỹ năng chuyên ngành và kỹ năng mềm theo đúng ngôn ngữ
+    catalog_to_check = SOFT_SKILLS_EN if cv_lang == "en" else SOFT_SKILLS_VI
+    soft_catalog_labels = {lbl.lower() for lbl in catalog_to_check.keys()}
+    universal_detected = extract_skills_universal_from_text(raw_text, max_skills=10, include_soft=False, lang=cv_lang)
     domain_detected = [sk for sk in universal_detected if sk.lower() not in soft_catalog_labels]
 
     for sk in domain_detected:
@@ -854,16 +928,33 @@ Output ONLY a valid JSON object without any explanation.
                     if not any(skills_are_matching(s_name, existing_k) for existing_k in final_skills.keys()):
                         final_skills[s_name] = 4
 
-        soft_detected = extract_soft_skills_from_text(cv_input.cv_text, max_skills=10)
+        soft_detected = extract_soft_skills_from_text(raw_text, max_skills=10, lang=cv_lang)
         for s_sk in soft_detected:
             if not any(skills_are_matching(s_sk, existing_k) for existing_k in final_skills.keys()):
                 final_skills[s_sk] = 4
             if len(final_skills) >= 12:
                 break
 
+    # Làm sạch tên kỹ năng để đảm bảo chuẩn xác về ngôn ngữ, không bị dính song ngữ lẫn lộn
+    clean_skills = {}
+    for k, v in final_skills.items():
+        k_str = str(k).strip()
+        if cv_lang == "vi":
+            k_str = re.sub(r'\s*\([a-zA-Z\s/&]+\)$', '', k_str).strip()
+        if k_str:
+            clean_skills[k_str] = v
+    final_skills = clean_skills
+
+    # KIỂM TRA FILE RÁC: Báo lỗi ngay nếu không tìm thấy kỹ năng chuyên môn hay kỹ năng mềm nào
+    if len(final_skills) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="File tải lên không hợp lệ hoặc là file rác (không tìm thấy bất kỳ kỹ năng chuyên môn hay kỹ năng mềm nào trong nội dung). Vui lòng kiểm tra lại file CV của bạn!"
+        )
+
     ai_exp = _clean_spaced_hyphens(str(ai_data.get("experience", "")).strip())
-    if not ai_exp or ai_exp == "Chưa có dữ liệu":
-        ai_exp = _clean_spaced_hyphens(cv_input.cv_text[:800].strip())
+    if not ai_exp or ai_exp in ("Chưa có dữ liệu", "Brief summary of work experience and projects in English"):
+        ai_exp = _clean_spaced_hyphens(raw_text[:800].strip())
 
     existing_profile = db.query(Profile).filter(Profile.email == ai_email).first()
     if existing_profile:
@@ -1144,7 +1235,64 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
         f"Khuyến nghị bạn chuyển sang bước 'Lộ trình học tập' để hệ thống tự động phân bổ bài học vào khung giờ rảnh và luyện tập trong 'Phòng phỏng vấn STAR'."
     )
 
+    # =========================================================
+    # LƯU TRỮ VÀO DATABASE CHO BẢNG JOBS VÀ ANALYSES (AUDIT DATABASE MODELS)
+    # =========================================================
+    db_job = None
+    try:
+        if jd_text:
+            db_job = db.query(Job).filter(Job.description == jd_text).first()
+            if not db_job:
+                db_job = Job(
+                    title=target_role_display,
+                    description=jd_text,
+                    requirements_json=json.dumps(list(jd_skills.keys()), ensure_ascii=False)
+                )
+                db.add(db_job)
+                db.commit()
+                db.refresh(db_job)
+        else:
+            db_job = db.query(Job).filter(Job.title == target_role_display).first()
+            if not db_job:
+                db_job = Job(
+                    title=target_role_display,
+                    description=f"Vị trí tuyển dụng: {target_role_display}",
+                    requirements_json=json.dumps(list(jd_skills.keys()), ensure_ascii=False)
+                )
+                db.add(db_job)
+                db.commit()
+                db.refresh(db_job)
+    except Exception as e_job:
+        print(f"Lỗi lưu trữ Job: {e_job}")
+
+    saved_analysis_id = None
+    if not is_sample_mode and profile:
+        try:
+            analysis_record = Analysis(
+                profile_id=profile.id,
+                job_id=db_job.id if db_job else None,
+                total_score=float(rounded_total),
+                gaps_json=json.dumps(missing_skill_names, ensure_ascii=False),
+                reasons_json=json.dumps({
+                    "ai_reasoning": ai_reasoning,
+                    "skill_score": round(skill_score),
+                    "interest_score": round(interest_score),
+                    "experience_score": round(experience_score),
+                    "matched_skills": matched_skill_names,
+                    "missing_skills": missing_skill_names,
+                    "target_role": target_role_display
+                }, ensure_ascii=False)
+            )
+            db.add(analysis_record)
+            db.commit()
+            db.refresh(analysis_record)
+            saved_analysis_id = analysis_record.id
+        except Exception as e_ana:
+            print(f"Lỗi lưu trữ Analysis: {e_ana}")
+
     return {
+        "analysis_id": saved_analysis_id,
+        "job_id": db_job.id if db_job else None,
         "profile_id": profile_id,
         "role_id": role_id,
         "target_role": target_role_display,
@@ -1171,24 +1319,75 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
         profile, streak_record = ensure_profile_and_streak(db, req.profile_id)
         target_pid = profile.id
 
-        missing_skills = req.gaps if req.gaps and len(req.gaps) > 0 else ["Kỹ năng chuyên ngành"]
-        gaps_count = len(missing_skills)
+        missing_skills = [g for g in req.gaps if g and g.strip()] if req.gaps else []
+        is_strong_cv = (len(missing_skills) <= 2) or all("chuyên ngành" in g.lower() for g in missing_skills)
+        jd_context = (req.jd_text or "").strip()
+        role_label = (req.target_role or "vị trí chuyên môn").strip()
 
-        prompt_text = f"""
-        Lên lộ trình học tập cá nhân hóa để khắc phục ĐẦY ĐỦ {gaps_count} kỹ năng bị hổng sau: {", ".join(missing_skills)}.
-        
-        QUY TẮC BẮT BUỘC:
-        1. Sáng tạo TỐI THIỂU {gaps_count} bài học. Mỗi kỹ năng hổng phải có ít nhất 1 bài học chi tiết, thực tế.
-        2. Không sử dụng ký tự gạch nối " - " trong tên bài học (hãy viết câu tự nhiên hoặc dùng dấu phẩy, dấu hai chấm).
-        3. CHỈ trả về JSON hợp lệ, KHÔNG kèm văn bản giải thích.
-        4. Định dạng chuẩn:
-        {{
-            "tasks": [
-                {{"title": "Tên bài học cụ thể", "duration_minutes": 45}},
-                {{"title": "Thực hành bài tập ứng dụng", "duration_minutes": 60}}
-            ]
-        }}
-        """
+        # NÂNG CẤP LỘ TRÌNH: Khi CV quá xịn (ít hoặc không có lỗ hổng), đào sâu yêu cầu nâng cao trong JD
+        if is_strong_cv and jd_context:
+            prompt_text = f"""
+            [NGỮ CẢNH ĐẶC BIỆT]: Ứng viên này có CV RẤT XỊN / TRÌNH ĐỘ CAO (đã thành thạo các kỹ năng cơ bản của vị trí '{role_label}').
+            TUYỆT ĐỐI KHÔNG TẠO BÀI HỌC CƠ BẢN HOẶC CHUNG CHUNG!
+
+            Hãy đọc kỹ Mô tả công việc (JD) của nhà tuyển dụng dưới đây để bóc tách các yêu cầu NÂNG CAO, CHUYÊN SÂU & THỰC CHIẾN ngoài các kỹ năng thông thường:
+            [MÔ TẢ CÔNG VIỆC JD]:
+            {jd_context[:2200]}
+
+            YÊU CẦU THIẾT KẾ LỘ TRÌNH SENIOR / LEVEL CAO:
+            1. Đào sâu vào các khía cạnh cao cấp mà nhà tuyển dụng đòi hỏi:
+               - Thiết kế kiến trúc hệ thống, kiến trúc giải pháp chịu tải cao và mở rộng (System Architecture, Scalability).
+               - Tối ưu hóa hiệu năng, profiling và giải quyết nghẽn cổ chai (Performance Optimization, Caching).
+               - Tiêu chuẩn bảo mật chuyên sâu, phân quyền và phòng chống rủi ro (Security Best Practices, OWASP).
+               - Quy trình kỹ thuật tự động hóa: CI/CD, Containerization, Automated Testing và APM Logging/Monitoring.
+               - Giải quyết các bài toán nghiệp vụ phức tạp đặc thù của dự án được nêu trong JD.
+            2. Tạo từ 5 đến 7 bài học CHUYÊN SÂU, thực chiến cao cấp.
+            3. QUY TẮC: Không sử dụng ký tự gạch nối " - " trong tên bài học.
+            4. CHỈ trả về JSON hợp lệ:
+            {{
+                "tasks": [
+                    {{"title": "Thiết kế kiến trúc hệ thống chịu tải cao và mô hình caching", "duration_minutes": 60}},
+                    {{"title": "Tối ưu hóa truy vấn cơ sở dữ liệu và đánh chỉ mục chuyên sâu", "duration_minutes": 45}}
+                ]
+            }}
+            """
+        elif is_strong_cv and not jd_context:
+            prompt_text = f"""
+            [NGỮ CẢNH ĐẶC BIỆT]: Ứng viên này có CV XUẤT SẮC / NỀN TẢNG KỸ NĂNG RẤT TỐT cho vị trí '{role_label}'.
+            TUYỆT ĐỐI KHÔNG TẠO BÀI HỌC CƠ BẢN HOẶC CHUNG CHUNG!
+
+            Hãy thiết kế một lộ trình học tập CHUYÊN SÂU (Senior Level) tập trung nâng tầm năng lực vượt trội:
+            1. Kiến trúc hệ thống, Clean Architecture và Design Patterns trong thực tế dự án lớn.
+            2. Tối ưu hóa hiệu năng chuyên sâu, bộ nhớ, cơ sở dữ liệu và kỹ thuật caching.
+            3. Tiêu chuẩn bảo mật ứng dụng, phân quyền nghiêm ngặt và phòng chống tấn công.
+            4. Tự động hóa kiểm thử (Unit/Integration Test, CI/CD Pipeline).
+            5. Kỹ năng Review Code, kiến trúc giải pháp và xử lý sự cố môi trường Production.
+            Tạo từ 5 đến 6 bài học cụ thể, thực tế. Không sử dụng ký tự gạch nối " - " trong tên bài học. CHỈ trả về JSON hợp lệ.
+            {{
+                "tasks": [
+                    {{"title": "Kiến trúc hệ thống và thiết kế Clean Architecture thực chiến", "duration_minutes": 45}},
+                    {{"title": "Tối ưu hóa hiệu năng và kỹ thuật xử lý dữ liệu lớn", "duration_minutes": 60}}
+                ]
+            }}
+            """
+        else:
+            gaps_count = len(missing_skills) if missing_skills else 1
+            missing_skills_str = ", ".join(missing_skills) if missing_skills else "Kỹ năng chuyên môn chuyên sâu"
+            prompt_text = f"""
+            Lên lộ trình học tập cá nhân hóa để khắc phục ĐẦY ĐỦ các kỹ năng bị hổng sau: {missing_skills_str}.
+            
+            QUY TẮC BẮT BUỘC:
+            1. Sáng tạo TỐI THIỂU {max(4, gaps_count)} bài học. Mỗi kỹ năng hổng phải có bài học chi tiết, thực tế.
+            2. Không sử dụng ký tự gạch nối " - " trong tên bài học (hãy viết câu tự nhiên hoặc dùng dấu phẩy, dấu hai chấm).
+            3. CHỈ trả về JSON hợp lệ, KHÔNG kèm văn bản giải thích.
+            4. Định dạng chuẩn:
+            {{
+                "tasks": [
+                    {{"title": "Tên bài học cụ thể", "duration_minutes": 45}},
+                    {{"title": "Thực hành bài tập ứng dụng", "duration_minutes": 60}}
+                ]
+            }}
+            """
 
         max_retries = 2
         ai_tasks = []
@@ -1426,12 +1625,26 @@ def reset_all_database_tables():
 # ==========================================
 @app.post("/auth/register")
 def register_user(data: RegisterInput, db: Session = Depends(get_db)):
+    pwd = (data.password or "").strip()
+    if len(pwd) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Mật khẩu quá ngắn! Mật khẩu phải có tối thiểu 6 ký tự để đảm bảo an toàn."
+        )
+
+    weak_passwords = {"123456", "12345678", "123456789", "abcdef", "password", "111111", "000000", "qwerty", "admin123"}
+    if pwd.lower() in weak_passwords or len(set(pwd)) <= 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Mật khẩu quá yếu và dễ đoán! Vui lòng chọn mật khẩu phức tạp hơn kết hợp cả chữ cái và số."
+        )
+
     existing = db.query(Profile).filter(Profile.email == data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email này đã được đăng ký!")
 
     new_user = Profile(
-        name=data.name, email=data.email, password=data.password,
+        name=data.name, email=data.email, password=pwd,
         skills_json="{}", interests_json="[]", experience_text="", free_time_json="[]"
     )
     db.add(new_user)
@@ -1480,6 +1693,12 @@ def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
 
     if task.status == "completed":
         raise HTTPException(status_code=400, detail="Bài học này đã được hoàn thành trước đó!")
+
+    if task.status == "excused":
+        raise HTTPException(
+            status_code=400,
+            detail="Bài học này đã được miễn và vô hiệu hóa do bạn đã đăng ký Thẻ nghỉ phép ngày hôm nay!"
+        )
 
     now_vn = vn_now()
 
@@ -1669,29 +1888,68 @@ def water_plant(profile_id: str, db: Session = Depends(get_db)):
 @app.post("/gamification/use-leave-pass/{profile_id}")
 def use_leave_pass(profile_id: str, db: Session = Depends(get_db)):
     """
-    Đăng ký sử dụng Thẻ Phiếu Nghỉ Phép (Giới hạn tối đa 1 lần / 1 tuần)
-    để bảo lưu chuỗi ngày học (Streak) không bị mất khi bận.
+    Đăng ký sử dụng Thẻ Phiếu Nghỉ Phép (Giới hạn tối đa 1 lần / 1 tuần).
+    Chỉ cho phép sử dụng khi ngày hôm đó có lịch học theo đăng ký.
+    Khi sử dụng, các bài học của ngày hôm đó sẽ được miễn và vô hiệu hóa (status = 'excused')
+    để bảo lưu chuỗi ngày học (Streak).
     """
     profile, record = ensure_profile_and_streak(db, profile_id)
     now_vn = vn_now()
-    today_str = now_vn.strftime("%Y-%m-%d")
+    today_ymd = now_vn.strftime("%Y-%m-%d")
+    today_dmy = now_vn.strftime("%d/%m/%Y")
 
-    if record.last_leave_date and _is_same_iso_week(record.last_leave_date, today_str):
+    # 1. Kiểm tra giới hạn 1 lần / 1 tuần
+    if record.last_leave_date and _is_same_iso_week(record.last_leave_date, today_ymd):
         raise HTTPException(
             status_code=400,
             detail=f"Bạn đã sử dụng Phiếu nghỉ phép trong tuần này rồi (Ngày {record.last_leave_date}). Giới hạn tối đa 1 lần/tuần!"
         )
 
-    record.last_leave_date = today_str
+    # 2. Kiểm tra xem người dùng đã có lộ trình học tập chưa
+    all_tasks = db.query(StudyTask).filter(StudyTask.profile_id == profile.id).all()
+    if not all_tasks:
+        raise HTTPException(
+            status_code=400,
+            detail="Bạn chưa có lộ trình học tập nào. Vui lòng tạo lộ trình trước khi sử dụng Phiếu nghỉ phép!"
+        )
+
+    # 3. Lọc ra các bài học có lịch trong ngày hôm nay
+    today_tasks = [
+        t for t in all_tasks
+        if (t.scheduled_day and (t.scheduled_day.strip() == today_dmy or t.scheduled_day.strip() == today_ymd))
+        or (t.unlock_time and t.unlock_time.startswith(today_ymd))
+    ]
+
+    if not today_tasks:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Hôm nay ({today_dmy}) bạn không có lịch học nào theo đăng ký. Thẻ nghỉ phép chỉ áp dụng vào những ngày có lịch học!"
+        )
+
+    # 4. Kiểm tra xem bài học hôm nay đã hoàn thành hết chưa
+    uncompleted_today = [t for t in today_tasks if t.status not in ("completed", "excused")]
+    if not uncompleted_today:
+        raise HTTPException(
+            status_code=400,
+            detail="Bạn đã hoàn thành tất cả bài học của ngày hôm nay rồi, không cần sử dụng Phiếu nghỉ phép!"
+        )
+
+    # 5. Vô hiệu hóa các bài học hôm nay (chuyển sang 'excused')
+    for t in uncompleted_today:
+        t.status = "excused"
+
+    record.last_leave_date = today_ymd
     record.recovery_mode = False
+    compute_roadmap_and_plant_metrics(db, profile.id, record)
     db.commit()
 
     return {
-        "message": "Đăng ký Phiếu nghỉ phép hôm nay thành công! Chuỗi Streak của bạn được bảo lưu trong tuần này (Giới hạn 1 lần/tuần).",
-        "last_leave_date": today_str,
+        "message": f"Đăng ký Phiếu nghỉ phép hôm nay ({today_dmy}) thành công! Đã miễn và vô hiệu hóa {len(uncompleted_today)} bài học hôm nay. Chuỗi Streak của bạn được bảo lưu an toàn.",
+        "last_leave_date": today_ymd,
         "leave_pass_remaining": 0,
         "leave_weekday": now_vn.date().isoweekday(),
-        "current_streak": record.current_streak
+        "current_streak": record.current_streak,
+        "excused_tasks_count": len(uncompleted_today)
     }
 
 
@@ -1822,12 +2080,21 @@ Generate EXACTLY 3 distinct, realistic interview questions tailored to these spe
             "Cân bằng giữa tốc độ hoàn thành và độ chính xác tiêu chuẩn"
         ]
         chosen_angles = rng.sample(focus_angles_vi, 3)
-        prompt = f"""[HỆ THỐNG]: Bạn là một chuyên gia tuyển dụng AI (Mã phiên ngẫu nhiên: #{nonce_val}). BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không kèm văn bản giải thích.
+        prompt = f"""[HỆ THỐNG]: Bạn là một chuyên gia tuyển dụng AI chuyên nghiệp (Mã phiên ngẫu nhiên: #{nonce_val}). BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không kèm văn bản giải thích.
 YÊU CẦU TỐI THƯỢNG: BẠN PHẢI TẠO RA ĐÚNG 3 CÂU HỎI KHÁC NHAU, MỚI MẺ BẰNG TIẾNG VIỆT, BÁM SÁT GÓC ĐỘ ĐƯỢC CHỈ ĐỊNH DƯỚI ĐÂY.
+QUY TẮC XƯNG HÔ CHUYÊN NGHIỆP:
+Người phỏng vấn tự xưng là 'Tôi', gọi ứng viên là 'bạn' (hoặc 'ứng viên').
+TUYỆT ĐỐI KHÔNG dùng các đại từ khác như 'mình', 'em', 'anh/chị', 'chúng tôi', 'mày/tao'.
+Duy trì phong thái lịch thiệp, tôn trọng, khách quan và chuẩn mực doanh nghiệp.
+
+QUY TẮC TRÁNH TRÙNG LẶP TUYỆT ĐỐI:
+3 câu hỏi trong cùng một bộ PHẢI hoàn toàn khác nhau về chủ đề, nội dung và khía cạnh hỏi:
+- Câu 1: Bắt buộc là Chuyên môn kỹ thuật / nghiệp vụ cốt lõi ({chosen_angles[0]}).
+- Câu 2: Bắt buộc là Tình huống thực tế / Xử lý sự cố ({chosen_angles[1]}).
+- Câu 3: Bắt buộc là Kỹ năng mềm / Phối hợp làm việc nhóm / Đàm phán ({chosen_angles[2]}).
+TUYỆT ĐỐI KHÔNG để các câu hỏi bị trùng ý hoặc hỏi lại cùng một nội dung.
+
 QUY TẮC TRÌNH BÀY: Hạn chế tối đa sử dụng ký tự gạch nối (" - ") trong tiêu đề, nội dung câu hỏi và gợi ý STAR (hãy viết câu tự nhiên bằng dấu phẩy hoặc dấu chấm).
-• Góc độ câu 1 (Chuyên môn): {chosen_angles[0]}
-• Góc độ câu 2 (Tình huống): {chosen_angles[1]}
-• Góc độ câu 3 (Kỹ năng mềm): {chosen_angles[2]}
 
 [THÔNG TIN ĐẦU VÀO]:
 • Vị trí: {target_role}
@@ -1896,10 +2163,69 @@ QUY TẮC TRÌNH BÀY: Hạn chế tối đa sử dụng ký tự gạch nối (
 
     content = re.sub(r',\s*([\]}])', r'\1', json_match.group(1))
     ai_output = json.loads(content)
-    questions = _clean_spaced_hyphens(ai_output.get("questions", []))
-    if not isinstance(questions, list) or len(questions) < 3:
-        raise HTTPException(status_code=500, detail="AI tạo chưa đủ 3 câu hỏi phỏng vấn.")
-    return {"questions": questions[:3], "language": language}
+    raw_questions = _clean_spaced_hyphens(ai_output.get("questions", []))
+    if not isinstance(raw_questions, list) or len(raw_questions) == 0:
+        raise HTTPException(status_code=500, detail="AI tạo chưa đủ câu hỏi phỏng vấn.")
+
+    # LỌC TRÙNG LẶP TUYỆT ĐỐI TRONG BỘ CÂU HỎI
+    unique_questions = []
+    seen_titles = []
+    for q in raw_questions:
+        title_norm = q.get("title", "").strip().lower()
+        ques_norm = q.get("question", "").strip().lower()
+
+        is_dup = False
+        for st, sq in seen_titles:
+            if title_norm and title_norm == st:
+                is_dup = True
+                break
+            if ques_norm and ques_norm == sq:
+                is_dup = True
+                break
+            if len(title_norm) > 10 and (title_norm in st or st in title_norm):
+                is_dup = True
+                break
+        if not is_dup:
+            seen_titles.append((title_norm, ques_norm))
+            unique_questions.append(q)
+
+    # Nếu AI vô tình tạo câu trùng và thiếu câu, bổ sung các câu hỏi dự phòng chuyên sâu không trùng
+    if len(unique_questions) < 3:
+        backup_pool = [
+            {
+                "title": f"Chuyên môn cốt lõi về {target_role}",
+                "question": f"Trong công việc của một {target_role}, khi thiết kế giải pháp kỹ thuật, bạn áp dụng các nguyên tắc hoặc chuẩn mực nào để đảm bảo tính ổn định và mở rộng lâu dài?",
+                "category": "Chuyên môn",
+                "difficulty": "3/5",
+                "tag": "Cốt lõi",
+                "suggested_star": {"situation": "Mô tả bối cảnh dự án có bài toán kỹ thuật", "task": "Nhiệm vụ đảm bảo tính ổn định và tối ưu", "action": "Áp dụng thiết kế module, quy chuẩn code và review", "result": "Hệ thống vận hành thông suốt"}
+            },
+            {
+                "title": f"Xử lý sự cố khẩn cấp {target_role}",
+                "question": f"Hãy chia sẻ về một sự cố bất ngờ hoặc lỗi nghiêm trọng bạn từng gặp trong công việc liên quan đến {target_role} và các bước bạn đã thực hiện để tìm nguyên nhân gốc rễ và khắc phục?",
+                "category": "Tình huống",
+                "difficulty": "4/5",
+                "tag": "Thực chiến",
+                "suggested_star": {"situation": "Bối cảnh sự cố phát sinh bất ngờ gần deadline", "task": "Trách nhiệm phân tích và dập tắt sự cố", "action": "Thu thập log, phân tích nguyên nhân và cô lập lỗi", "result": "Khắc phục triệt để và viết tài liệu phòng ngừa"}
+            },
+            {
+                "title": f"Phối hợp và thuyết phục trong {target_role}",
+                "question": f"Khi bạn và đồng nghiệp hoặc cấp trên có bất đồng quan điểm chuyên môn về giải pháp triển khai trong công việc {target_role}, bạn đã làm gì để thuyết phục và đạt được tiếng nói chung?",
+                "category": "Kỹ năng mềm",
+                "difficulty": "3/5",
+                "tag": "Làm việc nhóm",
+                "suggested_star": {"situation": "Tình huống có sự khác biệt quan điểm giải pháp", "task": "Mục tiêu đạt được đồng thuận hiệu quả nhất", "action": "Đưa ra dẫn chứng thực tế, đo lường số liệu và lắng nghe", "result": "Đội ngũ thống nhất phương án tối ưu nhất"}
+            }
+        ]
+        for bq in backup_pool:
+            if len(unique_questions) >= 3:
+                break
+            unique_questions.append(bq)
+
+    for idx, q in enumerate(unique_questions[:3]):
+        q["id"] = idx + 1
+
+    return {"questions": unique_questions[:3], "language": language}
 
 
 @app.post("/interview/submit-and-evaluate/{question_id}")
@@ -1926,9 +2252,11 @@ FORMATTING RULE: Do NOT use spaced hyphens (" - ") in your text; write natural s
 }}
 }}"""
     else:
-        prompt = f"""[HỆ THỐNG]: Bạn là một giám khảo phỏng vấn nhân sự khó tính nhưng công tâm. 
-Nhiệm vụ của bạn là chấm điểm câu trả lời của ứng viên dựa trên câu hỏi phỏng vấn.
+        prompt = f"""[HỆ THỐNG]: Bạn là một giám khảo phỏng vấn nhân sự chuyên nghiệp, công tâm và sắc sảo. 
+Nhiệm vụ của bạn là đánh giá và chấm điểm câu trả lời của ứng viên dựa trên câu hỏi phỏng vấn theo phương pháp STAR (Situation, Task, Action, Result).
 BẮT BUỘC phải trả về đúng định dạng JSON thuần túy, không kèm theo văn bản giải thích.
+QUY TẮC XƯNG HÔ CHUYÊN NGHIỆP:
+Luôn xưng là 'Tôi' (người đánh giá) và gọi ứng viên là 'bạn'. Tuyệt đối không xưng 'mình', 'em', 'anh/chị', 'chúng tôi'. Giọng điệu mang tính xây dựng, khách quan và chuẩn mực doanh nghiệp.
 QUY TẮC TRÌNH BÀY: Không sử dụng ký tự gạch nối (" - ") trong lời nhận xét và đáp án mẫu; hãy viết câu văn mạch lạc bằng dấu chấm và dấu phẩy.
 
 [THÔNG TIN ĐẦU VÀO]:
@@ -1972,17 +2300,102 @@ QUY TẮC TRÌNH BÀY: Không sử dụng ký tự gạch nối (" - ") trong l�
     compute_roadmap_and_plant_metrics(db, profile.id, streak_record)
     db.commit()
 
+    # LƯU TRỮ VÀO DATABASE CHO BẢNG INTERVIEWS (AUDIT DATABASE MODELS)
     new_interview = Interview(
         profile_id=profile.id,
+        job_id=payload.job_id,
+        questions_json=json.dumps({
+            "question_id": question_id,
+            "question_text": payload.question_text,
+            "category": payload.question_category or "Phỏng vấn chuyên sâu",
+            "language": language
+        }, ensure_ascii=False),
         student_answer_text=payload.student_answer,
         evaluation_json=json.dumps({"evaluation": eval_obj}, ensure_ascii=False)
     )
     db.add(new_interview)
     db.commit()
+    db.refresh(new_interview)
 
     return {
         "evaluation": eval_obj,
+        "interview_id": new_interview.id,
         "added_xp": xp_reward,
         "current_xp": streak_record.current_xp,
         "weekly_xp": streak_record.weekly_xp
     }
+
+
+# ==========================================
+# PHẦN 10: FEEDBACK & TRUY VẤN LỊCH SỬ TỪ DATABASE (AUDIT MODELS)
+# ==========================================
+@app.post("/analyses/feedback")
+@app.post("/analyses/feedback/")
+def submit_match_feedback(data: FeedbackInput, db: Session = Depends(get_db)):
+    """Lưu trữ phản hồi người dùng về độ chính xác và tương thích vào bảng feedbacks trong Database."""
+    profile, _ = ensure_profile_and_streak(db, data.profile_id)
+    new_feedback = Feedback(
+        profile_id=profile.id,
+        job_id=data.job_id,
+        is_match=data.is_match
+    )
+    db.add(new_feedback)
+    db.commit()
+    db.refresh(new_feedback)
+    return {
+        "status": "success",
+        "message": "Cảm ơn bạn đã gửi phản hồi đánh giá độ tương thích!",
+        "feedback_id": new_feedback.id
+    }
+
+
+@app.get("/analyses/history/{profile_id}")
+def get_analysis_history(profile_id: str, db: Session = Depends(get_db)):
+    """Lấy danh sách các lần phân tích JD/CV đã lưu trong bảng analyses của Database."""
+    profile, _ = ensure_profile_and_streak(db, profile_id)
+    records = db.query(Analysis).filter(Analysis.profile_id == profile.id).order_by(Analysis.id.desc()).limit(10).all()
+    history = []
+    for r in records:
+        try:
+            reasons = json.loads(r.reasons_json) if r.reasons_json else {}
+        except Exception:
+            reasons = {}
+        try:
+            gaps = json.loads(r.gaps_json) if r.gaps_json else []
+        except Exception:
+            gaps = []
+        job = db.query(Job).filter(Job.id == r.job_id).first() if r.job_id else None
+        history.append({
+            "id": r.id,
+            "job_id": r.job_id,
+            "job_title": job.title if job else reasons.get("target_role", "Vị trí tuyển dụng"),
+            "total_score": r.total_score,
+            "gaps": gaps,
+            "reasons": reasons
+        })
+    return {"history": history}
+
+
+@app.get("/interview/history/{profile_id}")
+def get_interview_history(profile_id: str, db: Session = Depends(get_db)):
+    """Lấy lịch sử các phiên phỏng vấn đã lưu trong bảng interviews của Database."""
+    profile, _ = ensure_profile_and_streak(db, profile_id)
+    records = db.query(Interview).filter(Interview.profile_id == profile.id).order_by(Interview.id.desc()).limit(15).all()
+    results = []
+    for r in records:
+        try:
+            q_obj = json.loads(r.questions_json) if r.questions_json else {}
+        except Exception:
+            q_obj = {"question_text": "Câu hỏi phỏng vấn"}
+        try:
+            eval_data = json.loads(r.evaluation_json) if r.evaluation_json else {}
+        except Exception:
+            eval_data = {}
+        results.append({
+            "id": r.id,
+            "job_id": r.job_id,
+            "question_info": q_obj,
+            "student_answer": r.student_answer_text,
+            "evaluation": eval_data.get("evaluation", eval_data)
+        })
+    return {"history": results}

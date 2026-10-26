@@ -560,6 +560,10 @@ async function startAnalysis() {
     
     const data = await res.json();
     
+    appState.currentJobId = data.job_id || null;
+    appState.currentAnalysisId = data.analysis_id || null;
+    appState.targetRoleTitle = data.target_role || '';
+    
     AppStore.setAnalysisResult(data);
     
     // Gọi hàm vẽ giao diện dùng chung
@@ -919,9 +923,33 @@ if (cvFileInput) {
     cvFileInput.addEventListener('change', async (e) => {
         if (e.target.files.length > 0) {
             const file = e.target.files[0];
+            const errBox = document.getElementById('cvUploadErrorMsg');
+            const errText = document.getElementById('cvUploadErrorText');
+            if (errBox) errBox.classList.add('hidden');
+
+            // NGĂN CHẶN FILE KHÔNG PHẢI .PDF NGAY TỪ ĐẦU
+            const fileName = (file.name || '').toLowerCase();
+            const isPdf = fileName.endsWith('.pdf') || file.type === 'application/pdf';
+            if (!isPdf) {
+                const msg = 'Định dạng file không hợp lệ! Hệ thống chỉ chấp nhận định dạng tài liệu .PDF.';
+                if (errBox && errText) {
+                    errText.textContent = msg;
+                    errBox.classList.remove('hidden');
+                }
+                if (uploadStatusText) uploadStatusText.textContent = 'Sai định dạng file!';
+                if (uploadFileName) uploadFileName.textContent = file.name;
+                showToast('Lỗi định dạng', msg, 'error');
+                e.target.value = '';
+                return;
+            }
             
             if (file.size > 5 * 1024 * 1024) { 
-                showToast('File quá lớn', 'File CV vượt quá 5MB. Vui lòng nén lại.', 'warning');
+                const msg = 'File CV vượt quá 5MB. Vui lòng nén lại file PDF.';
+                if (errBox && errText) {
+                    errText.textContent = msg;
+                    errBox.classList.remove('hidden');
+                }
+                showToast('File quá lớn', msg, 'warning');
                 e.target.value = ''; 
                 return;
             }
@@ -933,8 +961,8 @@ if (cvFileInput) {
             try {
                 let extractedText = "";
 
-               // DÙNG PDF.JS ĐỂ RÚT TRÍCH VĂN BẢN TỪ FILE PDF (CÁCH MỚI)
-                if (file.type === "application/pdf") {
+               // DÙNG PDF.JS ĐỂ RÚT TRÍCH VĂN BẢN TỪ FILE PDF
+                if (file.type === "application/pdf" || fileName.endsWith('.pdf')) {
                     const fileUrl = URL.createObjectURL(file);
                     const loadingTask = pdfjsLib.getDocument(fileUrl);
                     const pdf = await loadingTask.promise;
@@ -952,10 +980,17 @@ if (cvFileInput) {
                     extractedText = await file.text();
                 }
 
-                if (!extractedText || extractedText.trim() === "") {
-                     showToast('Lỗi đọc file', 'Không thể đọc chữ. Đảm bảo CV của bạn không phải là file ảnh (Canva/Scan).', 'error');
-                     if (uploadStatusText) uploadStatusText.textContent = "Không tìm thấy văn bản trong PDF!";
-                     return;
+                const words = (extractedText || '').trim().split(/\s+/).filter(Boolean);
+                if (words.length < 15) {
+                    const msg = 'Nội dung file quá ngắn hoặc không đọc được chữ (file ảnh scan / không có dữ liệu văn bản). Vui lòng tải lên CV định dạng PDF có chứa chữ!';
+                    if (errBox && errText) {
+                        errText.textContent = msg;
+                        errBox.classList.remove('hidden');
+                    }
+                    showToast('Lỗi đọc file', msg, 'error');
+                    if (uploadStatusText) uploadStatusText.textContent = "Không tìm thấy văn bản hợp lệ trong PDF!";
+                    e.target.value = '';
+                    return;
                 }
 
                 if (uploadStatusText) uploadStatusText.textContent = "AI đang trích xuất kỹ năng đa ngành...";
@@ -974,8 +1009,20 @@ if (cvFileInput) {
                 });
 
                 if (!response.ok) {
-                    throw new Error("Lỗi phản hồi từ server Python FastAPI");
+                    const errData = await response.json().catch(() => ({}));
+                    const errorMsg = errData.detail || "File không hợp lệ hoặc là file rác (không tìm thấy kỹ năng).";
+                    if (errBox && errText) {
+                        errText.textContent = errorMsg;
+                        errBox.classList.remove('hidden');
+                    }
+                    if (uploadStatusText) uploadStatusText.textContent = "Tải file thất bại!";
+                    if (uploadFileName) uploadFileName.textContent = file.name;
+                    showToast('Lỗi nội dung CV', errorMsg, 'error');
+                    e.target.value = '';
+                    return;
                 }
+
+                if (errBox) errBox.classList.add('hidden');
 
                 const data = await response.json();
                 appState.uploadedProfileId = data.id;
@@ -1136,7 +1183,9 @@ if (btnSubmit) {
             profile_id: activeProfileId,
             question_text: currentQuestionText,
             student_answer: text,
-            language: isEnLang ? 'en' : 'vi'
+            language: isEnLang ? 'en' : 'vi',
+            job_id: appState.currentJobId || null,
+            question_category: activeQObj?.category || null
         })
       });
       
@@ -1479,8 +1528,34 @@ if (btnSubmitLogin) {
           const emailInput = document.querySelector('#registerView input[type="email"]');
           const passInputs = document.querySelectorAll('#registerView input[type="password"]');
           
-          if (passInputs[0].value !== passInputs[1].value) {
-              showToast('Lỗi', 'Mật khẩu xác nhận không khớp!', 'warning');
+          const name = nameInput.value.trim();
+          const email = emailInput.value.trim();
+          const pass = passInputs[0].value.trim();
+          const confirmPass = passInputs[1].value.trim();
+
+          if (!name || !email || !pass) {
+              showToast('Thiếu thông tin', 'Vui lòng điền đầy đủ Họ và tên, Email và Mật khẩu!', 'warning');
+              return;
+          }
+
+          // KIỂM TRA ĐỘ DÀI & ĐỘ MẠNH CỦA MẬT KHẨU
+          if (pass.length < 6) {
+              showToast('Mật khẩu quá ngắn', 'Mật khẩu phải có tối thiểu 6 ký tự để bảo vệ tài khoản!', 'warning');
+              passInputs[0].focus();
+              return;
+          }
+
+          const weakList = ['123456', '12345678', '123456789', 'abcdef', 'password', '111111', '000000', 'qwerty', 'admin123'];
+          const isWeak = weakList.includes(pass.toLowerCase()) || (new Set(pass).size <= 2);
+          if (isWeak) {
+              showToast('Mật khẩu quá yếu', 'Mật khẩu quá đơn giản và dễ đoán. Vui lòng kết hợp cả chữ cái và số!', 'warning');
+              passInputs[0].focus();
+              return;
+          }
+
+          if (pass !== confirmPass) {
+              showToast('Lỗi xác nhận', 'Mật khẩu xác nhận không khớp!', 'warning');
+              passInputs[1].focus();
               return;
           }
 
@@ -1488,7 +1563,7 @@ if (btnSubmitLogin) {
               const res = await fetch(`${API_BASE_URL}/auth/register`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ name: nameInput.value, email: emailInput.value, password: passInputs[0].value })
+                  body: JSON.stringify({ name: name, email: email, password: pass })
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.detail || "Lỗi đăng ký");
@@ -1902,13 +1977,19 @@ if (btnSubmitLogin) {
             btnGeneratePlan.innerHTML = 'Đang tạo lộ trình mới...';
 
             try {
+                const customJdEl = document.getElementById('customJdInput');
+                const jdText = (customJdEl ? customJdEl.value.trim() : '') || (appState.customJdText || '');
+                const targetRole = appState.targetRoleTitle || (document.getElementById('targetRoleBadge') ? document.getElementById('targetRoleBadge').textContent.trim() : '');
+
                 const payload = {
                     profile_id: String(realProfileId),
                     role_id: String(appState.selectedRoleId || "1"),
                     schedules: window.userSchedules,
                     gaps: (appState.gapDetails && appState.gapDetails.length > 0) 
                             ? appState.gapDetails.map(g => g.name) 
-                            : ["Kỹ năng chuyên ngành"]
+                            : ["Kỹ năng chuyên ngành"],
+                    jd_text: jdText,
+                    target_role: targetRole
                 };
 
                 const res = await fetch(`${API_BASE_URL}/study-plan/generate`, {
@@ -2158,6 +2239,7 @@ if (btnSubmitLogin) {
             console.error("Lỗi tải lộ trình:", err);
         }
     }
+    window.loadSavedStudyPlan = loadSavedStudyPlan;
 
     function strIsDigit(str) {
         return /^\d+$/.test(str);
@@ -2203,20 +2285,21 @@ window.renderMasterRoadmapUI = function(tasks) {
 
     tasks.forEach((task, index) => {
         const isCompleted = task.status === 'completed';
+        const isExcused = task.status === 'excused';
         const isUnscheduled = task.status === 'unscheduled';
         const isLeft = (index % 2 === 0); // 1 Trái (chẵn) - 1 Phải (lẻ) luân phiên đến hết lộ trình
         const stepNum = String(index + 1).padStart(2, '0');
 
-        if (isCompleted) {
+        if (isCompleted || isExcused) {
             completedCount++;
         }
 
-        let isDisabled = !unlocked && !isCompleted;
-        if (isUnscheduled) isDisabled = true;
+        let isDisabled = !unlocked && !isCompleted && !isExcused;
+        if (isUnscheduled || isExcused) isDisabled = true;
 
         const now = new Date();
         const unlockTime = task.unlock_time ? new Date(task.unlock_time) : null;
-        const isTimeLocked = unlockTime && !isNaN(unlockTime.getTime()) && (now.getTime() + 60000 < unlockTime.getTime()) && !isCompleted;
+        const isTimeLocked = unlockTime && !isNaN(unlockTime.getTime()) && (now.getTime() + 60000 < unlockTime.getTime()) && !isCompleted && !isExcused;
 
         if (isTimeLocked) {
             isDisabled = true;
@@ -2238,6 +2321,12 @@ window.renderMasterRoadmapUI = function(tasks) {
             badgeColorClass = 'text-emerald-700';
             centerCircleHtml = `<div class="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center ring-4 ring-emerald-50 shadow-sm flex-shrink-0 hidden sm:flex">✓</div>`;
             actionHtml = `<div class="mt-2"><span class="inline-block text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-200">Đã hoàn thành (+50 XP)</span></div>`;
+        } else if (isExcused) {
+            cardClass = 'bg-sky-50/70 border border-sky-300 shadow-xs';
+            badgeLabel = `Bài ${stepNum} • Đã nghỉ phép (Miễn học)`;
+            badgeColorClass = 'text-sky-700 font-bold';
+            centerCircleHtml = `<div class="w-9 h-9 rounded-full bg-sky-500 text-white font-bold text-xs flex items-center justify-center ring-4 ring-sky-50 shadow-sm flex-shrink-0 hidden sm:flex">🏖️</div>`;
+            actionHtml = `<div class="mt-2"><span class="inline-block text-[11px] font-bold text-sky-700 bg-sky-100 px-2.5 py-1 rounded-md border border-sky-200">Đã miễn học (Thẻ nghỉ phép)</span></div>`;
         } else if (!isDisabled) {
             cardClass = 'bg-amber-50/50 border border-amber-400 shadow-xs hover:border-amber-500';
             badgeLabel = `Bài ${stepNum} • Sẵn sàng`;
@@ -2290,7 +2379,7 @@ window.renderMasterRoadmapUI = function(tasks) {
             </div>
         `;
 
-        if (!isCompleted) {
+        if (!isCompleted && !isExcused) {
             unlocked = false;
         }
     });
@@ -2475,10 +2564,45 @@ window.useLeavePass = async function() {
             showToast('Đăng ký nghỉ phép thành công', data.message, 'success');
         }
         await loadGamificationData();
+        if (typeof window.loadSavedStudyPlan === 'function') {
+            await window.loadSavedStudyPlan();
+        }
     } catch (err) {
         if (typeof showToast === 'function') {
             showToast('Thông báo', err.message, 'warning');
         }
+    }
+};
+
+// --- HÀM GỬI PHẢN HỒI ĐÁNH GIÁ ĐỘ TƯƠNG THÍCH (LƯU VÀO DATABASE FEEDBACKS) ---
+window.submitMatchFeedback = async function(isMatch) {
+    const profileId = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId;
+    if (!profileId) {
+        if (typeof showToast === 'function') showToast('Thông báo', 'Vui lòng đăng nhập để gửi phản hồi!', 'warning');
+        return;
+    }
+    const jobId = appState.currentJobId || null;
+    try {
+        const res = await fetch(`${API_BASE_URL}/analyses/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: String(profileId),
+                job_id: jobId,
+                is_match: Boolean(isMatch)
+            })
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.detail || "Không thể gửi phản hồi");
+        if (typeof showToast === 'function') {
+            showToast('Cảm ơn bạn', isMatch ? 'Đã ghi nhận phản hồi: Khớp và chính xác!' : 'Đã ghi nhận phản hồi: Chưa khớp để hệ thống cải tiến!', 'success');
+        }
+        const feedbackContainer = document.getElementById('matchingFeedbackContainer');
+        if (feedbackContainer) {
+            feedbackContainer.innerHTML = `<span class="text-emerald-700 font-semibold text-xs">✓ Cảm ơn bạn đã phản hồi! Dữ liệu đã được lưu trữ an toàn trong Database.</span>`;
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast('Thông báo', e.message || 'Lỗi gửi phản hồi', 'error');
     }
 };
 
