@@ -179,10 +179,9 @@ function showToast(title, message, type = 'success') {
 }
 
 function checkAndUpdateStage() {
-  const current = appState.user.currentStageIndex;
   const stages = appState.stages;
   
-  if (current < stages.length - 1 && appState.user.currentXp >= stages[current].xpRequired) {
+  while (appState.user.currentStageIndex < stages.length - 1 && appState.user.currentXp >= stages[appState.user.currentStageIndex].xpRequired) {
     appState.user.currentStageIndex++;
     sfx.playSuccess();
     showToast('Lên cấp!', `Mầm cây đã phát triển sang giai đoạn: ${stages[appState.user.currentStageIndex].name}`, 'success');
@@ -491,7 +490,6 @@ async function startAnalysis() {
   
   // Lưu màn hình vào bộ nhớ để F5 không bị văng
   appState.currentScreen = 'screen-gap';
-  localStorage.setItem('current_screen', 'screen-gap');
   sessionStorage.setItem('current_screen', 'screen-gap');
   if (typeof updateActiveTabHighlight === 'function') updateActiveTabHighlight('screen-gap');
   
@@ -501,7 +499,10 @@ async function startAnalysis() {
   if (realResults) realResults.classList.add('hidden');
 
   try {
-    const profileId = localStorage.getItem('current_profile_id') || appState.uploadedProfileId || appState.currentProfileId || appState.selectedProfileId || 1;
+    const sampleFallback = /^\d+$/.test(String(appState.selectedProfileId))
+      ? appState.selectedProfileId
+      : (isSampleMode ? appState.selectedProfileId : null);
+    const profileId = localStorage.getItem('current_profile_id') || appState.uploadedProfileId || appState.currentProfileId || sampleFallback || 1;
 
     let jdSkillsArray = [];
     let jdTextContent = "";
@@ -564,16 +565,19 @@ async function startAnalysis() {
     appState.currentAnalysisId = data.analysis_id || null;
     appState.targetRoleTitle = data.target_role || '';
     
-    AppStore.setAnalysisResult(data);
+    if (typeof AppStore !== 'undefined' && typeof AppStore.setAnalysisResult === 'function') {
+      AppStore.setAnalysisResult(data);
+    }
     
     // Gọi hàm vẽ giao diện dùng chung
     window.renderAnalysisResult(data);
     
     // ĐIỀU HƯỚNG CHUẨN XÁC SANG TAB SKILL GAP SAU KHI PHÂN TÍCH XONG
     appState.currentScreen = 'screen-gap';
-    AppStore.setScreen('screen-gap');
-
-    AppStore.state.analysisDone = true;
+    if (typeof AppStore !== 'undefined') {
+      if (typeof AppStore.setScreen === 'function') AppStore.setScreen('screen-gap');
+      if (AppStore.state) AppStore.state.analysisDone = true;
+    }
     localStorage.setItem('analysis_done', 'true');
 
     // === LƯU TRỮ DỮ LIỆU PHÂN TÍCH GẮN LIỀN VỚI PROFILE ID CỦA TÀI KHOẢN NÀY ===
@@ -608,6 +612,9 @@ async function startAnalysis() {
 
 function selectInterviewQuestion(id) {
   appState.activeQId = id;
+  if (typeof currentQuestionId !== 'undefined') {
+    currentQuestionId = id;
+  }
   
   if (typeof ROLES === 'undefined' || typeof FIELD_QUESTIONS === 'undefined') return;
 
@@ -680,7 +687,7 @@ function getSmartQuote() {
 
   if (streak === 0) {
     const list = motivationalQuotes.streakLost;
-    return list[dayOfMonth % list.length];
+    return list[(dayOfMonth - 1) % list.length];
   }
 
   let currentStageQuote = "";
@@ -693,7 +700,7 @@ function getSmartQuote() {
   }
 
   const combinedQuotes = [...motivationalQuotes.daily, currentStageQuote];
-  return combinedQuotes[dayOfMonth % combinedQuotes.length];
+  return combinedQuotes[(dayOfMonth - 1) % combinedQuotes.length];
 }
 
 function renderInitialRoles() {
@@ -762,7 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 2. KIỂM TRA ĐIỀU KIỆN: Nếu bấm vào tab Phỏng vấn nhưng CHƯA PHÂN TÍCH
-      const isAnalysisDone = AppStore.state.analysisDone || localStorage.getItem('analysis_done') === 'true' || localStorage.getItem(`analysis_done_${currentPid}`) === 'true';
+      const isAnalysisDone = (typeof AppStore !== 'undefined' && AppStore.state && AppStore.state.analysisDone) || localStorage.getItem('analysis_done') === 'true' || localStorage.getItem(`analysis_done_${currentPid}`) === 'true';
       if (sId === 'screen-interview' && !isAnalysisDone) {
           if (typeof showToast === 'function') {
               showToast('Chưa phân tích hồ sơ', 'Bạn cần hoàn thành việc chọn hồ sơ và bấm nút "Phân tích Kỹ năng" trước khi vào phòng phỏng vấn!', 'warning');
@@ -773,7 +780,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 3. Cho phép chuyển tab bình thường khi đã thỏa mãn điều kiện
-      AppStore.setScreen(sId);
+      if (typeof AppStore !== 'undefined' && typeof AppStore.setScreen === 'function') {
+          AppStore.setScreen(sId);
+      }
       if (typeof sfx !== 'undefined' && sfx.playClick) sfx.playClick();
       
       appState.currentScreen = sId;
@@ -787,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 4. XỬ LÝ KHI SANG TAB SKILL GAP: TỰ ĐỘNG KHÔI PHỤC DATA NẾU BỘ NHỚ ĐANG TRỐNG
       if (sId === 'screen-gap') {
           // Nếu trong AppStore chưa có dữ liệu chi tiết, tự động tìm và nạp từ localStorage theo profile_id
-          if (!AppStore.state.analysisData) {
+          if (typeof AppStore !== 'undefined' && AppStore.state && !AppStore.state.analysisData) {
               const savedData = localStorage.getItem(`analysis_data_${currentPid}`) || localStorage.getItem('analysis_data');
               if (savedData) {
                   try {
@@ -801,9 +810,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // Vẽ lại giao diện ngay lập tức mà không cần F5
-          if ((AppStore.state.analysisDone || isAnalysisDone) && AppStore.state.analysisData) {
+          const restoredData = (typeof AppStore !== 'undefined' && AppStore.state) ? AppStore.state.analysisData : null;
+          if (((typeof AppStore !== 'undefined' && AppStore.state && AppStore.state.analysisDone) || isAnalysisDone) && restoredData) {
               if (typeof window.renderAnalysisResult === 'function') {
-                  window.renderAnalysisResult(AppStore.state.analysisData);
+                  window.renderAnalysisResult(restoredData);
               }
           }
       }
@@ -1024,7 +1034,16 @@ if (cvFileInput) {
                     uploadStatusText.textContent = "Trích xuất CV thành công!";
                 }
                 
-                const skillsObj = JSON.parse(data.skills_json || "{}");
+                let skillsObj = {};
+                if (data && typeof data.skills_json === 'string' && data.skills_json.trim()) {
+                    try {
+                        skillsObj = JSON.parse(data.skills_json);
+                    } catch (_) {
+                        skillsObj = {};
+                    }
+                } else if (data && data.skills_json && typeof data.skills_json === 'object') {
+                    skillsObj = data.skills_json;
+                }
                 window.currentUploadedSkills = Object.keys(skillsObj).map(skillName => ({
                     topic: skillName,
                     score: skillsObj[skillName]
@@ -1055,31 +1074,36 @@ if (cvFileInput) {
                 }
 
                 // Tự động gợi ý và sắp xếp lại danh sách JD mẫu theo kỹ năng vừa trích xuất
-                if (typeof ROLES !== 'undefined' && Array.isArray(ROLES)) {
-                    const tempProfile = {
-                        skills: window.currentUploadedSkills.map(s => s.topic),
-                        major: extractedText.slice(0, 300)
-                    };
-                    const scoredRoles = ROLES.map(r => ({ ...r, match: getDetailedRoleMatch(r, tempProfile).matchScore })).sort((a,b) => b.match - a.match);
-                    if (!appState.selectedRoleId && scoredRoles.length > 0) {
-                        appState.selectedRoleId = scoredRoles[0].id;
+                try {
+                    if (typeof ROLES !== 'undefined' && Array.isArray(ROLES)) {
+                        const tempProfile = {
+                            skills: window.currentUploadedSkills.map(s => s.topic),
+                            major: extractedText.slice(0, 300)
+                        };
+                        const scoredRoles = ROLES.map(r => ({ ...r, match: getDetailedRoleMatch(r, tempProfile).matchScore })).sort((a,b) => b.match - a.match);
+                        if (!appState.selectedRoleId && scoredRoles.length > 0) {
+                            appState.selectedRoleId = scoredRoles[0].id;
+                        }
+                        const roleContainer = document.getElementById('contentRoleStandard');
+                        if (roleContainer) {
+                            roleContainer.innerHTML = scoredRoles.map((r, i) => `
+                              <div class="role-option p-3 rounded-lg border ${r.id === appState.selectedRoleId ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-200 bg-white hover:border-slate-300'} cursor-pointer mb-2 transition-colors" data-role-id="${r.id}" onclick="selectRole('${r.id}')">
+                                <div class="flex justify-between items-center">
+                                  <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">Đề xuất</span>' : ''}</div>
+                                  <div class="text-[10px] px-2 py-0.5 rounded ${r.match >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'} font-bold">${r.match}%</div>
+                                </div>
+                                <div class="flex items-center justify-between mt-1.5">
+                                  <span class="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${r.field}</span>
+                                  <span class="text-[9px] text-indigo-600 font-medium">${r.requiredSkills.length} kỹ năng yêu cầu</span>
+                                </div>
+                              </div>
+                            `).join('');
+                        }
                     }
-                    const roleContainer = document.getElementById('contentRoleStandard');
-                    if (roleContainer) {
-                        roleContainer.innerHTML = scoredRoles.map((r, i) => `
-                          <div class="role-option p-3 rounded-lg border ${r.id === appState.selectedRoleId ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-200 bg-white hover:border-slate-300'} cursor-pointer mb-2 transition-colors" data-role-id="${r.id}" onclick="selectRole('${r.id}')">
-                            <div class="flex justify-between items-center">
-                              <div class="font-bold text-xs text-slate-900">${r.title} ${i===0 ? '<span class="ml-1 text-[9px] bg-amber-100 text-amber-800 px-1 rounded border border-amber-300">Đề xuất</span>' : ''}</div>
-                              <div class="text-[10px] px-2 py-0.5 rounded ${r.match >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'} font-bold">${r.match}%</div>
-                            </div>
-                            <div class="flex items-center justify-between mt-1.5">
-                              <span class="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">${r.field}</span>
-                              <span class="text-[9px] text-indigo-600 font-medium">${r.requiredSkills.length} kỹ năng yêu cầu</span>
-                            </div>
-                          </div>
-                        `).join('');
-                    }
+                } catch (roleErr) {
+                    console.warn("Lỗi tự động gợi ý JD mẫu:", roleErr);
                 }
+                e.target.value = '';
 
             } catch (error) {
                 console.error("Lỗi Trích xuất CV:", error);
@@ -1168,6 +1192,7 @@ if (btnSubmit) {
     let numericScore = 0;
     let aiFeedback = '';
     let improvedAnswer = '';
+    let addedXp = 0;
 
     const activeQObj = (typeof activeInterviewQuestionsList !== 'undefined' && activeInterviewQuestionsList[currentSelectedQuestionIndex])
         ? activeInterviewQuestionsList[currentSelectedQuestionIndex]
@@ -1202,6 +1227,15 @@ if (btnSubmit) {
       numericScore = parseFloat(data.evaluation?.score) || 0;
       aiFeedback = data.evaluation?.feedback || '';
       improvedAnswer = data.evaluation?.improved_answer || '';
+
+      const prevXp = (typeof appState !== 'undefined' && appState.user) ? (appState.user.currentXp || 0) : 0;
+      if (typeof data.added_xp === 'number') {
+          addedXp = data.added_xp;
+      } else if (typeof data.current_xp === 'number') {
+          addedXp = Math.max(0, data.current_xp - prevXp);
+      } else {
+          addedXp = numericScore >= 7.0 ? 50 : 10;
+      }
 
       if (typeof appState !== 'undefined' && appState.user && data.current_xp) {
           appState.user.currentXp = data.current_xp;
@@ -1253,9 +1287,9 @@ if (btnSubmit) {
     // Tích hợp logic Game (Hiển thị toast & đồng bộ DB)
     if (typeof appState !== 'undefined' && appState.user) {
       if (numericScore < 7.0) {
-        showToast(isEnLang ? 'Graded!' : 'Đã chấm điểm!', `Điểm: ${numericScore}/10 (+10 XP). Hãy xem nhận xét và gợi ý nâng cấp STAR bên dưới!`, 'warning');
+        showToast(isEnLang ? 'Graded!' : 'Đã chấm điểm!', `Điểm: ${numericScore}/10 (+${addedXp} XP). Hãy xem nhận xét và gợi ý nâng cấp STAR bên dưới!`, 'warning');
       } else {
-        showToast(isEnLang ? 'Excellent!' : 'Tuyệt vời!', `Điểm: ${numericScore}/10. Câu trả lời rất tốt, bạn nhận được +50 XP!`, 'success');
+        showToast(isEnLang ? 'Excellent!' : 'Tuyệt vời!', `Điểm: ${numericScore}/10. Câu trả lời rất tốt, bạn nhận được +${addedXp} XP!`, 'success');
       }
 
       if (typeof checkAndUpdateStage === 'function') checkAndUpdateStage();
@@ -1408,6 +1442,11 @@ if (btnSubmit) {
   // --- HÀM TIỆN ÍCH: RESET VÀ CHUYỂN HƯỚNG VỀ TRANG CHỦ ---
   function forceNavigateToHome() {
     // 1. Xóa sạch tất cả các key dữ liệu phân tích cũ trong LocalStorage & SessionStorage
+    const currentPid = localStorage.getItem('current_profile_id') || (typeof appState !== 'undefined' ? appState.currentProfileId : null);
+    if (currentPid) {
+        localStorage.removeItem(`analysis_done_${currentPid}`);
+        localStorage.removeItem(`analysis_data_${currentPid}`);
+    }
     localStorage.removeItem('analysis_done');
     localStorage.removeItem('analysis_data');
     sessionStorage.removeItem('analysis_done');
@@ -2255,33 +2294,15 @@ if (btnSubmitLogin) {
     }
     window.loadSavedStudyPlan = loadSavedStudyPlan;
 
-    function strIsDigit(str) {
-        return /^\d+$/.test(str);
-    }
-
-    function renderSavedStudyTasksOnUI(tasks) {
-        const planContainer = document.getElementById('studyPlanResultContainer');
-        if (!planContainer) return;
-
-        planContainer.innerHTML = tasks.map((t, index) => `
-            <div class="p-3 mb-2 rounded-xl border border-slate-200 bg-white shadow-2xs flex items-center justify-between">
-                <div>
-                    <span class="text-[10px] font-bold text-indigo-600 uppercase">Bài ${index + 1} - ${t.scheduled_day}</span>
-                    <h4 class="text-xs font-semibold text-slate-800 mt-0.5">${t.title}</h4>
-                </div>
-                <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium">${t.duration_minutes} phút</span>
-            </div>
-        `).join('');
-    }
-
     loadSavedStudyPlan();
     window.loadSavedSchedulesFromServer();
 
-    setInterval(() => {
-        if (window.userSavedStudyTasks && window.userSavedStudyTasks.length > 0 && typeof window.renderMasterRoadmapUI === 'function') {
-            window.renderMasterRoadmapUI(window.userSavedStudyTasks);
-        }
-    }, 15000);
+    const roadmapRefreshInterval = setInterval(async () => {
+        const pid = localStorage.getItem('current_profile_id');
+        if (!pid) return;
+        await loadSavedStudyPlan();
+    }, 30000);
+    window.roadmapRefreshInterval = roadmapRefreshInterval;
 
 // --- RENDER SƠ ĐỒ LỘ TRÌNH ĐỐI XỨNG 1 TRÁI - 1 PHẢI (GIỐNG GIAO DIỆN KHI CHƯA ĐĂNG NHẬP) ĐẾN HẾT LỘ TRÌNH ---
 window.renderMasterRoadmapUI = function(tasks) {
@@ -2299,7 +2320,7 @@ window.renderMasterRoadmapUI = function(tasks) {
 
     tasks.forEach((task, index) => {
         const isCompleted = task.status === 'completed';
-        const isExcused = task.status === 'excused';
+        const isExcused = (task.status === 'excused') && (appState.leavePassRemaining === 0);
         const isUnscheduled = task.status === 'unscheduled';
         const isLeft = (index % 2 === 0); // 1 Trái (chẵn) - 1 Phải (lẻ) luân phiên đến hết lộ trình
         const stepNum = String(index + 1).padStart(2, '0');
@@ -2423,8 +2444,8 @@ window.completeTask = async function(taskId) {
             showToast('Hoàn thành bài học!', `${data.message || 'Đã hoàn thành!'} | +${data.added_xp} XP | Chuỗi: ${data.current_streak} ngày`, 'success');
         }
 
-        await loadSavedStudyPlan();
         await loadGamificationData();
+        await loadSavedStudyPlan();
         
     } catch (err) {
         if (typeof showToast === 'function') showToast('Thông báo', err.message, 'warning');
@@ -2474,6 +2495,7 @@ async function loadGamificationData() {
             const leaveStatusEl = document.getElementById('leavePassStatusText');
             const btnUseLeaveEl = document.getElementById('btnUseLeavePass');
             const remainingLeave = (typeof data.leave_pass_remaining === 'number') ? data.leave_pass_remaining : 1;
+            appState.leavePassRemaining = remainingLeave;
 
             if (leaveBadgeEl) {
                 leaveBadgeEl.textContent = `Còn ${remainingLeave}/1 tuần này`;

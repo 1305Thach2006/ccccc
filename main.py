@@ -34,7 +34,7 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
 )
 _connect_args = {"connect_timeout": 3} if SQLALCHEMY_DATABASE_URL.startswith("postgresql") else {"check_same_thread": False}
 engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True, connect_args=_connect_args)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 Base = declarative_base()
 
 # ==========================================
@@ -500,13 +500,17 @@ def _smart_ollama_chat(*args, **kwargs):
         try:
             client = ollama.Client(host=host, headers={"Host": "localhost:11434"}, timeout=300.0)
             if not has_model:
-                print(f"[Ollama] Đang tải model {target_model} tại {host}...")
+                print(f"[Ollama] Đang tải model {target_model} tại {host}...", flush=True)
                 client.pull(target_model)
+            _start_ts = datetime.now()
+            print(f"[AI MODEL CALL] Đang gửi yêu cầu tới model '{target_model}' tại {host}...", flush=True)
             res = client.chat(*args, **kwargs)
+            _elapsed = (datetime.now() - _start_ts).total_seconds()
+            print(f"[AI MODEL CALL] Model '{target_model}' phản hồi thành công sau {_elapsed:.2f}s (host: {host})", flush=True)
             _WORKING_OLLAMA_HOST = host
             return res
         except Exception as e:
-            print(f"[Ollama] Lỗi khi gọi model tại {host}: {e}")
+            print(f"[Ollama] Lỗi khi gọi model tại {host}: {e}", flush=True)
             last_err = e
             if _WORKING_OLLAMA_HOST == host:
                 _WORKING_OLLAMA_HOST = None
@@ -938,6 +942,8 @@ def read_root():
 
 @app.post("/jobs/extract-advanced/")
 def create_job_with_advanced_ai(job: JobCreateAI, db: Session = Depends(get_db)):
+    print(f"\n========== [AI JD ADVANCED EXTRACT] BẮT ĐẦU TRÍCH XUẤT JD ==========", flush=True)
+    print(f"[AI JD ADVANCED EXTRACT] Tiêu đề JD: {job.title} | Độ dài mô tả: {len(job.description or '')} ký tự", flush=True)
     prompt_text = f"""
     Đọc Mô tả công việc (JD) sau và trích xuất các kỹ năng chuyên môn (Hard skills) và kỹ năng mềm (Soft skills).
     JD này có thể thuộc bất kỳ ngành nghề nào (CNTT, Kinh tế, Tài chính, Kế toán, Luật, F&B, Marketing, Nhân sự, Kỹ thuật...).
@@ -954,6 +960,7 @@ def create_job_with_advanced_ai(job: JobCreateAI, db: Session = Depends(get_db))
         format='json'
     )
     ai_extracted_skills = response['message']['content']
+    print(f"[AI JD ADVANCED EXTRACT] Kết quả JSON từ AI:\n{ai_extracted_skills}\n====================================================================\n", flush=True)
 
     db_job = Job(title=job.title, description=job.description, requirements_json=ai_extracted_skills)
     db.add(db_job)
@@ -1037,6 +1044,8 @@ def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
     ))
     is_vi_cv = (vi_chars_count >= 10)
     cv_lang = "vi" if is_vi_cv else "en"
+    print(f"\n========== [AI CV EXTRACT] BẮT ĐẦU TRÍCH XUẤT HỒ SƠ CV ==========", flush=True)
+    print(f"[AI CV EXTRACT] Ngôn ngữ phát hiện: {cv_lang.upper()} (Số ký tự có dấu TV: {vi_chars_count}, Tổng số từ: {len(words)})", flush=True)
 
     if is_vi_cv:
         lang_rule = (
@@ -1086,7 +1095,7 @@ REQUIRED JSON FORMAT:
         content = response.get('message', {}).get('content', '')
 
     content = content.strip()
-    print(f"--- CÂU TRẢ LỜI GỐC CỦA AI (CV - {cv_lang.upper()}) ---:\n{content}\n-----------------------------")
+    print(f"--- [AI CV EXTRACT] CÂU TRẢ LỜI GỐC CỦA AI (CV - {cv_lang.upper()}) ---:\n{content}\n-----------------------------", flush=True)
 
     json_match = re.search(r'(\{[\s\S]*\})', content)
     cleaned = json_match.group(1) if json_match else content
@@ -1094,6 +1103,7 @@ REQUIRED JSON FORMAT:
 
     # BẮT LỖI NẾU AI PHÁT HIỆN ĐÂY LÀ FILE RÁC / KHÔNG PHẢI CV
     if ai_data.get("is_cv") is False:
+        print(f"[AI CV EXTRACT] Cảnh báo: AI phát hiện file tải lên không phải là CV hợp lệ (is_cv=false)!", flush=True)
         raise HTTPException(status_code=400, detail="File PDF không hợp lệ hoặc không phải là CV/Resume!")
 
     ai_name = str(ai_data.get("name", "")).strip()
@@ -1137,7 +1147,8 @@ REQUIRED JSON FORMAT:
         if len(final_skills) >= 12:
             break
 
-    has_specialized_skills = any(k.lower() not in soft_catalog_labels for k in final_skills.keys())
+    hard_skills_logged = [k for k in final_skills.keys() if k.lower() not in soft_catalog_labels]
+    has_specialized_skills = len(hard_skills_logged) > 0
 
     # Bổ sung các Kỹ năng mềm người dùng có liệt kê trên CV theo đúng ngôn ngữ của CV (Anh -> Anh, Việt -> Việt)
     if not has_specialized_skills or len(final_skills) < 10:
@@ -1157,8 +1168,14 @@ REQUIRED JSON FORMAT:
             if len(final_skills) >= 12:
                 break
 
+    soft_skills_logged = [k for k in final_skills.keys() if k not in hard_skills_logged]
+    print(f"[AI CV EXTRACT] Kỹ năng chuyên môn trích xuất ({len(hard_skills_logged)}): {hard_skills_logged}", flush=True)
+    print(f"[AI CV EXTRACT] Kỹ năng mềm trích xuất ({len(soft_skills_logged)}): {soft_skills_logged}", flush=True)
+    print(f"[AI CV EXTRACT] Tổng hợp danh sách kỹ năng trả về UI ({len(final_skills)} kỹ năng): {final_skills}", flush=True)
+
     # KIỂM TRA FILE RÁC: Báo lỗi ngay nếu không tìm thấy kỹ năng chuyên môn hay kỹ năng mềm nào
     if len(final_skills) == 0:
+        print(f"[AI CV EXTRACT] Lỗi: Không tìm thấy bất kỳ kỹ năng chuyên môn hay kỹ năng mềm nào trong file!", flush=True)
         raise HTTPException(
             status_code=400,
             detail="File tải lên không hợp lệ hoặc là file rác (không tìm thấy bất kỳ kỹ năng chuyên môn hay kỹ năng mềm nào trong nội dung). Vui lòng kiểm tra lại file CV của bạn!"
@@ -1192,8 +1209,19 @@ REQUIRED JSON FORMAT:
 
     # Tự động khởi tạo bản ghi Chậu cây (StreakAndReport) cho hồ sơ CV vừa tải lên
     ensure_profile_and_streak(db, db_profile.id)
+    db.refresh(db_profile)
 
-    return db_profile
+    response_payload = {
+        "id": db_profile.id,
+        "name": db_profile.name,
+        "email": db_profile.email,
+        "skills_json": db_profile.skills_json,
+        "interests_json": db_profile.interests_json,
+        "experience_text": db_profile.experience_text,
+        "free_time_json": db_profile.free_time_json
+    }
+    print(f"[AI CV EXTRACT] Hoàn tất lưu Profile ID={db_profile.id} ({db_profile.name}) và trả dữ liệu về UI!\n==================================================================\n", flush=True)
+    return response_payload
 
 
 @app.post("/analyses/match/{profile_id}/{role_id}")
@@ -1255,6 +1283,8 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
     # TRÍCH XUẤT KỸ NĂNG TỪ JD DÁN TỰ DO (HỖ TRỢ TẤT CẢ CÁC NGÀNH)
     # =========================================================
     if (not raw_jd_skills or len(raw_jd_skills) == 0) and jd_text:
+        print(f"\n========== [AI JD EXTRACT] BẮT ĐẦU TRÍCH XUẤT JD TỰ DO ==========", flush=True)
+        print(f"[AI JD EXTRACT] Độ dài văn bản JD: {len(jd_text)} ký tự", flush=True)
         prompt_text = f"""
         Đọc Mô tả công việc (JD) dưới đây và trích xuất từ 5 đến 8 kỹ năng quan trọng nhất.
         QUY TẮC NGÔN NGỮ:
@@ -1275,6 +1305,7 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
             )
             raw_msg = response.get('message', {}) if isinstance(response, dict) else getattr(response, 'message', {})
             raw_content = (raw_msg.get('content', '') if isinstance(raw_msg, dict) else getattr(raw_msg, 'content', '')).strip()
+            print(f"--- [AI JD EXTRACT] CÂU TRẢ LỜI GỐC CỦA AI ---:\n{raw_content}\n-----------------------------", flush=True)
 
             match = re.search(r'\[[\s\S]*?\]', raw_content)
             if match:
@@ -1294,7 +1325,7 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
                         manual_skills.append(clean_line)
                 raw_jd_skills = manual_skills
         except Exception as e:
-            print(f"Lỗi AI trích xuất JD tự do: {e}")
+            print(f"[AI JD EXTRACT] Lỗi AI trích xuất JD tự do: {e}", flush=True)
 
         # Kết hợp thêm bộ quét kỹ năng đa ngành từ văn bản JD để đảm bảo độ phủ 100% mọi ngành nghề
         universal_jd_skills = extract_skills_universal_from_text(jd_text, max_skills=8)
@@ -1306,6 +1337,7 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
 
         if not raw_jd_skills:
             raw_jd_skills = ["Kỹ năng chuyên môn ngành", "Phân tích & Giải quyết vấn đề", "Giao tiếp & Làm việc nhóm", "Microsoft Office"]
+        print(f"[AI JD EXTRACT] Danh sách kỹ năng JD sau tổng hợp ({len(raw_jd_skills)}): {raw_jd_skills}\n=================================================================\n", flush=True)
 
     jd_skills = {}
     if isinstance(raw_jd_skills, list) and len(raw_jd_skills) > 0:
@@ -1449,6 +1481,12 @@ async def analyze_skill_match(profile_id: str, role_id: str, request: Request, d
         f"• Trọng tâm cần cải thiện ({gap_count} kỹ năng): {gaps_str}. "
         f"Khuyến nghị bạn chuyển sang bước 'Lộ trình học tập' để hệ thống tự động phân bổ bài học vào khung giờ rảnh và luyện tập trong 'Phòng phỏng vấn STAR'."
     )
+    print(f"\n========== [AI SKILL MATCH] KẾT QUẢ ĐỐI SÁNH KỸ NĂNG ==========", flush=True)
+    print(f"[AI SKILL MATCH] Profile ID: {profile_id} | Vị trí mục tiêu: {target_role_display} ({role_id})", flush=True)
+    print(f"[AI SKILL MATCH] Điểm tổng hợp: {rounded_total}% (Kỹ năng: {round(skill_score)}%, Yêu thích: {round(interest_score)}%, Kinh nghiệm: {round(experience_score)}%)", flush=True)
+    print(f"[AI SKILL MATCH] Kỹ năng đã đáp ứng ({met_count}): {matched_skill_names}", flush=True)
+    print(f"[AI SKILL MATCH] Kỹ năng còn thiếu / cần nâng cao ({gap_count}): {missing_skill_names}", flush=True)
+    print(f"===============================================================\n", flush=True)
 
     # =========================================================
     # LƯU TRỮ VÀO DATABASE CHO BẢNG JOBS VÀ ANALYSES (AUDIT DATABASE MODELS)
@@ -1572,7 +1610,8 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
         last_ai_err = None
 
         for attempt in range(max_retries):
-            print(f"--- ĐANG GỌI AI TẠO LỘ TRÌNH (LẦN THỬ {attempt + 1}/{max_retries}) ---")
+            print(f"\n========== [AI STUDY PLAN] ĐANG GỌI AI TẠO LỘ TRÌNH (LẦN THỬ {attempt + 1}/{max_retries}) ==========", flush=True)
+            print(f"[AI STUDY PLAN] Hồ sơ ID: {target_pid} | Vị trí: {role_label} | Kỹ năng cần học ({gaps_count}): {missing_skills}", flush=True)
             try:
                 response = ollama.chat(
                     model='qwen3.5:4b',
@@ -1586,6 +1625,7 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
 
                 raw_msg = response.get('message', {}) if isinstance(response, dict) else getattr(response, 'message', {})
                 raw_content = (raw_msg.get('content', '') if isinstance(raw_msg, dict) else getattr(raw_msg, 'content', '')).strip()
+                print(f"--- [AI STUDY PLAN] CÂU TRẢ LỜI GỐC CỦA AI ---:\n{raw_content}\n-----------------------------", flush=True)
                 if "```json" in raw_content:
                     raw_content = raw_content.split("```json")[1].split("```")[0].strip()
                 elif "```" in raw_content:
@@ -1599,11 +1639,11 @@ def generate_study_plan(req: StudyPlanRequest, db: Session = Depends(get_db)):
                 ai_tasks = _clean_spaced_hyphens(ai_data.get("tasks", []))
 
                 if len(ai_tasks) > 0:
-                    print(f"AI ĐÃ TẠO THÀNH CÔNG {len(ai_tasks)} BÀI HỌC CHO {gaps_count} KỸ NĂNG!")
+                    print(f"[AI STUDY PLAN] AI đã tạo thành công {len(ai_tasks)} bài học: {[t.get('title') for t in ai_tasks]}\n===========================================================================\n", flush=True)
                     break
             except Exception as e:
                 last_ai_err = e
-                print(f"Lỗi tạo lộ trình lần {attempt + 1}: {e}")
+                print(f"[AI STUDY PLAN] Lỗi tạo lộ trình lần {attempt + 1}: {e}", flush=True)
 
         if not ai_tasks:
             raise HTTPException(status_code=500, detail=f"Không thể gọi AI tạo lộ trình: {last_ai_err}")
@@ -1929,8 +1969,16 @@ def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
     two_days_ago_str = (today - timedelta(days=2)).strftime("%Y-%m-%d")
 
     # Nếu hôm nay đã bấm nghỉ phép nhưng sau đó vẫn đổi ý vào học thật -> Hoàn lại thẻ nghỉ phép cho tuần này
+    # đồng thời gỡ trạng thái 'excused' của các bài học khác trong ngày để có thể học tiếp bình thường
     if record.last_leave_date == today_str:
         record.last_leave_date = ""
+        excused_other_tasks = db.query(StudyTask).filter(
+            StudyTask.profile_id == profile_id,
+            StudyTask.status == "excused",
+            StudyTask.id != task.id
+        ).all()
+        for et in excused_other_tasks:
+            et.status = "active"
 
     if record.last_study_date == today_str:
         # Trong cùng 1 ngày đã làm bài rồi -> giữ nguyên Streak hiện tại (không cộng dồn thêm)
@@ -2354,7 +2402,8 @@ QUY TẮC TRÌNH BÀY:
 ]
 }}"""
 
-    print(f"--- Đang tạo bộ câu hỏi phỏng vấn ({language.upper()} | #{nonce_val}) cho vị trí: {target_role} ---")
+    print(f"\n========== [AI INTERVIEW GENERATE] BẮT ĐẦU TẠO CÂU HỎI PHỎNG VẤN ==========", flush=True)
+    print(f"[AI INTERVIEW GENERATE] Vị trí: {target_role} | Ngôn ngữ: {language.upper()} | Cấp độ: {level} | Persona: {persona} | Phiên: #{nonce_val}", flush=True)
     response = ollama.chat(
         model='qwen3.5:4b',
         format='json',
@@ -2373,6 +2422,7 @@ QUY TẮC TRÌNH BÀY:
         content = response.get('message', {}).get('content', '')
 
     content = content.strip()
+    print(f"--- [AI INTERVIEW GENERATE] CÂU TRẢ LỜI GỐC CỦA AI ({language.upper()}) ---:\n{content}\n-----------------------------", flush=True)
     if not content:
         raise HTTPException(status_code=500, detail="AI trả về nội dung rỗng khi tạo câu hỏi phỏng vấn.")
 
@@ -2444,6 +2494,7 @@ QUY TẮC TRÌNH BÀY:
     for idx, q in enumerate(unique_questions[:3]):
         q["id"] = idx + 1
 
+    print(f"[AI INTERVIEW GENERATE] Hoàn tất tạo 3 câu hỏi phỏng vấn: {[q.get('title') for q in unique_questions[:3]]}\n===========================================================================\n", flush=True)
     return {"questions": unique_questions[:3], "language": language}
 
 
@@ -2491,7 +2542,9 @@ QUY TẮC TRÌNH BÀY: Không sử dụng ký tự gạch nối (" - ") trong l�
 }}
 }}"""
 
-    print(f"--- Đang chấm điểm câu hỏi ID: {question_id} ({language.upper()}) ---")
+    print(f"\n========== [AI INTERVIEW EVALUATE] ĐANG CHẤM ĐIỂM CÂU HỎI ID #{question_id} ({language.upper()}) ==========", flush=True)
+    print(f"[AI INTERVIEW EVALUATE] Câu hỏi: {payload.question_text[:150]}...", flush=True)
+    print(f"[AI INTERVIEW EVALUATE] Câu trả lời ứng viên ({len(payload.student_answer or '')} ký tự): {(payload.student_answer or '')[:150]}...", flush=True)
     response = ollama.chat(
         model='qwen3.5:4b',
         format='json',
@@ -2499,6 +2552,7 @@ QUY TẮC TRÌNH BÀY: Không sử dụng ký tự gạch nối (" - ") trong l�
         options={'temperature': 0.3, 'num_predict': 2000}
     )
     content = getattr(response.message, 'content', '') if hasattr(response, 'message') else response.get('message', {}).get('content', '')
+    print(f"--- [AI INTERVIEW EVALUATE] KẾT QUẢ GỐC TỪ AI ---:\n{content}\n-----------------------------", flush=True)
     json_match = re.search(r'(\{[\s\S]*\})', content)
     if not json_match:
         raise HTTPException(status_code=500, detail="AI không trả về kết quả chấm điểm dạng JSON hợp lệ.")
@@ -2513,6 +2567,7 @@ QUY TẮC TRÌNH BÀY: Không sử dụng ký tự gạch nối (" - ") trong l�
     eval_obj["score"] = numeric_score
 
     xp_reward = 50 if numeric_score >= 7.0 else 10
+    print(f"[AI INTERVIEW EVALUATE] Hoàn tất chấm điểm: {numeric_score}/10 | Thưởng +{xp_reward} XP\n===================================================================================\n", flush=True)
 
     profile, streak_record = ensure_profile_and_streak(db, payload.profile_id)
     streak_record.current_xp += xp_reward
