@@ -268,8 +268,146 @@ def extract_skills_universal_from_text(text: str, max_skills: int = 12, include_
     return found[:max_skills]
 
 
+# Bảng ánh xạ nhãn từ điển sang Tiếng Anh khi người dùng tải lên CV Tiếng Anh
+CATALOG_VI_TO_EN = {
+    "Vận hành ca & Quản lý cửa hàng": "Shift & Store Operations",
+    "Thiết kế đồ họa (Graphic Design)": "Graphic Design",
+    "Microsoft Office (Word / Excel / PowerPoint)": "Microsoft Office (Word/Excel)",
+    "Food & Beverage Service (Nghiệp vụ F&B)": "Food & Beverage Service",
+    "Mixology / Pha chế (Bartender & Barista)": "Mixology & Barista Skills",
+    "Cost Control (Kiểm soát chi phí)": "Cost Control",
+    "Inventory Management (Quản lý tồn kho)": "Inventory Management",
+    "Tiêu chuẩn VSATTP (HACCP / ISO)": "Food Hygiene and Safety (HACCP)",
+    "Kỹ năng Bán hàng & Phát triển kinh doanh (Sales)": "Sales & Business Development",
+    "Chăm sóc khách hàng & CRM": "Customer Service & CRM",
+    "Đàm phán & Thương lượng": "Negotiation",
+    "Giao tiếp & Trình bày (Communication)": "Communication",
+    "Giao tiếp & Trình bày": "Communication",
+    "Làm việc nhóm (Teamwork)": "Teamwork",
+    "Làm việc nhóm": "Teamwork",
+    "Giải quyết vấn đề (Problem Solving)": "Problem Solving",
+    "Giải quyết vấn đề": "Problem Solving",
+    "Tư duy phản biện & Phân tích (Critical Thinking)": "Critical Thinking",
+    "Tư duy phản biện & Phân tích": "Critical Thinking",
+    "Quản lý thời gian & Tổ chức công việc": "Time Management",
+    "Quản lý thời gian & Tiến độ": "Time Management",
+    "Kỹ năng Thuyết trình (Presentation)": "Presentation Skills",
+    "Kỹ năng Thuyết trình": "Presentation Skills",
+    "Đàm phán & Thuyết phục (Negotiation)": "Negotiation",
+    "Đàm phán & Thuyết phục": "Negotiation",
+    "Lãnh đạo & Quản lý đội nhóm (Leadership)": "Leadership",
+    "Lãnh đạo & Quản lý đội nhóm": "Leadership",
+    "Làm việc dưới áp lực & Thích nghi nhanh": "Adaptability & Working Under Pressure",
+    "Thích ứng & Học hỏi nhanh": "Adaptability & Working Under Pressure",
+    "Tư duy sáng tạo (Creativity)": "Creativity",
+    "Tư duy sáng tạo": "Creativity",
+    "Chăm sóc & Dịch vụ khách hàng": "Customer Service",
+    "Chăm sóc khách hàng": "Customer Service",
+    # Ánh xạ đầy đủ toàn bộ các nhóm ngành còn lại trong UNIVERSAL_SKILL_CATALOG
+    "SQL / Cơ sở dữ liệu": "SQL & Database Management",
+    "Git / Quản lý mã nguồn": "Git & Version Control",
+    "Unit Test / Kiểm thử (QA/QC)": "Unit Testing & QA/QC",
+    "An toàn thông tin / Bảo mật": "Information Security",
+    "Phân tích dữ liệu (Data Analysis)": "Data Analysis",
+    "Kế toán tổng hợp": "General Accounting",
+    "MISA / Phần mềm ERP": "ERP Software (SAP/MISA)",
+    "Excel nâng cao": "Advanced Excel",
+    "Phân tích báo cáo tài chính": "Financial Statement Analysis",
+    "Lập dự toán & Ngân sách": "Budgeting & Forecasting",
+    "Thuế & Quyết toán thuế": "Taxation & Tax Settlement",
+    "Kiểm toán & Kiểm soát nội bộ": "Auditing & Internal Control",
+    "Tín dụng & Ngân hàng": "Credit & Banking Operations",
+    "Đầu tư & Chứng khoán": "Investment & Securities",
+    "Soạn thảo hợp đồng": "Contract Drafting",
+    "Nghiên cứu văn bản pháp luật": "Legal Research",
+    "Luật Doanh nghiệp": "Corporate Law",
+    "Luật Lao động": "Labor Law",
+    "Tư vấn pháp lý": "Legal Consulting & Compliance",
+    "Sở hữu trí tuệ": "Intellectual Property",
+    "Giải quyết tranh chấp & Tranh tụng": "Dispute Resolution & Litigation",
+    "Nghiên cứu thị trường & Insight": "Market Research & Consumer Insight",
+    "Quảng cáo đa kênh (Ads)": "Multi-channel Advertising (Ads)",
+    "Quản trị Mạng xã hội (Social Media)": "Social Media Management",
+    "Thương mại điện tử (E-commerce)": "E-commerce Management",
+    "Thiết kế UI/UX (Figma)": "UI/UX Design (Figma)",
+    "Dựng phim & Biên tập Video": "Video Editing & Production",
+    "Tuyển dụng nhân sự (Talent Acquisition)": "Talent Acquisition & Recruitment",
+    "Tiền lương & Phúc lợi (C&B)": "Compensation & Benefits (C&B)",
+    "Đào tạo & Phát triển nhân sự (L&D)": "Learning & Development (L&D)",
+    "Hành chính văn phòng": "Office Administration",
+    "Nghiệp vụ Xuất nhập khẩu & Hải quan": "Import-Export & Customs Operations",
+    "Quản trị Chuỗi cung ứng & Logistics": "Supply Chain & Logistics Management",
+    "Thu mua & Quản lý Nhà cung cấp (Procurement)": "Procurement & Vendor Management",
+    "Thiết kế kỹ thuật (AutoCAD / SolidWorks)": "Technical Design (AutoCAD/SolidWorks)",
+    "Quản lý chất lượng sản xuất (ISO / 5S / Kaizen)": "Quality Management (ISO/5S/Kaizen)",
+    "Bóc tách khối lượng & Giám sát thi công": "Quantity Surveying & Site Supervision",
+    "Tự động hóa & Điện công nghiệp (PLC)": "Industrial Automation & PLC",
+    "Chuyên môn Y Dược & Chăm sóc sức khỏe": "Healthcare & Pharmaceutical Practice",
+    "Kỹ năng Sư phạm & Giảng dạy": "Pedagogy & Teaching Skills",
+    "Tiếng Anh chuyên ngành / Giao tiếp": "Business & Professional English",
+    "Ngoại ngữ thứ 2 (Trung / Nhật / Hàn)": "Foreign Language (Chinese/Japanese/Korean)",
+}
+
+# Bảng ánh xạ nhãn Tiếng Anh / Song ngữ sang Tiếng Việt thuần khi tải lên CV Tiếng Việt
+CATALOG_EN_TO_VI = {
+    "food & beverage service (nghiệp vụ f&b)": "Nghiệp vụ F&B",
+    "food & beverage service": "Nghiệp vụ F&B",
+    "mixology / pha chế (bartender & barista)": "Pha chế đồ uống",
+    "mixology & barista skills": "Pha chế đồ uống",
+    "cost control (kiểm soát chi phí)": "Kiểm soát chi phí",
+    "cost control": "Kiểm soát chi phí",
+    "inventory management (quản lý tồn kho)": "Quản lý tồn kho",
+    "inventory management": "Quản lý tồn kho",
+    "shift & store operations": "Vận hành ca & Quản lý cửa hàng",
+    "store operations": "Vận hành cửa hàng",
+    "shift management": "Quản lý ca",
+    "food hygiene and safety (haccp)": "Tiêu chuẩn VSATTP (HACCP / ISO)",
+    "thiết kế đồ họa (graphic design)": "Thiết kế đồ họa",
+    "graphic design": "Thiết kế đồ họa",
+    "phân tích dữ liệu (data analysis)": "Phân tích dữ liệu",
+    "data analysis": "Phân tích dữ liệu",
+    "business analysis (ba)": "Phân tích nghiệp vụ (BA)",
+    "business analysis": "Phân tích nghiệp vụ (BA)",
+    "kỹ năng bán hàng & phát triển kinh doanh (sales)": "Kỹ năng Bán hàng & Phát triển kinh doanh",
+    "sales & business development": "Kỹ năng Bán hàng & Phát triển kinh doanh",
+    "tuyển dụng nhân sự (talent acquisition)": "Tuyển dụng nhân sự",
+    "talent acquisition": "Tuyển dụng nhân sự",
+    "thu mua & quản lý nhà cung cấp (procurement)": "Thu mua & Quản lý Nhà cung cấp",
+    "procurement": "Thu mua & Quản lý Nhà cung cấp",
+    "communication": "Giao tiếp & Trình bày",
+    "communication & presentation": "Giao tiếp & Trình bày",
+    "communication skills": "Kỹ năng giao tiếp",
+    "teamwork": "Làm việc nhóm",
+    "team work": "Làm việc nhóm",
+    "teamwork & collaboration": "Làm việc nhóm",
+    "collaboration": "Làm việc nhóm",
+    "problem solving": "Giải quyết vấn đề",
+    "problem-solving": "Giải quyết vấn đề",
+    "critical thinking": "Tư duy phản biện",
+    "critical thinking & analysis": "Tư duy phản biện & Phân tích",
+    "analytical thinking": "Tư duy phân tích",
+    "time management": "Quản lý thời gian",
+    "time management & planning": "Quản lý thời gian & Tiến độ",
+    "presentation": "Kỹ năng Thuyết trình",
+    "presentation skills": "Kỹ năng Thuyết trình",
+    "public speaking": "Kỹ năng Thuyết trình",
+    "negotiation": "Đàm phán & Thuyết phục",
+    "negotiation & persuasion": "Đàm phán & Thuyết phục",
+    "leadership": "Lãnh đạo & Quản lý đội nhóm",
+    "leadership & mentoring": "Lãnh đạo & Quản lý đội nhóm",
+    "adaptability": "Thích ứng & Học hỏi nhanh",
+    "adaptability & agility": "Thích ứng & Học hỏi nhanh",
+    "adaptability & working under pressure": "Thích ứng & Học hỏi nhanh",
+    "working under pressure": "Làm việc dưới áp lực",
+    "creativity": "Tư duy sáng tạo",
+    "creative thinking": "Tư duy sáng tạo",
+    "customer service": "Chăm sóc khách hàng",
+    "customer service & crm": "Chăm sóc khách hàng & CRM",
+}
+
+
 def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
-    """So khớp thông minh giữa kỹ năng trong CV và kỹ năng yêu cầu của JD (hỗ trợ từ đồng nghĩa & từ khóa con)."""
+    """So khớp thông minh giữa kỹ năng trong CV và kỹ năng yêu cầu của JD (hỗ trợ đối chiếu song ngữ Anh - Việt)."""
     c = cv_skill.lower().strip()
     j = jd_skill.lower().strip()
     if not c or not j:
@@ -277,19 +415,27 @@ def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
     if c in j or j in c:
         return True
 
-    combined_catalogs = list(UNIVERSAL_SKILL_CATALOG.items()) + list(SOFT_SKILLS_CATALOG.items())
+    combined_catalogs = (
+        list(UNIVERSAL_SKILL_CATALOG.items())
+        + list(SOFT_SKILLS_VI.items())
+        + list(SOFT_SKILLS_EN.items())
+    )
     for skill_label, kws in combined_catalogs:
         lbl_low = skill_label.lower()
-        c_hit = (c == lbl_low) or any(_kw_in_text(kw, c) for kw in kws if len(kw.strip()) >= 2)
+        en_mapped = CATALOG_VI_TO_EN.get(skill_label, "").lower()
+        all_variants = [kw for kw in kws if len(kw.strip()) >= 2]
+        if en_mapped:
+            all_variants.append(en_mapped)
+        c_hit = (c == lbl_low) or (en_mapped and c == en_mapped) or any(_kw_in_text(kw, c) for kw in all_variants)
         if not c_hit:
             continue
-        j_hit = (j == lbl_low) or any(_kw_in_text(kw, j) for kw in kws if len(kw.strip()) >= 2)
+        j_hit = (j == lbl_low) or (en_mapped and j == en_mapped) or any(_kw_in_text(kw, j) for kw in all_variants)
         if j_hit:
             return True
 
-    stop_tokens = {"kỹ", "năng", "cơ", "bản", "nâng", "cao", "chuyên", "môn", "về", "và", "hoặc", "quản", "lý", "phân", "tích", "nghiệp", "vụ"}
-    c_tokens = {t for t in re.split(r'[\s/,\-\(\)]+', c) if len(t) >= 3 and t not in stop_tokens}
-    j_tokens = {t for t in re.split(r'[\s/,\-\(\)]+', j) if len(t) >= 3 and t not in stop_tokens}
+    stop_tokens = {"kỹ", "năng", "cơ", "bản", "nâng", "cao", "chuyên", "môn", "về", "và", "hoặc", "quản", "lý", "phân", "tích", "nghiệp", "vụ", "skills", "and", "management"}
+    c_tokens = {t for t in re.split(r'[\s/,\-\(\)&]+', c) if len(t) >= 3 and t not in stop_tokens}
+    j_tokens = {t for t in re.split(r'[\s/,\-\(\)&]+', j) if len(t) >= 3 and t not in stop_tokens}
     if c_tokens and j_tokens and (c_tokens & j_tokens):
         return True
     return False
@@ -816,6 +962,62 @@ def create_job_with_advanced_ai(job: JobCreateAI, db: Session = Depends(get_db))
     return db_job
 
 
+_VN_ACCENT_REGEX = re.compile(r'[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]', re.IGNORECASE)
+_KEPT_TECH_PARENS = {"haccp", "iso", "word", "excel", "powerpoint", "aws", "azure", "gcp", "autocad", "solidworks", "figma", "plc", "5s", "kaizen", "qa/qc", "c&b", "l&d", "ba"}
+
+
+def _format_skill_by_cv_lang(skill_name: str, is_vi_cv: bool) -> str:
+    """
+    Chuẩn hóa tên kỹ năng theo đúng ngôn ngữ của CV:
+    - Nếu là CV Tiếng Anh (is_vi_cv = False): trả về 100% Tiếng Anh, loại bỏ mọi từ Tiếng Việt.
+    - Nếu là CV Tiếng Việt (is_vi_cv = True): trả về 100% Tiếng Việt (chỉ giữ tên riêng công nghệ/chứng chỉ quốc tế).
+    """
+    s = (skill_name or "").strip()
+    if not s:
+        return ""
+
+    if is_vi_cv:
+        # 1. Tra bảng ánh xạ Tiếng Anh / Song ngữ -> Tiếng Việt thuần
+        if s.lower() in CATALOG_EN_TO_VI:
+            return CATALOG_EN_TO_VI[s.lower()]
+        # 2. Trường hợp "English Term (Tiếng Việt)" -> lấy phần Tiếng Việt trong ngoặc
+        m_vi_inside = re.match(r'^[A-Za-z0-9\s/&.,+-]+\(([^)]+)\)$', s)
+        if m_vi_inside and _VN_ACCENT_REGEX.search(m_vi_inside.group(1)):
+            return m_vi_inside.group(1).strip()
+        # 3. Trường hợp "Tiếng Việt (English Translation)" -> bỏ phần dịch Tiếng Anh thừa trong ngoặc (giữ lại tên công nghệ/chứng chỉ)
+        m_en_inside = re.match(r'^(.+?)\s*\(([A-Za-z0-9\s/&.,+-]+)\)$', s)
+        if m_en_inside and _VN_ACCENT_REGEX.search(m_en_inside.group(1)):
+            paren_low = m_en_inside.group(2).strip().lower()
+            if not any(tk in paren_low for tk in _KEPT_TECH_PARENS):
+                s = m_en_inside.group(1).strip()
+        if s.lower() in CATALOG_EN_TO_VI:
+            return CATALOG_EN_TO_VI[s.lower()]
+        return s
+
+    # --- NẾU LÀ CV TIẾNG ANH (is_vi_cv = False) ---
+    # 1. Tra bảng CATALOG_VI_TO_EN sang Tiếng Anh
+    if s in CATALOG_VI_TO_EN:
+        return CATALOG_VI_TO_EN[s]
+    for k_vi, v_en in CATALOG_VI_TO_EN.items():
+        if k_vi.lower() == s.lower():
+            return v_en
+
+    # 2. Nếu nhãn có dạng "English Term (Tiếng Việt)" -> lấy phần Tiếng Anh phía trước ngoặc
+    prefix_match = re.match(r'^([A-Za-z0-9\s/&.,+-]+?)\s*\([^)]+\)$', s)
+    if prefix_match and _VN_ACCENT_REGEX.search(s) and not _VN_ACCENT_REGEX.search(prefix_match.group(1)):
+        return prefix_match.group(1).strip()
+
+    # 3. Nếu nhãn có dạng "Tiếng Việt (English Term)" -> lấy phần Tiếng Anh trong ngoặc
+    paren_match = re.search(r'\(([A-Za-z0-9\s/&.,+-]+)\)', s)
+    if paren_match and _VN_ACCENT_REGEX.search(s):
+        return paren_match.group(1).strip()
+
+    # 4. Nếu chuỗi vẫn còn dấu Tiếng Việt thì bỏ qua, tuyệt đối không chèn vào CV Tiếng Anh
+    if _VN_ACCENT_REGEX.search(s):
+        return ""
+    return s
+
+
 @app.post("/profiles/extract-cv/")
 def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
     raw_text = (cv_input.cv_text or "").strip()
@@ -826,17 +1028,36 @@ def create_profile_from_cv(cv_input: CVInput, db: Session = Depends(get_db)):
             detail="Nội dung file quá ngắn hoặc không đọc được chữ (file ảnh quét / scan / không có dữ liệu văn bản). Vui lòng tải lên file CV định dạng PDF hợp lệ!"
         )
 
-    cv_lang = detect_language(raw_text)
     cv_text_short = raw_text[:2500]
 
-    if cv_lang == "en":
-        prompt_text = f"""Extract candidate info and skills from the English CV text below.
-CRITICAL RULES:
-1. VALIDATION: If the text below is a junk file, exam paper, invoice, novel, or NOT a valid CV/Resume, return ONLY: {{"is_cv": false}}
-2. IF IT IS A VALID CV, return "is_cv": true and extract the candidate data.
-3. LANGUAGE RULE: The CV is in English. Extract all skills, soft skills, and experience summary in ENGLISH.
-Output ONLY a valid JSON object without markdown or explanation.
+    # 1. Tự động phát hiện ngôn ngữ của CV (đếm ký tự có dấu Tiếng Việt)
+    vi_chars_count = len(re.findall(
+        r'[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]',
+        cv_text_short.lower()
+    ))
+    is_vi_cv = (vi_chars_count >= 10)
+    cv_lang = "vi" if is_vi_cv else "en"
 
+    if is_vi_cv:
+        lang_rule = (
+            "CRITICAL LANGUAGE RULE: This CV is written in VIETNAMESE. "
+            "You MUST output all skill names, soft_skills, and experience summary in VIETNAMESE "
+            "(only keep standard international tech/tool names like Python, Laravel, Excel, MISA, SQL, HACCP)."
+        )
+    else:
+        lang_rule = (
+            "CRITICAL LANGUAGE RULE: This CV is written in ENGLISH. "
+            "You MUST output 100% of skill names, soft_skills, and experience summary in ENGLISH. "
+            "Do NOT output any Vietnamese words."
+        )
+
+    prompt_text = f"""Extract candidate info and skills from the CV text below.
+{lang_rule}
+IMPORTANT RULE:
+1. VALIDATION: If the text below is a junk file, exam paper, invoice, novel, or NOT a valid CV/Resume, return ONLY: {{"is_cv": false}}
+2. IF IT IS A VALID CV, return "is_cv": true and extract all specialized domain/hard skills mentioned in the CV.
+3. If the CV does NOT contain specialized domain skills (or only has general experience), search for SOFT SKILLS listed by the candidate and include them in "skills" and "soft_skills" in the SAME language as the CV.
+Output ONLY a valid JSON object without any explanation.
 CV TEXT:
 {cv_text_short}
 
@@ -846,32 +1067,8 @@ REQUIRED JSON FORMAT:
     "name": "Candidate Name",
     "email": "email@example.com",
     "skills": {{"Skill 1": 4, "Skill 2": 5}},
-    "soft_skills": ["Soft Skill 1", "Soft Skill 2"],
-    "experience": "Brief summary of work experience and projects in English"
-}}
-"""
-    else:
-        prompt_text = f"""Phân tích văn bản dưới đây và trích xuất thông tin ứng viên sang định dạng JSON.
-QUY TẮC TỐI THƯỢNG:
-1. KIỂM TRA HỢP LỆ: Nếu văn bản dưới đây là tài liệu rác, đề thi, hóa đơn, truyện, hoặc KHÔNG PHẢI là Hồ sơ xin việc (CV/Resume), hãy trả về duy nhất: {{"is_cv": false}}
-2. NẾU LÀ CV HỢP LỆ, trả về "is_cv": true và trích xuất dữ liệu.
-3. ĐỒNG NHẤT NGÔN NGỮ KỸ NĂNG:
-   - Các kỹ năng mềm, kỹ năng chung BẮT BUỘC dịch sang Tiếng Việt (VD: "Communication" -> "Giao tiếp", "Teamwork" -> "Làm việc nhóm", "Problem Solving" -> "Giải quyết vấn đề").
-   - Chỉ giữ lại Tiếng Anh cho tên riêng của công nghệ, phần mềm, chứng chỉ quốc tế (VD: Python, ReactJS, Docker, Excel, AutoCAD, IELTS).
-   - TUYỆT ĐỐI KHÔNG viết song ngữ nửa Anh nửa Việt (ví dụ: không viết 'Giao tiếp (Communication)' hay 'Teamwork làm việc nhóm').
-4. Nếu CV có liệt kê kỹ năng mềm (giao tiếp, làm việc nhóm, giải quyết vấn đề, quản lý thời gian...), hãy trích xuất chúng vào "soft_skills" bằng Tiếng Việt.
-
-VĂN BẢN CẦN PHÂN TÍCH:
-{cv_text_short}
-
-TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SAU (KHÔNG KÈM MARKDOWN):
-{{
-    "is_cv": true,
-    "name": "Họ và tên ứng viên",
-    "email": "email@example.com",
-    "skills": {{"Tên kỹ năng 1": 4, "Tên kỹ năng 2": 5}},
-    "soft_skills": ["Kỹ năng mềm 1", "Kỹ năng mềm 2"],
-    "experience": "Tóm tắt kinh nghiệm bằng Tiếng Việt"
+    "soft_skills": ["Soft skill 1", "Soft skill 2"],
+    "experience": "Brief summary of work experience and projects from CV"
 }}
 """
 
@@ -914,83 +1111,51 @@ TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON SAU (KHÔNG KÈM MARKDOWN):
     if isinstance(raw_skills, list):
         for s in raw_skills:
             if s:
-                final_skills[str(s).strip()] = 4
+                formatted_s = _format_skill_by_cv_lang(str(s).strip(), is_vi_cv)
+                if formatted_s:
+                    final_skills[formatted_s] = 4
     elif isinstance(raw_skills, dict):
         for k, v in raw_skills.items():
             if k:
-                try:
-                    final_skills[str(k).strip()] = max(1, min(5, int(float(v))))
-                except Exception:
-                    final_skills[str(k).strip()] = 4
+                formatted_k = _format_skill_by_cv_lang(str(k).strip(), is_vi_cv)
+                if formatted_k:
+                    try:
+                        final_skills[formatted_k] = max(1, min(5, int(float(v))))
+                    except Exception:
+                        final_skills[formatted_k] = 4
 
-    # Phân tách kỹ năng chuyên ngành và kỹ năng mềm theo đúng ngôn ngữ
-    catalog_to_check = SOFT_SKILLS_EN if cv_lang == "en" else SOFT_SKILLS_VI
-    soft_catalog_labels = {lbl.lower() for lbl in catalog_to_check.keys()}
+    # Phân tách kỹ năng chuyên ngành và kỹ năng mềm theo đúng ngôn ngữ của CV
+    catalog_to_check = SOFT_SKILLS_VI if is_vi_cv else SOFT_SKILLS_EN
+    soft_catalog_labels = {lbl.lower() for lbl in list(SOFT_SKILLS_VI.keys()) + list(SOFT_SKILLS_EN.keys())}
     universal_detected = extract_skills_universal_from_text(raw_text, max_skills=10, include_soft=False, lang=cv_lang)
     domain_detected = [sk for sk in universal_detected if sk.lower() not in soft_catalog_labels]
 
     for sk in domain_detected:
-        if not any(skills_are_matching(sk, existing_k) for existing_k in final_skills.keys()):
-            final_skills[sk] = 4
+        localized_sk = _format_skill_by_cv_lang(sk, is_vi_cv)
+        if localized_sk and not any(skills_are_matching(localized_sk, existing_k) for existing_k in final_skills.keys()):
+            final_skills[localized_sk] = 4
         if len(final_skills) >= 12:
             break
 
     has_specialized_skills = any(k.lower() not in soft_catalog_labels for k in final_skills.keys())
 
-    # Nếu CV không có kỹ năng chuyên ngành (hoặc số kỹ năng còn ít), quét toàn bộ Kỹ năng mềm người dùng liệt kê trên CV
-    if not has_specialized_skills or len(final_skills) < 5:
+    # Bổ sung các Kỹ năng mềm người dùng có liệt kê trên CV theo đúng ngôn ngữ của CV (Anh -> Anh, Việt -> Việt)
+    if not has_specialized_skills or len(final_skills) < 10:
         ai_soft_list = ai_data.get("soft_skills", [])
         if isinstance(ai_soft_list, list):
             for s_sk in ai_soft_list:
                 if s_sk and str(s_sk).strip():
-                    s_name = str(s_sk).strip()
-                    if not any(skills_are_matching(s_name, existing_k) for existing_k in final_skills.keys()):
+                    s_name = _format_skill_by_cv_lang(str(s_sk).strip(), is_vi_cv)
+                    if s_name and not any(skills_are_matching(s_name, existing_k) for existing_k in final_skills.keys()):
                         final_skills[s_name] = 4
 
         soft_detected = extract_soft_skills_from_text(raw_text, max_skills=10, lang=cv_lang)
         for s_sk in soft_detected:
-            if not any(skills_are_matching(s_sk, existing_k) for existing_k in final_skills.keys()):
-                final_skills[s_sk] = 4
+            localized_soft = _format_skill_by_cv_lang(s_sk, is_vi_cv)
+            if localized_soft and not any(skills_are_matching(localized_soft, existing_k) for existing_k in final_skills.keys()):
+                final_skills[localized_soft] = 4
             if len(final_skills) >= 12:
                 break
-
-    # Làm sạch tên kỹ năng để đảm bảo chuẩn xác về ngôn ngữ, không bị dính song ngữ lẫn lộn
-    en_to_vi_soft_map = {
-        "communication": "Giao tiếp",
-        "communication skills": "Kỹ năng giao tiếp",
-        "teamwork": "Làm việc nhóm",
-        "team work": "Làm việc nhóm",
-        "collaboration": "Làm việc nhóm",
-        "problem solving": "Giải quyết vấn đề",
-        "problem-solving": "Giải quyết vấn đề",
-        "time management": "Quản lý thời gian",
-        "critical thinking": "Tư duy phản biện",
-        "analytical thinking": "Tư duy phân tích",
-        "presentation": "Kỹ năng thuyết trình",
-        "public speaking": "Kỹ năng thuyết trình",
-        "leadership": "Kỹ năng lãnh đạo",
-        "negotiation": "Kỹ năng đàm phán",
-        "customer service": "Chăm sóc khách hàng",
-        "adaptability": "Khả năng thích ứng",
-        "creativity": "Tư duy sáng tạo"
-    }
-    clean_skills = {}
-    for k, v in final_skills.items():
-        k_str = str(k).strip()
-        if cv_lang == "vi":
-            # Trường hợp "Communication (Giao tiếp)" -> lấy phần Tiếng Việt trong ngoặc
-            m_vi_paren = re.match(r'^[a-zA-Z\s/&\-]+\(([^)]*[À-ỹ][^)]*)\)$', k_str)
-            if m_vi_paren:
-                k_str = m_vi_paren.group(1).strip()
-            else:
-                # Trường hợp "Giao tiếp (Communication)" -> bỏ phần Tiếng Anh trong ngoặc
-                k_str = re.sub(r'\s*\([a-zA-Z\s/&\.\-]+\)$', '', k_str).strip()
-            mapped_vi = en_to_vi_soft_map.get(k_str.lower())
-            if mapped_vi:
-                k_str = mapped_vi
-        if k_str:
-            clean_skills[k_str] = v
-    final_skills = clean_skills
 
     # KIỂM TRA FILE RÁC: Báo lỗi ngay nếu không tìm thấy kỹ năng chuyên môn hay kỹ năng mềm nào
     if len(final_skills) == 0:
@@ -1738,12 +1903,6 @@ def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
     if task.status == "completed":
         raise HTTPException(status_code=400, detail="Bài học này đã được hoàn thành trước đó!")
 
-    if task.status == "excused":
-        raise HTTPException(
-            status_code=400,
-            detail="Bài học này đã được miễn và vô hiệu hóa do bạn đã đăng ký Thẻ nghỉ phép ngày hôm nay!"
-        )
-
     now_vn = vn_now()
 
     # Chốt chặn thời gian thực theo đúng múi giờ Việt Nam (UTC+7), cho phép dung sai 1 phút
@@ -1768,6 +1927,10 @@ def complete_study_task(data: TaskCompleteInput, db: Session = Depends(get_db)):
     today_str = today.strftime("%Y-%m-%d")
     yesterday_str = (today - timedelta(days=1)).strftime("%Y-%m-%d")
     two_days_ago_str = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+
+    # Nếu hôm nay đã bấm nghỉ phép nhưng sau đó vẫn đổi ý vào học thật -> Hoàn lại thẻ nghỉ phép cho tuần này
+    if record.last_leave_date == today_str:
+        record.last_leave_date = ""
 
     if record.last_study_date == today_str:
         # Trong cùng 1 ngày đã làm bài rồi -> giữ nguyên Streak hiện tại (không cộng dồn thêm)
@@ -1941,6 +2104,14 @@ def use_leave_pass(profile_id: str, db: Session = Depends(get_db)):
     now_vn = vn_now()
     today_ymd = now_vn.strftime("%Y-%m-%d")
     today_dmy = now_vn.strftime("%d/%m/%Y")
+    today_str = today_ymd
+
+    # 0. Chặn bấm nghỉ phép nếu hôm nay đã học xong bài và có Streak rồi (Tránh mất oan Phiếu nghỉ phép)
+    if record.last_study_date == today_str:
+        raise HTTPException(
+            status_code=400,
+            detail="Hôm nay bạn đã hoàn thành bài học và giữ chuỗi Streak rồi, không cần dùng Phiếu nghỉ phép!"
+        )
 
     # 1. Kiểm tra giới hạn 1 lần / 1 tuần
     if record.last_leave_date and _is_same_iso_week(record.last_leave_date, today_ymd):

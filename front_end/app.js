@@ -2340,7 +2340,7 @@ window.renderMasterRoadmapUI = function(tasks) {
             badgeLabel = `Bài ${stepNum} • Đã nghỉ phép (Miễn học)`;
             badgeColorClass = 'text-sky-700 font-bold';
             centerCircleHtml = `<div class="w-9 h-9 rounded-full bg-sky-500 text-white font-bold text-xs flex items-center justify-center ring-4 ring-sky-50 shadow-sm flex-shrink-0 hidden sm:flex">🏖️</div>`;
-            actionHtml = `<div class="mt-2"><span class="inline-block text-[11px] font-bold text-sky-700 bg-sky-100 px-2.5 py-1 rounded-md border border-sky-200">Đã miễn học (Thẻ nghỉ phép)</span></div>`;
+            actionHtml = `<div class="mt-2 flex flex-wrap items-center gap-2"><span class="inline-block text-[11px] font-bold text-sky-700 bg-sky-100 px-2.5 py-1 rounded-md border border-sky-200">Đã miễn học (Thẻ nghỉ phép)</span><button type="button" onclick="completeTask(${task.id})" class="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200 transition-all cursor-pointer">Học luôn & Hoàn thẻ (+50 XP)</button></div>`;
         } else if (!isDisabled) {
             cardClass = 'bg-amber-50/50 border border-amber-400 shadow-xs hover:border-amber-500';
             badgeLabel = `Bài ${stepNum} • Sẵn sàng`;
