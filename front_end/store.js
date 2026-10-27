@@ -34,7 +34,8 @@ const AppStore = {
     setAnalysisResult(data) {
         this.state.analysisDone = true;
         this.state.analysisData = data;
-        const pid = localStorage.getItem('current_profile_id') || this.state.selectedProfileId;
+        // Chỉ lưu theo tài khoản đang đăng nhập (không dùng selectedProfileId cũ có thể thuộc tài khoản trước)
+        const pid = localStorage.getItem('current_profile_id');
         if (pid && data) {
             localStorage.setItem(`has_analyzed_${pid}`, 'true');
             localStorage.setItem(`analysis_data_${pid}`, JSON.stringify(data));

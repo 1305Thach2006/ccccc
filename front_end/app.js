@@ -585,7 +585,6 @@ async function startAnalysis() {
       if (typeof AppStore.setScreen === 'function') AppStore.setScreen('screen-gap');
       if (AppStore.state) AppStore.state.analysisDone = true;
     }
-    localStorage.setItem('analysis_done', 'true');
 
     // === LƯU TRỮ DỮ LIỆU PHÂN TÍCH GẮN LIỀN VỚI PROFILE ID CỦA TÀI KHOẢN NÀY ===
     const currentPid = localStorage.getItem('current_profile_id') || profileId;
@@ -781,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 2. KIỂM TRA ĐIỀU KIỆN: Nếu bấm vào tab Phỏng vấn nhưng CHƯA PHÂN TÍCH
-      const isAnalysisDone = (typeof AppStore !== 'undefined' && AppStore.state && AppStore.state.analysisDone) || localStorage.getItem('analysis_done') === 'true' || localStorage.getItem(`analysis_done_${currentPid}`) === 'true';
+      const isAnalysisDone = (typeof AppStore !== 'undefined' && AppStore.state && AppStore.state.analysisDone) || localStorage.getItem(`analysis_done_${currentPid}`) === 'true' || localStorage.getItem(`has_analyzed_${currentPid}`) === 'true';
       if (sId === 'screen-interview' && !isAnalysisDone) {
           if (typeof showToast === 'function') {
               showToast('Chưa phân tích hồ sơ', 'Bạn cần hoàn thành việc chọn hồ sơ và bấm nút "Phân tích Kỹ năng" trước khi vào phòng phỏng vấn!', 'warning');
@@ -809,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (sId === 'screen-gap') {
           // Nếu trong AppStore chưa có dữ liệu chi tiết, tự động tìm và nạp từ localStorage theo profile_id
           if (typeof AppStore !== 'undefined' && AppStore.state && !AppStore.state.analysisData) {
-              const savedData = localStorage.getItem(`analysis_data_${currentPid}`) || localStorage.getItem('analysis_data');
+              const savedData = localStorage.getItem(`analysis_data_${currentPid}`);
               if (savedData) {
                   try {
                       const parsed = JSON.parse(savedData);
@@ -1397,9 +1396,9 @@ if (btnSubmit) {
   function checkAndRestoreUserAnalysis(profileId) {
     if (!profileId) return false;
 
-    // Tìm dữ liệu theo profile_id hoặc fallback về dữ liệu chung
-    const savedAnalysisDone = localStorage.getItem(`analysis_done_${profileId}`) || localStorage.getItem('analysis_done');
-    const savedAnalysisData = localStorage.getItem(`analysis_data_${profileId}`) || localStorage.getItem('analysis_data');
+    // CHỈ đọc dữ liệu gắn riêng với profile_id này (không fallback sang key chung để tránh dính dữ liệu tài khoản khác)
+    const savedAnalysisDone = localStorage.getItem(`analysis_done_${profileId}`) || localStorage.getItem(`has_analyzed_${profileId}`);
+    const savedAnalysisData = localStorage.getItem(`analysis_data_${profileId}`);
 
     if (savedAnalysisDone === 'true' && savedAnalysisData) {
         try {
@@ -1415,6 +1414,7 @@ if (btnSubmit) {
             // 2. Đồng bộ vào AppStore
             if (typeof AppStore !== 'undefined') {
                 if (AppStore.state) {
+                    AppStore.state.selectedProfileId = profileId;
                     AppStore.state.analysisDone = true;
                     AppStore.state.analysisData = parsedData;
                 }
@@ -1422,12 +1422,8 @@ if (btnSubmit) {
                     AppStore.setAnalysisResult(parsedData);
                 }
             }
-            
-            // 3. Đặt cờ chung
-            localStorage.setItem('analysis_done', 'true');
-            localStorage.setItem('analysis_data', savedAnalysisData);
 
-            // 4. Kích hoạt vẽ lại giao diện và biểu đồ Radar ngay lập tức
+            // 3. Kích hoạt vẽ lại giao diện và biểu đồ Radar ngay lập tức
             if (typeof window.renderAnalysisResult === 'function') {
                 window.renderAnalysisResult(parsedData);
             }
@@ -1436,33 +1432,59 @@ if (btnSubmit) {
             console.error("Lỗi khôi phục dữ liệu phân tích:", e);
         }
     } else {
-        // Nếu không có dữ liệu, reset sạch sẽ
+        // Nếu tài khoản này chưa có dữ liệu phân tích, reset sạch sẽ trạng thái trong bộ nhớ
         if (typeof appState !== 'undefined') {
             appState.analysisDone = false;
             appState.analysisData = null;
+            appState.gapDetails = [];
         }
         if (typeof AppStore !== 'undefined' && AppStore.state) {
             AppStore.state.analysisDone = false;
             AppStore.state.analysisData = null;
+            AppStore.state.gapDetails = [];
         }
-        localStorage.removeItem('analysis_done');
-        localStorage.removeItem('analysis_data');
     }
+    localStorage.removeItem('analysis_done');
+    localStorage.removeItem('analysis_data');
     return false;
 }
 
-  // --- HÀM TIỆN ÍCH: RESET VÀ CHUYỂN HƯỚNG VỀ TRANG CHỦ ---
-  function forceNavigateToHome() {
-    // 1. Xóa sạch tất cả các key dữ liệu phân tích cũ trong LocalStorage & SessionStorage
-    const currentPid = localStorage.getItem('current_profile_id') || (typeof appState !== 'undefined' ? appState.currentProfileId : null);
-    if (currentPid) {
-        localStorage.removeItem(`analysis_done_${currentPid}`);
-        localStorage.removeItem(`analysis_data_${currentPid}`);
+  // --- HÀM TIỆN ÍCH: XÓA TOÀN BỘ KEY PHÂN TÍCH GẮN VỚI 1 PROFILE ID (hoặc của mọi tài khoản khác) ---
+  function clearProfileAnalysisStorage(profileId) {
+    if (profileId) {
+        localStorage.removeItem(`analysis_done_${profileId}`);
+        localStorage.removeItem(`analysis_data_${profileId}`);
+        localStorage.removeItem(`has_analyzed_${profileId}`);
     }
     localStorage.removeItem('analysis_done');
     localStorage.removeItem('analysis_data');
     sessionStorage.removeItem('analysis_done');
     sessionStorage.removeItem('analysis_data');
+  }
+
+  function purgeOtherProfilesAnalysisStorage(keepProfileId) {
+    const keep = keepProfileId ? String(keepProfileId) : null;
+    Object.keys(localStorage).forEach(k => {
+        const m = k.match(/^(analysis_done_|analysis_data_|has_analyzed_)(.+)$/);
+        if (m && m[2] !== keep) localStorage.removeItem(k);
+    });
+    localStorage.removeItem('analysis_done');
+    localStorage.removeItem('analysis_data');
+  }
+
+  // --- HÀM TIỆN ÍCH: RESET VÀ CHUYỂN HƯỚNG VỀ TRANG CHỦ ---
+  // Nhận profileId của tài khoản vừa đăng xuất (phải lấy TRƯỚC khi xóa current_profile_id khỏi localStorage)
+  function forceNavigateToHome(profileIdToClear) {
+    // 1. Xóa sạch tất cả các key dữ liệu phân tích cũ trong LocalStorage & SessionStorage
+    const currentPid = profileIdToClear
+        || localStorage.getItem('current_profile_id')
+        || (typeof appState !== 'undefined' ? (appState.currentProfileId || appState.uploadedProfileId) : null)
+        || (typeof AppStore !== 'undefined' && AppStore.state ? AppStore.state.selectedProfileId : null);
+    clearProfileAnalysisStorage(currentPid);
+    // Dọn luôn các key phân tích còn sót lại của bất kỳ tài khoản nào (phiên đã đăng xuất hoàn toàn)
+    if (!localStorage.getItem('current_profile_id')) {
+        purgeOtherProfilesAnalysisStorage(null);
+    }
     sessionStorage.setItem('current_screen', 'screen-home');
 
     // 2. Reset các biến trạng thái appState & AppStore về mặc định ban đầu
@@ -1470,18 +1492,35 @@ if (btnSubmit) {
         appState.analysisDone = false;
         appState.analysisData = null;
         appState.gapDetails = [];
+        appState.uploadedProfileId = null;
+        appState.currentJobId = null;
+        appState.currentAnalysisId = null;
+        appState.targetRoleTitle = '';
+        if (!localStorage.getItem('current_profile_id')) {
+            appState.currentProfileId = null;
+        }
     }
+    window.currentUploadedSkills = [];
     
     if (typeof AppStore !== 'undefined') {
         if (AppStore.state) {
             AppStore.state.analysisDone = false;
             AppStore.state.analysisData = null;
             AppStore.state.gapDetails = [];
+            if (!localStorage.getItem('current_profile_id')) {
+                AppStore.state.selectedProfileId = null;
+            }
         }
         if (typeof AppStore.setScreen === 'function') {
             AppStore.setScreen('screen-home');
         }
     }
+
+    // Khóa lại Phòng phỏng vấn cho tới khi tài khoản mới hoàn thành phân tích
+    const interviewPlaceholderEl = document.getElementById('interviewPlaceholder');
+    const interviewContentEl = document.getElementById('interviewContent');
+    if (interviewPlaceholderEl) interviewPlaceholderEl.classList.remove('hidden');
+    if (interviewContentEl) interviewContentEl.classList.add('hidden');
 
     // 3. Hủy hoàn toàn biểu đồ Radar cũ để tránh lưu vết hình ảnh
     if (typeof window.myRadarChart !== 'undefined' && window.myRadarChart) {
@@ -1556,6 +1595,25 @@ if (btnSubmitLogin) {
             if (!res.ok) throw new Error(data.detail || "Lỗi đăng nhập");
 
             // 1. Lưu thông tin tài khoản
+            const previousPid = localStorage.getItem('current_profile_id');
+            if (previousPid && String(previousPid) !== String(data.profile_id)) {
+                clearProfileAnalysisStorage(previousPid);
+            }
+            // Xóa mọi dữ liệu phân tích còn sót của tài khoản khác, chỉ giữ dữ liệu của tài khoản vừa đăng nhập
+            purgeOtherProfilesAnalysisStorage(data.profile_id);
+            if (typeof appState !== 'undefined') {
+                appState.uploadedProfileId = null;
+                appState.analysisDone = false;
+                appState.analysisData = null;
+                appState.gapDetails = [];
+            }
+            if (typeof AppStore !== 'undefined' && AppStore.state) {
+                AppStore.state.selectedProfileId = String(data.profile_id);
+                AppStore.state.analysisDone = false;
+                AppStore.state.analysisData = null;
+                AppStore.state.gapDetails = [];
+            }
+
             localStorage.setItem('current_profile_id', data.profile_id);
             localStorage.setItem('current_user_name', data.name);
             appState.currentProfileId = data.profile_id;
@@ -1707,6 +1765,11 @@ if (btnSubmitLogin) {
   // Xử lý Đăng xuất
   if (btnLogout) {
     btnLogout.addEventListener('click', () => {
+        // QUAN TRỌNG: Lấy profile_id TRƯỚC khi xóa current_profile_id để xóa đúng các key analysis_*_${profileId}
+        const loggingOutPid = localStorage.getItem('current_profile_id')
+            || (typeof appState !== 'undefined' ? appState.currentProfileId : null);
+        clearProfileAnalysisStorage(loggingOutPid);
+
         localStorage.removeItem('current_profile_id');
         localStorage.removeItem('current_user_name');
         sessionStorage.clear();
@@ -1724,8 +1787,8 @@ if (btnSubmitLogin) {
         
         showToast('Đăng xuất', 'Đã đăng xuất tài khoản thành công.', 'info');
         
-        // Đăng xuất xong -> Tự động kéo về Trang chủ lập tức
-        forceNavigateToHome();
+        // Đăng xuất xong -> Tự động kéo về Trang chủ lập tức (truyền ID tài khoản vừa đăng xuất để xóa sạch key)
+        forceNavigateToHome(loggingOutPid);
         
         // Đóng menu dropdown và reset nút đăng nhập
         const userDropdownMenu = document.getElementById('userDropdownMenu');
@@ -2930,7 +2993,7 @@ async function generateNewRandomInterviewSession(triggerBtn, defaultLabelHtml) {
     const currentPid = localStorage.getItem('current_profile_id') || appState.currentProfileId || appState.uploadedProfileId || 1;
     const analysisData = (typeof AppStore !== 'undefined' && AppStore.state.analysisData) 
         ? AppStore.state.analysisData 
-        : JSON.parse(localStorage.getItem(`analysis_data_${currentPid}`) || localStorage.getItem('analysis_data') || '{}');
+        : JSON.parse(localStorage.getItem(`analysis_data_${currentPid}`) || '{}');
 
     if (!analysisData || Object.keys(analysisData).length === 0) {
         if (typeof showToast === 'function') {
