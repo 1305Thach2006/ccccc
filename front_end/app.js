@@ -283,7 +283,11 @@ function getDetailedRoleMatch(role, profile) {
   const pSkills = (profile.skills || []).map(s => (typeof s === 'object' ? s.topic : String(s)).toLowerCase());
   const rSkills = (role.requiredSkills || []).map(s => String(s).toLowerCase());
   let matched = 0;
-  rSkills.forEach(r => { if (pSkills.some(p => p.includes(r) || r.includes(p))) matched++; });
+  rSkills.forEach(r => {
+    if (pSkills.some(p => p === r || (p.length >= 4 && r.length >= 4 && p !== 'java' && r !== 'java' && (p.includes(r) || r.includes(p))))) {
+      matched++;
+    }
+  });
   
   const skillScore = rSkills.length > 0 ? Math.round((matched / rSkills.length) * 100) : 50;
   const majorLower = (profile.major || '').toLowerCase();
@@ -495,7 +499,10 @@ async function startAnalysis() {
   
   const skeleton = document.getElementById('gapSkeletonLoading');
   const realResults = document.getElementById('gapRealResults');
-  if (skeleton) skeleton.classList.remove('hidden');
+  if (skeleton) {
+    skeleton.style.display = '';
+    skeleton.classList.remove('hidden');
+  }
   if (realResults) realResults.classList.add('hidden');
 
   try {
@@ -599,6 +606,11 @@ async function startAnalysis() {
 
   } catch (err) {
     console.error("Lỗi phân tích:", err);
+    const skeleton = document.getElementById('gapSkeletonLoading');
+    if (skeleton) {
+      skeleton.style.display = 'none';
+      skeleton.classList.add('hidden');
+    }
     if (typeof showToast === 'function') {
       showToast('Lỗi phân tích', err.message || 'Không thể kết nối máy chủ phân tích.', 'error');
     }
@@ -1477,7 +1489,16 @@ if (btnSubmit) {
         window.myRadarChart = null;
     }
 
-    // 4. RESET TRẮNG GIAO DIỆN TAB SKILL GAP (Đưa về trạng thái chưa phân tích)
+    // 4. RESET TRẮNG GIAO DIỆN TAB SKILL GAP & LỘ TRÌNH TRÊN TRANG CHỦ (Đưa về trạng thái ban đầu)
+    window.userSavedStudyTasks = [];
+    window.userSchedules = [];
+    if (typeof window.renderMasterRoadmapUI === 'function') {
+        window.renderMasterRoadmapUI([]);
+    }
+    if (typeof window.renderSchedules === 'function') {
+        window.renderSchedules();
+    }
+
     const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
     const setWid = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = pct + '%'; };
 
@@ -1557,7 +1578,20 @@ if (btnSubmitLogin) {
             if (btnLoginOpen) btnLoginOpen.textContent = data.name + ' ▾';
             if (dropdownUserName) dropdownUserName.textContent = data.name;
 
+            // Xóa sạch lộ trình và lịch rảnh của tài khoản trước đó trước khi tải dữ liệu tài khoản mới
+            window.userSavedStudyTasks = [];
+            window.userSchedules = [];
+            if (typeof window.renderMasterRoadmapUI === 'function') {
+                window.renderMasterRoadmapUI([]);
+            }
+            if (typeof window.renderSchedules === 'function') {
+                window.renderSchedules();
+            }
+
             loadSavedStudyPlan();
+            if (typeof window.loadSavedSchedulesFromServer === 'function') {
+                window.loadSavedSchedulesFromServer();
+            }
             loadGamificationData();
         } catch (err) {
             showToast('Lỗi đăng nhập', err.message, 'error');
@@ -1676,6 +1710,17 @@ if (btnSubmitLogin) {
         localStorage.removeItem('current_profile_id');
         localStorage.removeItem('current_user_name');
         sessionStorage.clear();
+        if (typeof appState !== 'undefined') {
+            appState.currentProfileId = null;
+        }
+        window.userSavedStudyTasks = [];
+        window.userSchedules = [];
+        if (typeof window.renderMasterRoadmapUI === 'function') {
+            window.renderMasterRoadmapUI([]);
+        }
+        if (typeof window.renderSchedules === 'function') {
+            window.renderSchedules();
+        }
         
         showToast('Đăng xuất', 'Đã đăng xuất tài khoản thành công.', 'info');
         
@@ -1960,7 +2005,7 @@ if (btnSubmitLogin) {
             const res = await fetch(`${API_BASE_URL}/study-plan/schedules/${profileId}`);
             if (!res.ok) return;
             const data = await res.json();
-            if (data && Array.isArray(data.schedules) && data.schedules.length > 0) {
+            if (data && Array.isArray(data.schedules)) {
                 window.userSchedules = data.schedules;
                 renderSchedules();
             }
@@ -2177,8 +2222,9 @@ if (btnSubmitLogin) {
             isToday = true;
         }
 
-        const selectedH = parseInt(hourSel.value) || currentH;
-        const selectedM = parseInt(minSel.value) || currentM;
+        const hv = parseInt(hourSel.value, 10), mv = parseInt(minSel.value, 10);
+        const selectedH = Number.isNaN(hv) ? currentH : hv;
+        const selectedM = Number.isNaN(mv) ? currentM : mv;
 
         let hourOptions = '';
         let firstValidHour = -1;
@@ -2282,7 +2328,7 @@ if (btnSubmitLogin) {
             if (!res.ok) return;
             const tasks = await res.json();
             
-            if (tasks && tasks.length > 0) {
+            if (Array.isArray(tasks)) {
                 window.userSavedStudyTasks = tasks;
                 if (typeof renderMasterRoadmapUI === 'function') {
                     renderMasterRoadmapUI(tasks);
@@ -2788,7 +2834,10 @@ window.renderAnalysisResult = function(data) {
     // Hiển thị kết quả và mở khóa phỏng vấn
     const skeleton = document.getElementById('gapSkeletonLoading');
     const realResults = document.getElementById('gapRealResults');
-    if (skeleton) skeleton.classList.add('hidden');
+    if (skeleton) {
+      skeleton.style.display = 'none';
+      skeleton.classList.add('hidden');
+    }
     if (realResults) realResults.classList.remove('hidden');
 
     const interviewPlaceholder = document.getElementById('interviewPlaceholder');

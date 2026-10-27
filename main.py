@@ -412,7 +412,9 @@ def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
     j = jd_skill.lower().strip()
     if not c or not j:
         return False
-    if c in j or j in c:
+    if c == j:
+        return True
+    if len(c) >= 4 and len(j) >= 4 and c != "java" and j != "java" and (c in j or j in c):
         return True
 
     combined_catalogs = (
@@ -434,8 +436,9 @@ def skills_are_matching(cv_skill: str, jd_skill: str) -> bool:
             return True
 
     stop_tokens = {"kỹ", "năng", "cơ", "bản", "nâng", "cao", "chuyên", "môn", "về", "và", "hoặc", "quản", "lý", "phân", "tích", "nghiệp", "vụ", "skills", "and", "management"}
-    c_tokens = {t for t in re.split(r'[\s/,\-\(\)&]+', c) if len(t) >= 3 and t not in stop_tokens}
-    j_tokens = {t for t in re.split(r'[\s/,\-\(\)&]+', j) if len(t) >= 3 and t not in stop_tokens}
+    short_tech_tokens = {"c", "r", "ai", "bi", "ba", "qa", "qc", "ui", "ux"}
+    c_tokens = {t for t in re.split(r'[\s/,\-\(\)&]+', c) if (len(t) >= 3 or t in short_tech_tokens) and t not in stop_tokens}
+    j_tokens = {t for t in re.split(r'[\s/,\-\(\)&]+', j) if (len(t) >= 3 or t in short_tech_tokens) and t not in stop_tokens}
     if c_tokens and j_tokens and (c_tokens & j_tokens):
         return True
     return False
